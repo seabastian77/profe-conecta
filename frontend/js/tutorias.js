@@ -161,7 +161,8 @@ async function alEnviarTutoria(e) {
 
     mostrarTostada("¡Tutoría programada correctamente!", "exito");
     document.getElementById("formularioTutoria").reset();
-    irAPagina(sesion.rol === "docente" ? "panel-docente" : "panel-estudiante");
+    const panelDestino = sesion.rol === "admin" ? "panel-admin" : sesion.rol === "docente" ? "panel-docente" : "panel-estudiante";
+    irAPagina(panelDestino);
   } catch (err) {
     mostrarTostada(err.mensaje || "No se pudo programar la tutoría", "error");
   }
