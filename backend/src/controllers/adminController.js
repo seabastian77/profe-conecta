@@ -205,7 +205,7 @@ async function buscarUsuario(req, res) {
   const params = [like, like, like, like];
   if (rol) { sql += ' AND u.rol = ?'; params.push(rol); }
   sql += ' ORDER BY u.nombres LIMIT 10';
-  const resultados = await db.prepare(sql).all(...params).map(u => ({
+  const resultados = (await db.prepare(sql).all(...params)).map(u => ({
     id: u.id,
     nombre: u.nombres + ' ' + u.apellidos,
     correo: u.correo,
