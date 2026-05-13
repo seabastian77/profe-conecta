@@ -37,6 +37,7 @@ router.patch('/periodos/:id/cerrar', ctrl.cerrarPeriodo);
 
 // Buscar usuario + Programar clase (admin)
 router.get('/buscar-usuario',        ctrl.buscarUsuario);
+router.put('/usuarios/:id',          ctrl.actualizarUsuario);
 router.post('/programar-clase',      ctrl.programarClase);
 router.get('/clases-programadas',    ctrl.listarClasesAdmin);
 
