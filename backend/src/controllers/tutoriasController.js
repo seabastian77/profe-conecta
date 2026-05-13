@@ -39,7 +39,7 @@ async function programar(req, res) {
   await db.prepare('INSERT INTO notificaciones (usuario_id, icono, titulo, descripcion) VALUES (?,?,?,?)')
     .run(idDocente, '📅', 'Nueva tutoría asignada', `Sesión de ${asignatura} el ${fecha} a las ${hora}`);
 
-  res.status(201).json({ mensaje: 'Tutoría programada', id: resultado.lastInsertRowid });
+  res.status(201).json({ mensaje: 'Tutoría programada', id: resultado?.id });
 }
 
 // ── GET /api/tutorias ───────────────────────────────────
