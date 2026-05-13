@@ -47,7 +47,7 @@ async function guardarPerfilDocente(req, res) {
   await db.prepare('DELETE FROM docente_asignaturas WHERE docente_id = ?').run(perfil.id);
   if (Array.isArray(asignaturas) && asignaturas.length > 0) {
     const insertar = await db.prepare(
-      'INSERT OR IGNORE INTO docente_asignaturas (docente_id, asignatura_id) VALUES (?,?)'
+      'INSERT INTO docente_asignaturas (docente_id, asignatura_id) VALUES (?,?) ON CONFLICT DO NOTHING'
     );
     for (const nombre of asignaturas) {
       if (!nombre || !nombre.trim()) continue;
@@ -59,7 +59,7 @@ async function guardarPerfilDocente(req, res) {
   // Programas académicos
   await db.prepare('DELETE FROM docente_programas WHERE docente_id = ?').run(perfil.id);
   if (Array.isArray(programas) && programas.length > 0) {
-    const insP = await db.prepare('INSERT INTO docente_programas (docente_id, programa) VALUES (?,?)');
+    const insP = await db.prepare('INSERT INTO docente_programas (docente_id, programa) VALUES (?,?) ON CONFLICT DO NOTHING');
     programas.forEach(p => insP.run(perfil.id, p));
   }
 
