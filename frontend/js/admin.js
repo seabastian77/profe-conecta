@@ -219,13 +219,19 @@ async function guardarEdicionUsuario(id) {
   if (!datos.nombres || !datos.apellidos || !datos.correo) {
     mostrarTostada("Todos los campos son obligatorios", "error"); return;
   }
+
+  var btn = document.querySelector('#modalEditarUsuario .btn-primario');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+
   try {
-    await llamarAPI("/admin/usuarios/" + id, "PUT", datos);
+    var resp = await llamarAPI("/admin/usuarios/" + id, "PUT", datos);
     document.getElementById("modalEditarUsuario").remove();
-    mostrarTostada("✅ Usuario actualizado correctamente", "exito");
-    cargarTablaUsuarios();
+    mostrarTostada("✅ " + (resp.mensaje || "Usuario actualizado"), "exito");
+    if (typeof cargarTablaUsuarios === "function") cargarTablaUsuarios();
   } catch(err) {
-    mostrarTostada(err.mensaje || "Error al guardar cambios", "error");
+    var msg = err.error || err.mensaje || err.message || "Error al guardar cambios";
+    mostrarTostada("❌ " + msg, "error");
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar cambios'; }
   }
 }
 
