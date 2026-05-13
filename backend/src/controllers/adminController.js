@@ -113,7 +113,7 @@ async function verAuditoria(req, res) {
   let sql = "SELECT a.*, u.correo AS correo_usuario FROM auditoria a LEFT JOIN usuarios u ON u.id=a.usuario_id WHERE 1=1";
   const params = [];
   if (tipo) { sql += ' AND a.evento LIKE ?'; params.push('%' + tipo + '%'); }
-  if (fecha) { sql += ' AND date(a.creado_en)=?'; params.push(fecha); }
+  if (fecha) { sql += ' AND a.creada_en::date = ?::date'; params.push(fecha); }
   sql += ' ORDER BY a.creado_en DESC LIMIT 500';
   res.json(await db.prepare(sql).all(...params));
 }
