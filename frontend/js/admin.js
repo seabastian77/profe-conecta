@@ -226,14 +226,12 @@ async function guardarEdicionUsuario(id) {
   try {
     var resp = await llamarAPI("/admin/usuarios/" + id, "PUT", datos);
     document.getElementById("modalEditarUsuario").remove();
-    mostrarTostada("✅ " + (resp.mensaje || "Usuario actualizado"), "exito");
-    // Forzar recarga completa de la página de usuarios
-    setTimeout(function() {
-      if (typeof irAPagina === "function") irAPagina("admin-usuarios");
-    }, 500);
+    mostrarTostada("✅ Guardado correctamente", "exito");
+    // Recarga completa para garantizar datos frescos
+    setTimeout(function() { window.location.reload(); }, 1200);
   } catch(err) {
-    var msg = err.error || err.mensaje || err.message || "Error al guardar cambios";
-    mostrarTostada("❌ " + msg, "error");
+    var msg = err.error || err.mensaje || err.message || JSON.stringify(err);
+    alert("Error al guardar: " + msg);
     if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar cambios'; }
   }
 }
