@@ -144,4 +144,31 @@ async function docentesDisponibles(req, res) {
   })));
 }
 
-module.exports = { programar, listar, cancelar, marcarRealizada, docentesDisponibles };
+// ── GET /api/tutorias/buscar-estudiante?q=xxx ──────────
+// Accesible para docentes — busca estudiantes por documento o nombre
+async function buscarEstudiante(req, res) {
+  const { q } = req.query;
+  if (!q || q.trim().length < 2) {
+    return res.status(400).json({ error: 'Ingresa al menos 2 caracteres' });
+  }
+  const like = '%' + q.trim() + '%';
+  const estudiantes = await db.prepare(`
+    SELECT u.id, u.nombres, u.apellidos,
+           pe.documento, pe.programa
+    FROM usuarios u
+    LEFT JOIN perfiles_estudiante pe ON pe.usuario_id = u.id
+    WHERE u.activo = 1 AND u.rol = 'estudiante'
+      AND (u.nombres ILIKE ? OR u.apellidos ILIKE ? OR pe.documento ILIKE ?)
+    ORDER BY u.nombres
+    LIMIT 10
+  `).all(like, like, like);
+
+  res.json(estudiantes.map(e => ({
+    id: e.id,
+    nombre: e.nombres + ' ' + e.apellidos,
+    documento: e.documento || '—',
+    programa: e.programa || '—'
+  })));
+}
+
+module.exports = { programar, listar, cancelar, marcarRealizada, docentesDisponibles, buscarEstudiante };
