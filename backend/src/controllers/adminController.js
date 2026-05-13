@@ -152,16 +152,16 @@ async function obtenerConfiguracion(req, res) {
 async function guardarConfiguracion(req, res) {
   const { clave, valor } = req.body;
   if (!clave || valor === undefined) return res.status(400).json({ error: 'Faltan datos' });
-  await db.prepare('INSERT OR REPLACE INTO configuracion (clave, valor) VALUES (?,?)').run(clave, String(valor));
+  await db.prepare('INSERT INTO configuracion (clave, valor) VALUES (?,?) ON CONFLICT (clave) DO UPDATE SET valor=excluded.valor').run(clave, String(valor));
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'CONFIG', clave + ' = ' + valor);
   res.json({ mensaje: 'Guardado' });
 }
 
 async function resetearConfiguracion(req, res) {
-  await db.prepare("INSERT OR REPLACE INTO configuracion (clave, valor) VALUES ('umbral_alerta','3.0')").run();
-  await db.prepare("INSERT OR REPLACE INTO configuracion (clave, valor) VALUES ('max_estudiantes_tutor','15')").run();
-  await db.prepare("INSERT OR REPLACE INTO configuracion (clave, valor) VALUES ('horas_cancelacion','24')").run();
-  await db.prepare("INSERT OR REPLACE INTO configuracion (clave, valor) VALUES ('minutos_sesion','120')").run();
+  await db.prepare("INSERT INTO configuracion (clave, valor) VALUES ('umbral_alerta','3.0') ON CONFLICT (clave) DO UPDATE SET valor='3.0'").run();
+  await db.prepare("INSERT INTO configuracion (clave, valor) VALUES ('max_estudiantes_tutor','15') ON CONFLICT (clave) DO UPDATE SET valor='15'").run();
+  await db.prepare("INSERT INTO configuracion (clave, valor) VALUES ('horas_cancelacion','24') ON CONFLICT (clave) DO UPDATE SET valor='24'").run();
+  await db.prepare("INSERT INTO configuracion (clave, valor) VALUES ('minutos_sesion','120') ON CONFLICT (clave) DO UPDATE SET valor='120'").run();
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'CONFIG_RESET', 'Valores restaurados');
   res.json({ mensaje: 'Configuración reseteada' });
 }
@@ -175,7 +175,7 @@ async function listarPeriodos(req, res) {
 async function crearPeriodo(req, res) {
   const { nombre, inicio, fin } = req.body;
   if (!nombre || !inicio || !fin) return res.status(400).json({ error: 'Faltan datos' });
-  var result = await db.prepare("INSERT INTO periodos (nombre, inicio, fin, estado) VALUES (?,?,?,'proximo')").run(nombre, inicio, fin);
+  var result = await db.prepare("INSERT INTO periodos (nombre, inicio, fin, estado) VALUES (?,?,?,'proximo') RETURNING id").get(nombre, inicio, fin);
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'PERIODO_CREADO', nombre);
   res.json({ mensaje: 'Período creado', id: result.id });
 }
