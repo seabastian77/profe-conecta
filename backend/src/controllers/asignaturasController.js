@@ -4,10 +4,9 @@ async function buscar(req, res) {
   const { q } = req.query;
   let asignaturas;
   if (q && q.trim().length > 0) {
-    const like = '%' + q.trim() + '%';
     asignaturas = await db.prepare(
-      "SELECT id, nombre, area, programa FROM asignaturas WHERE nombre LIKE ? ORDER BY area, programa, nombre LIMIT 20"
-    ).all(like);
+      "SELECT id, nombre, area, programa FROM asignaturas WHERE nombre ILIKE ? ORDER BY area, programa, nombre LIMIT 20"
+    ).all('%' + q.trim() + '%');
   } else {
     asignaturas = await db.prepare(
       "SELECT id, nombre, area, programa FROM asignaturas ORDER BY area, programa, nombre LIMIT 60"
@@ -53,23 +52,32 @@ async function crearOBuscar(req, res) {
   const nombreLimpio = nombre.trim();
   const areaLimpia = (area || 'General').trim();
   const programaLimpio = (programa || 'General').trim();
+
   const existente = await db.prepare(
-    "SELECT id, nombre, area, programa FROM asignaturas WHERE nombre = ? COLLATE NOCASE"
+    "SELECT id, nombre, area, programa FROM asignaturas WHERE lower(nombre) = lower(?)"
   ).get(nombreLimpio);
+
   if (existente) {
     return res.json({ id: existente.id, nombre: existente.nombre, area: existente.area, programa: existente.programa, nueva: false });
   }
+
   const result = await db.prepare(
-    "INSERT INTO asignaturas (nombre, area, programa) VALUES (?,?,?)"
-  ).run(nombreLimpio, areaLimpia, programaLimpio);
+    "INSERT INTO asignaturas (nombre, area, programa) VALUES (?,?,?) RETURNING id"
+  ).get(nombreLimpio, areaLimpia, programaLimpio);
+
   res.status(201).json({ id: result.id, nombre: nombreLimpio, area: areaLimpia, programa: programaLimpio, nueva: true });
 }
 
-function obtenerOCrearId(nombre, area, programa) {
+// Función interna async — usada desde perfilController con await
+async function obtenerOCrearId(nombre, area, programa) {
   const nombreLimpio = nombre.trim();
-  const existente = await db.prepare("SELECT id FROM asignaturas WHERE nombre = ? COLLATE NOCASE").get(nombreLimpio);
+  const existente = await db.prepare(
+    "SELECT id FROM asignaturas WHERE lower(nombre) = lower(?)"
+  ).get(nombreLimpio);
   if (existente) return existente.id;
-  const result = await db.prepare("INSERT INTO asignaturas (nombre, area, programa) VALUES (?,?,?)").run(nombreLimpio, area || 'General', programa || 'General');
+  const result = await db.prepare(
+    "INSERT INTO asignaturas (nombre, area, programa) VALUES (?,?,?) RETURNING id"
+  ).get(nombreLimpio, area || 'General', programa || 'General');
   return result.id;
 }
 
