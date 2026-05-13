@@ -21,7 +21,7 @@ async function listarUsuarios(req, res) {
   if (estado === 'inactivo') sql += ' AND u.activo=0';
   if (estado === 'alerta')   sql += ' AND pe.promedio < 3.0';
   if (q) {
-    sql += ' AND (u.nombres LIKE ? OR u.apellidos LIKE ? OR u.correo LIKE ?)';
+    sql += ' AND (u.nombres ILIKE ? OR u.apellidos ILIKE ? OR u.correo ILIKE ?)';
     const like = '%' + q + '%';
     params.push(like, like, like);
   }
@@ -53,15 +53,32 @@ async function crearUsuario(req, res) {
 // ── ESTADÍSTICAS ──────────────────────────────────────
 
 async function estadisticas(req, res) {
+  // Función auxiliar para contar — PostgreSQL devuelve count como string
+  async function cnt(sql, ...params) {
+    const row = await db.prepare(sql).get(...params);
+    return parseInt(row?.n || row?.count || 0);
+  }
   const mesActual = new Date().toISOString().slice(0, 7);
-  const totales = await db.prepare("SELECT COUNT(*) AS n FROM usuarios WHERE activo=1").get().n;
-  const alertas = await db.prepare("SELECT COUNT(*) AS n FROM perfiles_estudiante WHERE promedio < 3.0").get().n;
-  const tutMes = await db.prepare("SELECT COUNT(*) AS n FROM tutorias WHERE fecha LIKE ? AND estado!='cancelada'").get(mesActual + '%').n;
-  const totalTut = await db.prepare("SELECT COUNT(*) AS n FROM tutorias").get().n;
-  const realizadas = await db.prepare("SELECT COUNT(*) AS n FROM tutorias WHERE estado='completada'").get().n;
-  const perfilesOk = await db.prepare("SELECT COUNT(*) AS n FROM perfiles_estudiante").get().n + await db.prepare("SELECT COUNT(*) AS n FROM perfiles_docente").get().n + await db.prepare("SELECT COUNT(*) AS n FROM perfiles_admin").get().n;
-  const asignaciones = await db.prepare("SELECT COUNT(*) AS n FROM asignaciones WHERE estado='activa'").get().n;
-  res.json({ total_usuarios: totales, alertas_activas: alertas, tutorias_este_mes: tutMes, total_tutorias: totalTut, perfiles_completos: perfilesOk, total_asignaciones: asignaciones, tasa_recuperacion: totalTut > 0 ? Math.round(realizadas/totalTut*100) + '%' : '0%' });
+  const totales     = await cnt("SELECT COUNT(*) AS n FROM usuarios WHERE activo=1");
+  const alertas     = await cnt("SELECT COUNT(*) AS n FROM perfiles_estudiante WHERE promedio < 3.0");
+  const tutMes      = await cnt("SELECT COUNT(*) AS n FROM tutorias WHERE fecha LIKE ? AND estado!='cancelada'", mesActual + '%');
+  const totalTut    = await cnt("SELECT COUNT(*) AS n FROM tutorias");
+  const realizadas  = await cnt("SELECT COUNT(*) AS n FROM tutorias WHERE estado='completada'");
+  const perfEst     = await cnt("SELECT COUNT(*) AS n FROM perfiles_estudiante");
+  const perfDoc     = await cnt("SELECT COUNT(*) AS n FROM perfiles_docente");
+  const perfAdm     = await cnt("SELECT COUNT(*) AS n FROM perfiles_admin");
+  const asignaciones = await cnt("SELECT COUNT(*) AS n FROM asignaciones WHERE estado='activa'");
+  const notifs      = await cnt("SELECT COUNT(*) AS n FROM notificaciones WHERE leida=0");
+  res.json({
+    total_usuarios: totales,
+    alertas_activas: alertas,
+    tutorias_este_mes: tutMes,
+    total_tutorias: totalTut,
+    perfiles_completos: perfEst + perfDoc + perfAdm,
+    total_asignaciones: asignaciones,
+    notificaciones_pendientes: notifs,
+    tasa_recuperacion: totalTut > 0 ? Math.round(realizadas / totalTut * 100) + '%' : '0%'
+  });
 }
 
 // ── NOTIFICACIONES ────────────────────────────────────
@@ -183,7 +200,7 @@ async function buscarUsuario(req, res) {
     LEFT JOIN perfiles_estudiante pe ON pe.usuario_id = u.id
     LEFT JOIN perfiles_docente pd ON pd.usuario_id = u.id
     WHERE u.activo = 1
-      AND (u.nombres LIKE ? OR u.apellidos LIKE ? OR pe.documento LIKE ? OR pd.cedula LIKE ?)
+      AND (u.nombres ILIKE ? OR u.apellidos ILIKE ? OR pe.documento ILIKE ? OR pd.cedula ILIKE ?)
   `;
   const params = [like, like, like, like];
   if (rol) { sql += ' AND u.rol = ?'; params.push(rol); }
