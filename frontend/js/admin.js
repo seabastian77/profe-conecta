@@ -365,12 +365,12 @@ async function cargarTablaUsuarios() {
     tbody.innerHTML = usuarios.map(function(u) {
       var programa = u.programa || u.facultad || u.dependencia || "—";
       var estadoHTML;
-      if (!u.activo) estadoHTML = '<span class="insignia insignia--inactivo">○ Inactivo</span>';
-      else if (u.en_alerta) estadoHTML = '<span class="insignia insignia--alerta">⚠ Alerta</span>';
+      if (!u.activo || u.activo == 0) estadoHTML = '<span class="insignia insignia--inactivo">○ Inactivo</span>';
+      else if (parseFloat(u.promedio) < 3.0 && u.promedio) estadoHTML = '<span class="insignia insignia--alerta">⚠ Alerta</span>';
       else estadoHTML = '<span class="insignia insignia--activo">● Activo</span>';
-      var btnToggle = u.activo
-        ? '<button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button>'
-        : '<button class="btn-accion btn-accion--toggle btn-accion--activar" onclick="toggleEstadoUsuario(this)" title="Activar">🟢</button>';
+      var btnToggle = (u.activo && u.activo != 0)
+        ? '<button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar" data-id="' + u.id + '" data-activo="1">🔴</button>'
+        : '<button class="btn-accion btn-accion--toggle btn-accion--activar" onclick="toggleEstadoUsuario(this)" title="Activar" data-id="' + u.id + '" data-activo="0">🟢</button>';
       return '<tr data-user-id="' + u.id + '">' +
         '<td><strong>' + u.nombres + ' ' + u.apellidos + '</strong></td>' +
         '<td>' + u.correo + '</td>' +
@@ -391,7 +391,10 @@ async function cargarTablaUsuarios() {
     }).join("");
     var conteo = document.getElementById("conteoUsuarios");
     if (conteo) conteo.textContent = "Mostrando " + usuarios.length + " usuario(s)";
-  } catch (err) { console.warn("Error cargando usuarios:", err); }
+  } catch (err) {
+    console.warn("Error cargando usuarios:", err);
+    mostrarTostada("⚠️ Error al recargar la tabla: " + (err.error || err.message || ""), "error");
+  }
 }
 
 // ── CARGAR USUARIOS RECIENTES (panel admin) ─────────────
