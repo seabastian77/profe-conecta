@@ -218,35 +218,36 @@ async function buscarUsuario(req, res) {
 
 // ── PUT /api/admin/usuarios/:id ────────────────────────
 async function actualizarUsuario(req, res) {
-  const { id } = req.params;
-  const { nombres, apellidos, correo, rol, contrasena } = req.body;
+  try {
+    const id = parseInt(req.params.id);
+    const { nombres, apellidos, correo, rol, contrasena } = req.body;
 
-  if (!nombres || !apellidos || !correo || !rol) {
-    return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    if (!nombres || !apellidos || !correo || !rol) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+
+    const existe = await db.prepare('SELECT id FROM usuarios WHERE id=?').get(id);
+    if (!existe) return res.status(404).json({ error: 'Usuario no encontrado (ID: ' + id + ')' });
+
+    if (contrasena && contrasena.length >= 6) {
+      const bcrypt = require('bcrypt');
+      const hash = await bcrypt.hash(contrasena, 10);
+      await db.prepare('UPDATE usuarios SET nombres=?, apellidos=?, correo=?, rol=?, contrasena=? WHERE id=?').run(nombres, apellidos, correo, rol, hash, id);
+    } else {
+      await db.prepare('UPDATE usuarios SET nombres=?, apellidos=?, correo=?, rol=? WHERE id=?').run(nombres, apellidos, correo, rol, id);
+    }
+
+    try {
+      await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(
+        req.usuario.id, 'EDITAR_USUARIO', 'Usuario #' + id + ' actualizado por admin'
+      );
+    } catch(e) { /* auditoria no crítica */ }
+
+    res.json({ mensaje: 'Usuario actualizado correctamente' });
+  } catch(err) {
+    console.error('Error actualizarUsuario:', err.message);
+    res.status(500).json({ error: err.message || 'Error al actualizar usuario' });
   }
-
-  const existe = await db.prepare('SELECT id FROM usuarios WHERE id=?').get(id);
-  if (!existe) return res.status(404).json({ error: 'Usuario no encontrado' });
-
-  let sql = 'UPDATE usuarios SET nombres=?, apellidos=?, correo=?, rol=?';
-  const params = [nombres, apellidos, correo, rol];
-
-  if (contrasena && contrasena.length >= 6) {
-    const bcrypt = require('bcrypt');
-    const hash = await bcrypt.hash(contrasena, 10);
-    sql += ', contrasena=?';
-    params.push(hash);
-  }
-
-  sql += ' WHERE id=?';
-  params.push(id);
-
-  await db.prepare(sql).run(...params);
-  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(
-    req.usuario.id, 'EDITAR_USUARIO', `Usuario #${id} actualizado por admin`
-  );
-
-  res.json({ mensaje: 'Usuario actualizado correctamente' });
 }
 
 // ── PROGRAMAR CLASE (admin programa asesoría) ────────────
