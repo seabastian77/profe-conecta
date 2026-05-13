@@ -1,6 +1,6 @@
 const { db } = require('../config/db');
 
-const HORAS_CANCELACION = parseInt(process.env.RN_HORAS_CANCELACION || 24);
+const { getConfigNum } = require('../config/config');
 
 // ── POST /api/tutorias ──────────────────────────────────
 async function programar(req, res) {
