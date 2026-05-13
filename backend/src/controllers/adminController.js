@@ -1,0 +1,300 @@
+const { db } = require('../config/db');
+const bcrypt = require('bcrypt');
+
+// ── USUARIOS ──────────────────────────────────────────
+
+async function listarUsuarios(req, res) {
+  const { rol, estado, q } = req.query;
+  let sql = `
+    SELECT u.id, u.nombres, u.apellidos, u.correo, u.rol, u.activo, u.creado_en,
+           pe.programa, pe.semestre, pe.promedio, pe.en_alerta,
+           pd.facultad, pa.dependencia
+    FROM usuarios u
+    LEFT JOIN perfiles_estudiante pe ON pe.usuario_id=u.id
+    LEFT JOIN perfiles_docente pd ON pd.usuario_id=u.id
+    LEFT JOIN perfiles_admin pa ON pa.usuario_id=u.id
+    WHERE 1=1
+  `;
+  const params = [];
+  if (rol)                 { sql += ' AND u.rol=?';       params.push(rol); }
+  if (estado === 'activo')   sql += ' AND u.activo=1';
+  if (estado === 'inactivo') sql += ' AND u.activo=0';
+  if (estado === 'alerta')   sql += ' AND pe.en_alerta=1';
+  if (q) {
+    sql += ' AND (u.nombres LIKE ? OR u.apellidos LIKE ? OR u.correo LIKE ?)';
+    const like = '%' + q + '%';
+    params.push(like, like, like);
+  }
+  sql += ' ORDER BY u.creado_en DESC';
+  res.json(await db.prepare(sql).all(...params));
+}
+
+async function cambiarEstado(req, res) {
+  const { activo } = req.body;
+  if (typeof activo !== 'boolean') return res.status(400).json({ error: 'activo debe ser boolean' });
+  await db.prepare('UPDATE usuarios SET activo=? WHERE id=?').run(activo ? 1 : 0, req.params.id);
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(
+    req.usuario.id, activo ? 'ACTIVAR_USUARIO' : 'DESACTIVAR_USUARIO', 'Usuario ID ' + req.params.id
+  );
+  res.json({ mensaje: 'Usuario ' + (activo ? 'activado' : 'desactivado') });
+}
+
+async function crearUsuario(req, res) {
+  const { nombres, apellidos, correo, rol, contrasena } = req.body;
+  if (!nombres || !apellidos || !correo || !rol) return res.status(400).json({ error: 'Faltan campos' });
+  const existe = await db.prepare('SELECT id FROM usuarios WHERE correo=?').get(correo);
+  if (existe) return res.status(409).json({ error: 'Ya existe un usuario con ese correo' });
+  const hash = bcrypt.hashSync(contrasena || 'Cambiar123', 10);
+  const result = await db.prepare('INSERT INTO usuarios (nombres, apellidos, correo, contrasena, rol) VALUES (?,?,?,?,?)').run(nombres, apellidos, correo, hash, rol);
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'CREAR_USUARIO', nombres + ' ' + apellidos);
+  res.json({ mensaje: 'Usuario creado', id: result.lastInsertRowid });
+}
+
+// ── ESTADÍSTICAS ──────────────────────────────────────
+
+async function estadisticas(req, res) {
+  const mesActual = new Date().toISOString().slice(0, 7);
+  const totales = await db.prepare("SELECT COUNT(*) AS n FROM usuarios WHERE activo=1").get().n;
+  const alertas = await db.prepare("SELECT COUNT(*) AS n FROM perfiles_estudiante WHERE en_alerta=1").get().n;
+  const tutMes = await db.prepare("SELECT COUNT(*) AS n FROM tutorias WHERE fecha LIKE ? AND estado!='cancelada'").get(mesActual + '%').n;
+  const totalTut = await db.prepare("SELECT COUNT(*) AS n FROM tutorias").get().n;
+  const realizadas = await db.prepare("SELECT COUNT(*) AS n FROM tutorias WHERE estado='completada'").get().n;
+  const perfilesOk = await db.prepare("SELECT COUNT(*) AS n FROM perfiles_estudiante").get().n + await db.prepare("SELECT COUNT(*) AS n FROM perfiles_docente").get().n + await db.prepare("SELECT COUNT(*) AS n FROM perfiles_admin").get().n;
+  const asignaciones = await db.prepare("SELECT COUNT(*) AS n FROM asignaciones WHERE estado='activa'").get().n;
+  res.json({ total_usuarios: totales, alertas_activas: alertas, tutorias_este_mes: tutMes, total_tutorias: totalTut, perfiles_completos: perfilesOk, total_asignaciones: asignaciones, tasa_recuperacion: totalTut > 0 ? Math.round(realizadas/totalTut*100) + '%' : '0%' });
+}
+
+// ── NOTIFICACIONES ────────────────────────────────────
+
+async function enviarNotificacion(req, res) {
+  const { destinatario, tipo, asunto, mensaje } = req.body;
+  if (!asunto || !mensaje) return res.status(400).json({ error: 'Faltan asunto o mensaje' });
+  var usuarios = [];
+  if (destinatario && destinatario.includes('alerta')) {
+    usuarios = await db.prepare('SELECT usuario_id AS id FROM perfiles_estudiante WHERE en_alerta=1').all();
+  } else if (destinatario && destinatario.includes('docente')) {
+    usuarios = await db.prepare("SELECT id FROM usuarios WHERE rol='docente' AND activo=1").all();
+  } else {
+    usuarios = await db.prepare("SELECT id FROM usuarios WHERE activo=1").all();
+  }
+  var icono = (tipo && tipo.includes('Alerta')) ? '⚠️' : (tipo && tipo.includes('Recordatorio')) ? '📅' : '📢';
+  var insertar = await db.prepare('INSERT INTO notificaciones (usuario_id, icono, titulo, descripcion) VALUES (?,?,?,?)');
+  usuarios.forEach(function(u) { insertar.run(u.id, icono, asunto, mensaje); });
+  await db.prepare('INSERT INTO historial_notificaciones (destinatario, tipo, asunto, mensaje, cantidad, enviado_por) VALUES (?,?,?,?,?,?)').run(destinatario || 'Todos', tipo || 'General', asunto, mensaje, usuarios.length, req.usuario.id);
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'NOTIFICACION', 'A ' + usuarios.length + ' usuarios: ' + asunto);
+  res.json({ mensaje: 'Enviado a ' + usuarios.length + ' usuarios', cantidad: usuarios.length });
+}
+
+async function historialNotificaciones(req, res) {
+  res.json(await db.prepare('SELECT * FROM historial_notificaciones ORDER BY creada_en DESC LIMIT 100').all());
+}
+
+// ── AUDITORÍA ─────────────────────────────────────────
+
+async function verAuditoria(req, res) {
+  const { tipo, fecha } = req.query;
+  let sql = "SELECT a.*, u.correo AS correo_usuario FROM auditoria a LEFT JOIN usuarios u ON u.id=a.usuario_id WHERE 1=1";
+  const params = [];
+  if (tipo) { sql += ' AND a.evento LIKE ?'; params.push('%' + tipo + '%'); }
+  if (fecha) { sql += ' AND date(a.creado_en)=?'; params.push(fecha); }
+  sql += ' ORDER BY a.creado_en DESC LIMIT 500';
+  res.json(await db.prepare(sql).all(...params));
+}
+
+// ── ASIGNACIONES ──────────────────────────────────────
+
+async function listarAsignaciones(req, res) {
+  res.json(await db.prepare("SELECT a.id, a.estado, a.creada_en, ue.nombres||' '||ue.apellidos AS nombre_estudiante, pe.programa, pe.promedio, ud.nombres||' '||ud.apellidos AS nombre_docente FROM asignaciones a JOIN usuarios ue ON ue.id=a.estudiante_id JOIN usuarios ud ON ud.id=a.docente_id LEFT JOIN perfiles_estudiante pe ON pe.usuario_id=a.estudiante_id WHERE a.estado='activa' ORDER BY a.creada_en DESC").all());
+}
+
+async function crearAsignacion(req, res) {
+  const { estudiante_id, docente_id } = req.body;
+  if (!estudiante_id || !docente_id) return res.status(400).json({ error: 'Faltan datos' });
+  var existe = await db.prepare("SELECT id FROM asignaciones WHERE estudiante_id=? AND docente_id=? AND estado='activa'").get(estudiante_id, docente_id);
+  if (existe) return res.status(409).json({ error: 'Ya existe esta asignación' });
+  var result = await db.prepare('INSERT INTO asignaciones (estudiante_id, docente_id) VALUES (?,?)').run(estudiante_id, docente_id);
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'ASIGNACION_CREADA', 'Est ' + estudiante_id + ' → Doc ' + docente_id);
+  res.json({ mensaje: 'Asignación creada', id: result.lastInsertRowid });
+}
+
+async function eliminarAsignacion(req, res) {
+  await db.prepare("UPDATE asignaciones SET estado='removida' WHERE id=?").run(req.params.id);
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'ASIGNACION_ELIMINADA', 'ID ' + req.params.id);
+  res.json({ mensaje: 'Asignación eliminada' });
+}
+
+// ── CONFIGURACIÓN ─────────────────────────────────────
+
+async function obtenerConfiguracion(req, res) {
+  var rows = await db.prepare('SELECT * FROM configuracion').all();
+  var config = {};
+  rows.forEach(function(r) { config[r.clave] = r.valor; });
+  res.json(config);
+}
+
+async function guardarConfiguracion(req, res) {
+  const { clave, valor } = req.body;
+  if (!clave || valor === undefined) return res.status(400).json({ error: 'Faltan datos' });
+  await db.prepare('INSERT OR REPLACE INTO configuracion (clave, valor) VALUES (?,?)').run(clave, String(valor));
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'CONFIG', clave + ' = ' + valor);
+  res.json({ mensaje: 'Guardado' });
+}
+
+async function resetearConfiguracion(req, res) {
+  await db.prepare("INSERT OR REPLACE INTO configuracion (clave, valor) VALUES ('umbral_alerta','3.0')").run();
+  await db.prepare("INSERT OR REPLACE INTO configuracion (clave, valor) VALUES ('max_estudiantes_tutor','15')").run();
+  await db.prepare("INSERT OR REPLACE INTO configuracion (clave, valor) VALUES ('horas_cancelacion','24')").run();
+  await db.prepare("INSERT OR REPLACE INTO configuracion (clave, valor) VALUES ('minutos_sesion','120')").run();
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'CONFIG_RESET', 'Valores restaurados');
+  res.json({ mensaje: 'Configuración reseteada' });
+}
+
+// ── PERÍODOS ──────────────────────────────────────────
+
+async function listarPeriodos(req, res) {
+  res.json(await db.prepare('SELECT * FROM periodos ORDER BY id DESC').all());
+}
+
+async function crearPeriodo(req, res) {
+  const { nombre, inicio, fin } = req.body;
+  if (!nombre || !inicio || !fin) return res.status(400).json({ error: 'Faltan datos' });
+  var result = await db.prepare("INSERT INTO periodos (nombre, inicio, fin, estado) VALUES (?,?,?,'proximo')").run(nombre, inicio, fin);
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'PERIODO_CREADO', nombre);
+  res.json({ mensaje: 'Período creado', id: result.lastInsertRowid });
+}
+
+async function cerrarPeriodo(req, res) {
+  await db.prepare("UPDATE periodos SET estado='cerrado' WHERE id=?").run(req.params.id);
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'PERIODO_CERRADO', 'ID ' + req.params.id);
+  res.json({ mensaje: 'Período cerrado' });
+}
+
+// ── BUSCAR USUARIO (por cédula o nombre) ─────────────────
+
+async function buscarUsuario(req, res) {
+  const { q, rol } = req.query;
+  if (!q || q.trim().length < 2) return res.status(400).json({ error: 'Ingresa al menos 2 caracteres' });
+  const like = '%' + q.trim() + '%';
+  let sql = `
+    SELECT u.id, u.nombres, u.apellidos, u.correo, u.rol,
+           pe.documento AS cedula_est, pe.programa,
+           pd.cedula AS cedula_doc, pd.facultad
+    FROM usuarios u
+    LEFT JOIN perfiles_estudiante pe ON pe.usuario_id = u.id
+    LEFT JOIN perfiles_docente pd ON pd.usuario_id = u.id
+    WHERE u.activo = 1
+      AND (u.nombres LIKE ? OR u.apellidos LIKE ? OR pe.documento LIKE ? OR pd.cedula LIKE ?)
+  `;
+  const params = [like, like, like, like];
+  if (rol) { sql += ' AND u.rol = ?'; params.push(rol); }
+  sql += ' ORDER BY u.nombres LIMIT 10';
+  const resultados = await db.prepare(sql).all(...params).map(u => ({
+    id: u.id,
+    nombre: u.nombres + ' ' + u.apellidos,
+    correo: u.correo,
+    rol: u.rol,
+    cedula: u.cedula_doc || u.cedula_est || '—',
+    info: u.facultad || u.programa || '—'
+  }));
+  res.json(resultados);
+}
+
+// ── PROGRAMAR CLASE (admin programa asesoría) ────────────
+
+async function programarClase(req, res) {
+  const { docente_id, estudiante_id, asignatura, fecha, hora, modalidad, observaciones } = req.body;
+
+  if (!docente_id || !estudiante_id || !asignatura || !fecha || !hora) {
+    return res.status(400).json({ error: 'Faltan datos obligatorios: docente, estudiante, materia, fecha y hora' });
+  }
+
+  // Verificar existencia de usuarios con el rol correcto
+  const docente = await db.prepare("SELECT id, nombres, apellidos FROM usuarios WHERE id=? AND rol='docente' AND activo=1").get(docente_id);
+  const estudiante = await db.prepare("SELECT id, nombres, apellidos FROM usuarios WHERE id=? AND rol='estudiante' AND activo=1").get(estudiante_id);
+
+  if (!docente)    return res.status(404).json({ error: 'Docente no encontrado o inactivo' });
+  if (!estudiante) return res.status(404).json({ error: 'Estudiante no encontrado o inactivo' });
+
+  // Verificar conflicto de horario para el docente
+  const conflictoDoc = await db.prepare(
+    "SELECT id FROM tutorias WHERE docente_id=? AND fecha=? AND hora=? AND estado NOT IN ('cancelada')"
+  ).get(docente_id, fecha, hora);
+  if (conflictoDoc) {
+    return res.status(409).json({ error: 'El docente ya tiene una sesión a esa fecha y hora' });
+  }
+
+  // Verificar conflicto para el estudiante
+  const conflictoEst = await db.prepare(
+    "SELECT id FROM tutorias WHERE estudiante_id=? AND fecha=? AND hora=? AND estado NOT IN ('cancelada')"
+  ).get(estudiante_id, fecha, hora);
+  if (conflictoEst) {
+    return res.status(409).json({ error: 'El estudiante ya tiene una sesión a esa fecha y hora' });
+  }
+
+  // Crear la tutoría con estado 'confirmada'
+  const result = await db.prepare(`
+    INSERT INTO tutorias (estudiante_id, docente_id, asignatura, fecha, hora, modalidad, estado, observaciones)
+    VALUES (?,?,?,?,?,?,?,?)
+  `).run(estudiante_id, docente_id, asignatura, fecha, hora, modalidad || 'Virtual', 'confirmada', observaciones || '');
+
+  const tutoriaId = result.lastInsertRowid;
+  const fechaHora = `${fecha} a las ${hora.slice(0,5)}`;
+
+  // Crear asignación automáticamente si no existe
+  const asigExiste = await db.prepare(
+    "SELECT id FROM asignaciones WHERE estudiante_id=? AND docente_id=? AND estado='activa'"
+  ).get(estudiante_id, docente_id);
+
+  if (!asigExiste) {
+    await db.prepare('INSERT INTO asignaciones (estudiante_id, docente_id) VALUES (?,?)').run(estudiante_id, docente_id);
+  }
+
+  // Guardar en clases_admin
+  await db.prepare('INSERT INTO clases_admin (docente_id, estudiante_id, asignatura, fecha, hora, modalidad, observaciones, programado_por) VALUES (?,?,?,?,?,?,?,?)').run(
+    docente_id, estudiante_id, asignatura, fecha, hora, modalidad || 'Virtual', observaciones || '', req.usuario.id
+  );
+
+  // Notificación al docente
+  await db.prepare('INSERT INTO notificaciones (usuario_id, icono, titulo, descripcion) VALUES (?,?,?,?)').run(
+    docente_id, '📅',
+    'Nueva asesoría: ' + asignatura,
+    `Sesión programada con ${estudiante.nombres} ${estudiante.apellidos} el ${fechaHora}. Modalidad: ${modalidad || 'Virtual'}. ${observaciones ? 'Nota: ' + observaciones : ''}`
+  );
+
+  // Notificación al estudiante
+  await db.prepare('INSERT INTO notificaciones (usuario_id, icono, titulo, descripcion) VALUES (?,?,?,?)').run(
+    estudiante_id, '📅',
+    'Asesoría programada: ' + asignatura,
+    `El administrador programó una sesión con ${docente.nombres} ${docente.apellidos} el ${fechaHora}. Modalidad: ${modalidad || 'Virtual'}. ${observaciones ? 'Nota: ' + observaciones : ''}`
+  );
+
+  await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(
+    req.usuario.id, 'ASESORIA_PROGRAMADA',
+    `Tutoría #${tutoriaId}: ${asignatura} — Doc ${docente_id} + Est ${estudiante_id}`
+  );
+
+  res.json({
+    mensaje: `Asesoría creada. Se notificó a ${docente.nombres} ${docente.apellidos} y a ${estudiante.nombres} ${estudiante.apellidos}.`,
+    tutoria_id: tutoriaId
+  });
+}
+
+// ── LISTAR CLASES PROGRAMADAS POR ADMIN ─────────────────
+
+async function listarClasesAdmin(req, res) {
+  const clases = await db.prepare(`
+    SELECT ca.id, ca.asignatura, ca.fecha, ca.hora, ca.modalidad, ca.observaciones, ca.creada_en,
+           ud.nombres||' '||ud.apellidos AS nombre_docente,
+           ue.nombres||' '||ue.apellidos AS nombre_estudiante,
+           ua.nombres||' '||ua.apellidos AS programado_por_nombre
+    FROM clases_admin ca
+    JOIN usuarios ud ON ud.id = ca.docente_id
+    JOIN usuarios ue ON ue.id = ca.estudiante_id
+    LEFT JOIN usuarios ua ON ua.id = ca.programado_por
+    ORDER BY ca.fecha DESC, ca.hora DESC
+    LIMIT 100
+  `).all();
+  res.json(clases);
+}
+
+module.exports = { listarUsuarios, cambiarEstado, crearUsuario, estadisticas, enviarNotificacion, historialNotificaciones, verAuditoria, listarAsignaciones, crearAsignacion, eliminarAsignacion, obtenerConfiguracion, guardarConfiguracion, resetearConfiguracion, listarPeriodos, crearPeriodo, cerrarPeriodo, buscarUsuario, programarClase, listarClasesAdmin };
