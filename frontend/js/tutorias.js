@@ -80,7 +80,7 @@ async function alEnviarTutoria(e) {
     } else if (!CONFIG.MODO_DEMO) {
       // Modo real: buscar en el backend por documento
       try {
-        const resultados = await llamarAPI("/admin/buscar-usuario?q=" + encodeURIComponent(documento) + "&rol=estudiante", "GET");
+        const resultados = await llamarAPI("/tutorias/buscar-estudiante?q=" + encodeURIComponent(documento), "GET");
         if (!resultados || resultados.length === 0) {
           ponerError("tutEstudiante", "No existe un estudiante con ese documento");
           hayError = true;
@@ -127,7 +127,7 @@ async function alEnviarTutoria(e) {
       hayError = true;
     } else if (!CONFIG.MODO_DEMO) {
       try {
-        const res = await llamarAPI("/admin/buscar-usuario?q=" + encodeURIComponent(docEst) + "&rol=estudiante", "GET");
+        const res = await llamarAPI("/tutorias/buscar-estudiante?q=" + encodeURIComponent(docEst), "GET");
         if (!res || res.length === 0) { ponerError("tutEstudiante", "Estudiante no encontrado"); hayError = true; }
         else estudiante_id = res[0].id;
       } catch(e) { ponerError("tutEstudiante", "Error buscando estudiante"); hayError = true; }
