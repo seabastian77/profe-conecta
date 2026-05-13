@@ -48,17 +48,22 @@ app.use('/api/asignaturas',    require('./routes/asignaturas.routes'));
 app.get('/api/ping', (req, res) => res.json({ estado: 'ok', hora: new Date().toISOString() }));
 
 // Cualquier ruta que no sea /api → devolver el index.html (SPA)
-app.get('*', (req, res) => {
+app.use((req, res, next) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: `${req.method} ${req.url} no existe` });
   }
-  res.sendFile(path.join(frontendPath, 'index.html'));
+  if (req.method === 'GET') {
+    return res.sendFile(path.join(frontendPath, 'index.html'));
+  }
+  next();
 });
 
-// Error global
+// Error global — SIEMPRE devuelve JSON, nunca HTML
 app.use((err, req, res, next) => {
-  console.error('Error no manejado:', err);
-  res.status(500).json({ error: 'Error interno del servidor' });
+  console.error('Error no manejado:', err.message || err);
+  if (!res.headersSent) {
+    res.status(500).json({ error: err.message || 'Error interno del servidor' });
+  }
 });
 
 module.exports = app;
