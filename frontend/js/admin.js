@@ -172,8 +172,61 @@ async function toggleEstadoUsuario(boton) {
 }
 
 // ── RF057 — EDITAR USUARIO ──────────────────────────────
-function editarUsuario(nombre) {
-  mostrarTostada("Editar " + nombre + " — disponible en la próxima versión", "alerta");
+// ── EDITAR USUARIO ───────────────────────────────────────
+
+function abrirEditorUsuario(btn) {
+  var id       = btn.getAttribute('data-id');
+  var nombres  = btn.getAttribute('data-nombres');
+  var apellidos = btn.getAttribute('data-apellidos');
+  var correo   = btn.getAttribute('data-correo');
+  var rol      = btn.getAttribute('data-rol');
+  editarUsuario(parseInt(id), nombres, apellidos, correo, rol);
+}
+async function editarUsuario(id, nombres, apellidos, correo, rol) {
+  var existente = document.getElementById("modalEditarUsuario");
+  if (existente) existente.remove();
+
+  var modal = document.createElement("div");
+  modal.id = "modalEditarUsuario";
+  modal.className = "modal-overlay";
+  modal.innerHTML = '<div class="modal-caja"><div class="modal-cabecera"><h3>✏️ Editar Usuario</h3><button class="modal-cerrar" type="button" onclick="document.getElementById(\'modalEditarUsuario\').remove()">✕</button></div>' +
+    '<div class="modal-cuerpo">' +
+    '<div class="grilla-dos">' +
+    '<div class="campo"><label class="campo__etiqueta">Nombres</label><input type="text" id="euNombres" class="campo__entrada" value="' + nombres + '"/></div>' +
+    '<div class="campo"><label class="campo__etiqueta">Apellidos</label><input type="text" id="euApellidos" class="campo__entrada" value="' + apellidos + '"/></div>' +
+    '</div>' +
+    '<div class="campo"><label class="campo__etiqueta">Correo</label><input type="email" id="euCorreo" class="campo__entrada" value="' + correo + '"/></div>' +
+    '<div class="grilla-dos">' +
+    '<div class="campo"><label class="campo__etiqueta">Rol</label><div class="campo__selector-contenedor"><select id="euRol" class="campo__entrada campo__selector"><option value="estudiante"' + (rol==="estudiante"?" selected":"") + '>🎓 Estudiante</option><option value="docente"' + (rol==="docente"?" selected":"") + '>👩‍🏫 Docente</option><option value="admin"' + (rol==="admin"?" selected":"") + '>⚙️ Admin</option></select><span class="campo__flecha">▾</span></div></div>' +
+    '<div class="campo"><label class="campo__etiqueta">Nueva contraseña <span style="color:#aaa;font-weight:400">(opcional)</span></label><input type="text" id="euContra" class="campo__entrada" placeholder="Dejar vacío para no cambiar"/></div>' +
+    '</div></div>' +
+    '<div class="modal-pie"><button class="btn-secundario" type="button" onclick="document.getElementById(\'modalEditarUsuario\').remove()">Cancelar</button>' +
+    '<button class="btn-primario" type="button" onclick="guardarEdicionUsuario(' + id + ')">💾 Guardar cambios</button></div></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener("click", function(e) { if (e.target === modal) modal.remove(); });
+}
+
+async function guardarEdicionUsuario(id) {
+  var datos = {
+    nombres: document.getElementById("euNombres").value.trim(),
+    apellidos: document.getElementById("euApellidos").value.trim(),
+    correo: document.getElementById("euCorreo").value.trim(),
+    rol: document.getElementById("euRol").value
+  };
+  var contra = document.getElementById("euContra").value.trim();
+  if (contra) datos.contrasena = contra;
+
+  if (!datos.nombres || !datos.apellidos || !datos.correo) {
+    mostrarTostada("Todos los campos son obligatorios", "error"); return;
+  }
+  try {
+    await llamarAPI("/admin/usuarios/" + id, "PUT", datos);
+    document.getElementById("modalEditarUsuario").remove();
+    mostrarTostada("✅ Usuario actualizado correctamente", "exito");
+    cargarTablaUsuarios();
+  } catch(err) {
+    mostrarTostada(err.mensaje || "Error al guardar cambios", "error");
+  }
 }
 
 // ── MODAL NUEVO USUARIO ─────────────────────────────────
@@ -197,7 +250,7 @@ async function guardarNuevoUsuario() {
   var contrasena = document.getElementById("nuContra").value.trim() || "Cambiar123";
 
   if (!nombres || !apellidos) { mostrarTostada("Nombres y apellidos obligatorios", "error"); return; }
-  if (!correo || correo.indexOf("@amigo.edu.co") === -1) { mostrarTostada("Solo correos @amigo.edu.co", "error"); return; }
+  if (!correo || correo.indexOf("@") === -1) { mostrarTostada("Correo inválido", "error"); return; }
   if (!rol) { mostrarTostada("Selecciona un rol", "error"); return; }
 
   try {
@@ -312,7 +365,23 @@ async function cargarTablaUsuarios() {
       var btnToggle = u.activo
         ? '<button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button>'
         : '<button class="btn-accion btn-accion--toggle btn-accion--activar" onclick="toggleEstadoUsuario(this)" title="Activar">🟢</button>';
-      return '<tr data-user-id="' + u.id + '"><td><strong>' + u.nombres + ' ' + u.apellidos + '</strong></td><td>' + u.correo + '</td><td>' + (rolLabels[u.rol] || u.rol) + '</td><td>' + programa + '</td><td>' + estadoHTML + '</td><td>' + (u.creado_en ? new Date(u.creado_en).toLocaleDateString("es-CO") : "—") + '</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario(\'' + u.nombres + ' ' + u.apellidos + '\')" title="Editar">✏️</button>' + btnToggle + '</td></tr>';
+      return '<tr data-user-id="' + u.id + '">' +
+        '<td><strong>' + u.nombres + ' ' + u.apellidos + '</strong></td>' +
+        '<td>' + u.correo + '</td>' +
+        '<td>' + (rolLabels[u.rol] || u.rol) + '</td>' +
+        '<td>' + programa + '</td>' +
+        '<td>' + estadoHTML + '</td>' +
+        '<td>' + (u.creado_en ? new Date(u.creado_en).toLocaleDateString("es-CO") : "—") + '</td>' +
+        '<td class="acciones-celda">' +
+          '<button class="btn-accion btn-accion--editar" title="Editar" ' +
+            'data-id="' + u.id + '" ' +
+            'data-nombres="' + (u.nombres||'').replace(/"/g,'&quot;') + '" ' +
+            'data-apellidos="' + (u.apellidos||'').replace(/"/g,'&quot;') + '" ' +
+            'data-correo="' + (u.correo||'').replace(/"/g,'&quot;') + '" ' +
+            'data-rol="' + (u.rol||'') + '" ' +
+            'onclick="abrirEditorUsuario(this)">✏️</button>' +
+          btnToggle +
+        '</td></tr>';
     }).join("");
     var conteo = document.getElementById("conteoUsuarios");
     if (conteo) conteo.textContent = "Mostrando " + usuarios.length + " usuario(s)";
