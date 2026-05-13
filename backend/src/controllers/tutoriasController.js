@@ -126,13 +126,13 @@ async function docentesDisponibles(req, res) {
   const docentes = await db.prepare(`
     SELECT u.id, u.nombres, u.apellidos,
            pd.facultad,
-           GROUP_CONCAT(a.nombre, ', ') AS asignaturas
+           STRING_AGG(a.nombre, ', ') AS asignaturas
     FROM usuarios u
     JOIN perfiles_docente pd ON pd.usuario_id = u.id
     LEFT JOIN docente_asignaturas da ON da.docente_id = pd.id
     LEFT JOIN asignaturas a ON a.id = da.asignatura_id
     WHERE u.activo = 1 AND u.rol = 'docente'
-    GROUP BY u.id
+    GROUP BY u.id, u.nombres, u.apellidos, pd.facultad
     ORDER BY u.nombres
   `).all();
 
