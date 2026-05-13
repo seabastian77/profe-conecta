@@ -227,7 +227,10 @@ async function guardarEdicionUsuario(id) {
     var resp = await llamarAPI("/admin/usuarios/" + id, "PUT", datos);
     document.getElementById("modalEditarUsuario").remove();
     mostrarTostada("✅ " + (resp.mensaje || "Usuario actualizado"), "exito");
-    if (typeof cargarTablaUsuarios === "function") cargarTablaUsuarios();
+    // Forzar recarga completa de la página de usuarios
+    setTimeout(function() {
+      if (typeof irAPagina === "function") irAPagina("admin-usuarios");
+    }, 500);
   } catch(err) {
     var msg = err.error || err.mensaje || err.message || "Error al guardar cambios";
     mostrarTostada("❌ " + msg, "error");
