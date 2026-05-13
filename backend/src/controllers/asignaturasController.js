@@ -62,7 +62,7 @@ async function crearOBuscar(req, res) {
   const result = await db.prepare(
     "INSERT INTO asignaturas (nombre, area, programa) VALUES (?,?,?)"
   ).run(nombreLimpio, areaLimpia, programaLimpio);
-  res.status(201).json({ id: result.lastInsertRowid, nombre: nombreLimpio, area: areaLimpia, programa: programaLimpio, nueva: true });
+  res.status(201).json({ id: result.id, nombre: nombreLimpio, area: areaLimpia, programa: programaLimpio, nueva: true });
 }
 
 function obtenerOCrearId(nombre, area, programa) {
@@ -70,7 +70,7 @@ function obtenerOCrearId(nombre, area, programa) {
   const existente = await db.prepare("SELECT id FROM asignaturas WHERE nombre = ? COLLATE NOCASE").get(nombreLimpio);
   if (existente) return existente.id;
   const result = await db.prepare("INSERT INTO asignaturas (nombre, area, programa) VALUES (?,?,?)").run(nombreLimpio, area || 'General', programa || 'General');
-  return result.lastInsertRowid;
+  return result.id;
 }
 
 module.exports = { buscar, listarTodas, listarPorAreas, crearOBuscar, obtenerOCrearId };
