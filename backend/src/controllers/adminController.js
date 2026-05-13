@@ -7,7 +7,7 @@ async function listarUsuarios(req, res) {
   const { rol, estado, q } = req.query;
   let sql = `
     SELECT u.id, u.nombres, u.apellidos, u.correo, u.rol, u.activo, u.creado_en,
-           pe.programa, pe.semestre, pe.promedio, pe.en_alerta,
+           pe.programa, pe.semestre, pe.promedio,
            pd.facultad, pa.dependencia
     FROM usuarios u
     LEFT JOIN perfiles_estudiante pe ON pe.usuario_id=u.id
@@ -19,7 +19,7 @@ async function listarUsuarios(req, res) {
   if (rol)                 { sql += ' AND u.rol=?';       params.push(rol); }
   if (estado === 'activo')   sql += ' AND u.activo=1';
   if (estado === 'inactivo') sql += ' AND u.activo=0';
-  if (estado === 'alerta')   sql += ' AND pe.en_alerta=1';
+  if (estado === 'alerta')   sql += ' AND pe.promedio < 3.0';
   if (q) {
     sql += ' AND (u.nombres LIKE ? OR u.apellidos LIKE ? OR u.correo LIKE ?)';
     const like = '%' + q + '%';
@@ -55,7 +55,7 @@ async function crearUsuario(req, res) {
 async function estadisticas(req, res) {
   const mesActual = new Date().toISOString().slice(0, 7);
   const totales = await db.prepare("SELECT COUNT(*) AS n FROM usuarios WHERE activo=1").get().n;
-  const alertas = await db.prepare("SELECT COUNT(*) AS n FROM perfiles_estudiante WHERE en_alerta=1").get().n;
+  const alertas = await db.prepare("SELECT COUNT(*) AS n FROM perfiles_estudiante WHERE promedio < 3.0").get().n;
   const tutMes = await db.prepare("SELECT COUNT(*) AS n FROM tutorias WHERE fecha LIKE ? AND estado!='cancelada'").get(mesActual + '%').n;
   const totalTut = await db.prepare("SELECT COUNT(*) AS n FROM tutorias").get().n;
   const realizadas = await db.prepare("SELECT COUNT(*) AS n FROM tutorias WHERE estado='completada'").get().n;
@@ -71,7 +71,7 @@ async function enviarNotificacion(req, res) {
   if (!asunto || !mensaje) return res.status(400).json({ error: 'Faltan asunto o mensaje' });
   var usuarios = [];
   if (destinatario && destinatario.includes('alerta')) {
-    usuarios = await db.prepare('SELECT usuario_id AS id FROM perfiles_estudiante WHERE en_alerta=1').all();
+    usuarios = await db.prepare('SELECT usuario_id AS id FROM perfiles_estudiante WHERE promedio < 3.0').all();
   } else if (destinatario && destinatario.includes('docente')) {
     usuarios = await db.prepare("SELECT id FROM usuarios WHERE rol='docente' AND activo=1").all();
   } else {
