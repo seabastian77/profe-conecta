@@ -114,7 +114,7 @@ async function verAuditoria(req, res) {
   const params = [];
   if (tipo) { sql += ' AND a.evento LIKE ?'; params.push('%' + tipo + '%'); }
   if (fecha) { sql += ' AND a.creada_en::date = ?::date'; params.push(fecha); }
-  sql += ' ORDER BY a.creado_en DESC LIMIT 500';
+  sql += ' ORDER BY a.creada_en DESC LIMIT 500';
   res.json(await db.prepare(sql).all(...params));
 }
 
