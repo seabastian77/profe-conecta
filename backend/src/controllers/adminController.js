@@ -47,7 +47,7 @@ async function crearUsuario(req, res) {
   const hash = bcrypt.hashSync(contrasena || 'Cambiar123', 10);
   const result = await db.prepare('INSERT INTO usuarios (nombres, apellidos, correo, contrasena, rol) VALUES (?,?,?,?,?)').run(nombres, apellidos, correo, hash, rol);
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'CREAR_USUARIO', nombres + ' ' + apellidos);
-  res.json({ mensaje: 'Usuario creado', id: result.lastInsertRowid });
+  res.json({ mensaje: 'Usuario creado', id: result.id });
 }
 
 // ── ESTADÍSTICAS ──────────────────────────────────────
@@ -114,7 +114,7 @@ async function crearAsignacion(req, res) {
   if (existe) return res.status(409).json({ error: 'Ya existe esta asignación' });
   var result = await db.prepare('INSERT INTO asignaciones (estudiante_id, docente_id) VALUES (?,?)').run(estudiante_id, docente_id);
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'ASIGNACION_CREADA', 'Est ' + estudiante_id + ' → Doc ' + docente_id);
-  res.json({ mensaje: 'Asignación creada', id: result.lastInsertRowid });
+  res.json({ mensaje: 'Asignación creada', id: result.id });
 }
 
 async function eliminarAsignacion(req, res) {
@@ -160,7 +160,7 @@ async function crearPeriodo(req, res) {
   if (!nombre || !inicio || !fin) return res.status(400).json({ error: 'Faltan datos' });
   var result = await db.prepare("INSERT INTO periodos (nombre, inicio, fin, estado) VALUES (?,?,?,'proximo')").run(nombre, inicio, fin);
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'PERIODO_CREADO', nombre);
-  res.json({ mensaje: 'Período creado', id: result.lastInsertRowid });
+  res.json({ mensaje: 'Período creado', id: result.id });
 }
 
 async function cerrarPeriodo(req, res) {
@@ -237,7 +237,7 @@ async function programarClase(req, res) {
     VALUES (?,?,?,?,?,?,?,?)
   `).run(estudiante_id, docente_id, asignatura, fecha, hora, modalidad || 'Virtual', 'confirmada', observaciones || '');
 
-  const tutoriaId = result.lastInsertRowid;
+  const tutoriaId = result.id;
   const fechaHora = `${fecha} a las ${hora.slice(0,5)}`;
 
   // Crear asignación automáticamente si no existe
