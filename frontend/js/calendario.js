@@ -1,3 +1,14 @@
+// Busca elemento solo en la página activa del calendario
+function calEl(id) {
+  // Buscar primero en la página activa para evitar conflictos de IDs duplicados
+  var pagina = document.querySelector('.pagina.activa');
+  if (pagina) {
+    var el = pagina.querySelector('#' + id);
+    if (el) return el;
+  }
+  return document.getElementById(id);
+}
+
 // calendario.js — Calendario dinámico de asesorías
 const CAL_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -32,7 +43,7 @@ async function iniciarCalendario() {
   _cal.mes = new Date().getMonth();
   _cal.anio = new Date().getFullYear();
   _cal.diaSeleccionado = null;
-  const detalle = document.getElementById('calDetalleDia');
+  const detalle = calEl('calDetalleDia');
   if (detalle) detalle.style.display = 'none';
 
   try {
@@ -43,7 +54,7 @@ async function iniciarCalendario() {
   }
 
   // Llenar filtro de materias
-  var selMat = document.getElementById('calFiltroMateria');
+  var selMat = calEl('calFiltroMateria');
   if (selMat) {
     var mats = [...new Set(_cal.tutorias.map(t => t.asignatura).filter(Boolean))].sort();
     selMat.innerHTML = '<option value="">📚 Todas las materias</option>' +
@@ -55,15 +66,15 @@ async function iniciarCalendario() {
 }
 
 function renderCalendario() {
-  var celdas = document.getElementById('calCeldas');
-  var titulo = document.getElementById('calTitulo');
+  var celdas = calEl('calCeldas');
+  var titulo = calEl('calTitulo');
   if (!celdas || !titulo) return;
 
   var mes = _cal.mes, anio = _cal.anio;
   titulo.textContent = CAL_MESES[mes] + ' ' + anio;
 
-  var fMat = (document.getElementById('calFiltroMateria') || {}).value || '';
-  var fEst = (document.getElementById('calFiltroEstado') || {}).value || '';
+  var fMat = (calEl('calFiltroMateria') || {}).value || '';
+  var fEst = (calEl('calFiltroEstado') || {}).value || '';
   var tutFilt = _cal.tutorias.filter(function(t) {
     if (fMat && t.asignatura !== fMat) return false;
     if (fEst && t.estado !== fEst) return false;
@@ -143,8 +154,8 @@ function calClickDia(dia) {
   var fechaStr = anio + '-' + String(mes+1).padStart(2,'0') + '-' + String(dia).padStart(2,'0');
   var festivo = CAL_FESTIVOS[fechaStr] || '';
 
-  var fMat = (document.getElementById('calFiltroMateria') || {}).value || '';
-  var fEst = (document.getElementById('calFiltroEstado') || {}).value || '';
+  var fMat = (calEl('calFiltroMateria') || {}).value || '';
+  var fEst = (calEl('calFiltroEstado') || {}).value || '';
   var sesiones = _cal.tutorias.filter(function(t) {
     if (t.fecha !== fechaStr) return false;
     if (fMat && t.asignatura !== fMat) return false;
@@ -152,9 +163,9 @@ function calClickDia(dia) {
     return true;
   });
 
-  var detalle = document.getElementById('calDetalleDia');
+  var detalle = calEl('calDetalleDia');
   var tituloEl = document.querySelector('#calDetalleTitulo h3');
-  var contenido = document.getElementById('calDetalleContenido');
+  var contenido = calEl('calDetalleContenido');
   if (!detalle || !contenido) return;
 
   var diaFmt = dia + ' de ' + CAL_MESES[mes] + ' ' + anio;
@@ -196,7 +207,7 @@ function calClickDia(dia) {
 }
 
 function renderProximas() {
-  var cont = document.getElementById('calProximas');
+  var cont = calEl('calProximas');
   if (!cont) return;
   var hoy = new Date(); hoy.setHours(0,0,0,0);
   var todayStr = hoy.toISOString().split('T')[0];
@@ -256,7 +267,7 @@ function calNavegar(delta) {
   if (_cal.mes > 11) { _cal.mes = 0; _cal.anio++; }
   if (_cal.mes < 0)  { _cal.mes = 11; _cal.anio--; }
   _cal.diaSeleccionado = null;
-  var det = document.getElementById('calDetalleDia');
+  var det = calEl('calDetalleDia');
   if (det) det.style.display = 'none';
   renderCalendario();
 }
@@ -267,7 +278,7 @@ function calBuscarMesInput(q) {
   if (idx !== -1) {
     _cal.mes = idx; _cal.diaSeleccionado = null;
     renderCalendario();
-    setTimeout(function(){ var el = document.getElementById('calBuscarMes'); if(el) el.value=''; }, 800);
+    setTimeout(function(){ var el = calEl('calBuscarMes'); if(el) el.value=''; }, 800);
   }
 }
 
