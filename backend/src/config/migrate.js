@@ -134,6 +134,17 @@ async function migrar() {
       valor TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS historial_notificaciones (
+      id           SERIAL PRIMARY KEY,
+      destinatario TEXT,
+      tipo         TEXT,
+      asunto       TEXT NOT NULL,
+      mensaje      TEXT,
+      cantidad     INTEGER DEFAULT 0,
+      enviado_por  INTEGER REFERENCES usuarios(id),
+      creada_en    TEXT DEFAULT (to_char(NOW(),'YYYY-MM-DD"T"HH24:MI:SS'))
+    );
+
     CREATE TABLE IF NOT EXISTS clases_admin (
       id              SERIAL PRIMARY KEY,
       docente_id      INTEGER NOT NULL REFERENCES usuarios(id),
