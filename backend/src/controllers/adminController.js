@@ -4,29 +4,35 @@ const bcrypt = require('bcrypt');
 // ── USUARIOS ──────────────────────────────────────────
 
 async function listarUsuarios(req, res) {
-  const { rol, estado, q } = req.query;
-  let sql = `
-    SELECT u.id, u.nombres, u.apellidos, u.correo, u.rol, u.activo, u.creado_en,
-           pe.programa, pe.semestre, pe.promedio,
-           pd.facultad, pa.dependencia
-    FROM usuarios u
-    LEFT JOIN perfiles_estudiante pe ON pe.usuario_id=u.id
-    LEFT JOIN perfiles_docente pd ON pd.usuario_id=u.id
-    LEFT JOIN perfiles_admin pa ON pa.usuario_id=u.id
-    WHERE 1=1
-  `;
-  const params = [];
-  if (rol)                 { sql += ' AND u.rol=?';       params.push(rol); }
-  if (estado === 'activo')   sql += ' AND u.activo=1';
-  if (estado === 'inactivo') sql += ' AND u.activo=0';
-  if (estado === 'alerta')   sql += ' AND pe.promedio < 3.0';
-  if (q) {
-    sql += ' AND (u.nombres ILIKE ? OR u.apellidos ILIKE ? OR u.correo ILIKE ?)';
-    const like = '%' + q + '%';
-    params.push(like, like, like);
+  try {
+    const { rol, estado, q } = req.query;
+    let sql = `
+      SELECT u.id, u.nombres, u.apellidos, u.correo, u.rol, u.activo, u.creado_en,
+             pe.programa, pe.semestre, pe.promedio,
+             pd.facultad, pa.dependencia
+      FROM usuarios u
+      LEFT JOIN perfiles_estudiante pe ON pe.usuario_id=u.id
+      LEFT JOIN perfiles_docente pd ON pd.usuario_id=u.id
+      LEFT JOIN perfiles_admin pa ON pa.usuario_id=u.id
+      WHERE 1=1
+    `;
+    const params = [];
+    if (rol)                 { sql += ' AND u.rol=?';       params.push(rol); }
+    if (estado === 'activo')   sql += ' AND u.activo=1';
+    if (estado === 'inactivo') sql += ' AND u.activo=0';
+    if (estado === 'alerta')   sql += ' AND pe.promedio < 3.0';
+    if (q) {
+      sql += ' AND (u.nombres ILIKE ? OR u.apellidos ILIKE ? OR u.correo ILIKE ?)';
+      const like = '%' + q + '%';
+      params.push(like, like, like);
+    }
+    sql += ' ORDER BY u.creado_en DESC';
+    const rows = await db.prepare(sql).all(...params);
+    res.json(rows);
+  } catch(err) {
+    console.error('listarUsuarios error:', err.message);
+    res.status(500).json({ error: err.message });
   }
-  sql += ' ORDER BY u.creado_en DESC';
-  res.json(await db.prepare(sql).all(...params));
 }
 
 async function cambiarEstado(req, res) {
