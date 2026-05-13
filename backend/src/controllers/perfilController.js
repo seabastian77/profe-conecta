@@ -51,7 +51,7 @@ async function guardarPerfilDocente(req, res) {
     );
     for (const nombre of asignaturas) {
       if (!nombre || !nombre.trim()) continue;
-      const asignaturaId = obtenerOCrearId(nombre.trim());
+      const asignaturaId = await obtenerOCrearId(nombre.trim());
       insertar.run(perfil.id, asignaturaId);
     }
   }
