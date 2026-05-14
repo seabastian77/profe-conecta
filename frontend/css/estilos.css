@@ -571,11 +571,12 @@ textarea  { resize: vertical; }
 /* Encabezado de la tarjeta (escudo + título) */
 .tarjeta-acceso__encabezado { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--borde); }
 .tarjeta-acceso__encabezado-icono {
-  width: 42px; height: 42px;
+  width: auto; height: 42px; padding: 0 10px;
   background: linear-gradient(135deg, var(--teal-osc), var(--teal));
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
+.tarjeta-acceso__encabezado-icono img { height: 28px; width: auto; }
 .tarjeta-acceso__encabezado-sistema { font-size: 10px; color: var(--gris); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
 .tarjeta-acceso__encabezado-titulo  { font-family: var(--f-cond); font-size: 1.5rem; font-weight: 900; color: var(--texto); }
 
