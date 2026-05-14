@@ -219,7 +219,7 @@ textarea  { resize: vertical; }
 @media (max-width: 768px) { .bs-menu { display: flex; } }
 
 .bs-logo { display: flex; align-items: center; gap: 7px; padding-right: 12px; border-right: 1px solid var(--borde); flex-shrink: 0; }
-.bs-logo img { height: 32px; width: auto; object-fit: contain; display: block; mix-blend-mode: multiply; }
+.bs-logo img { height: 28px; width: auto; object-fit: contain; display: block; }
 .bs-logo span { font-family: var(--f-cond); font-size: 13.5px; font-weight: 900; }
 
 /* Breadcrumb: muestra "ConectaProfe › Nombre de la página" */
