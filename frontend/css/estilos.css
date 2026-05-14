@@ -2319,3 +2319,75 @@ html { scroll-behavior: smooth; }
   background: #fef2f2;
 }
 .btn-accion--eliminar:hover { background: #fee2e2 !important; }
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE MÓVIL — FIXES COMPLETOS
+   ══════════════════════════════════════════════════════ */
+
+/* Calendarios y formularios de 2 columnas → 1 columna en móvil */
+@media (max-width: 768px) {
+  .cal-layout   { grid-template-columns: 1fr !important; }
+  .form-dos-col { grid-template-columns: 1fr !important; }
+
+  /* Tabla de usuarios — scroll horizontal */
+  .tabla-datos-contenedor { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tabla-datos { min-width: 520px; }
+
+  /* Panel de estadísticas admin — 2 columnas en móvil */
+  .grilla-admin-stats { grid-template-columns: repeat(2,1fr) !important; }
+
+  /* Banner del panel */
+  .banner { padding: 22px 16px; }
+  .banner__titulo { font-size: 1.6rem; }
+
+  /* Botones de acción en tabla — más grandes para dedo */
+  .btn-accion { width: 36px; height: 36px; font-size: 16px; }
+  .acciones-celda { gap: 6px !important; }
+
+  /* Tarjetas de tutoría — ancho completo */
+  .tarjeta-tutoria { margin: 0 0 12px; }
+
+  /* Modal — ocupa más pantalla */
+  .modal-caja, [id*="modal"] .modal-caja { width: 95vw !important; max-width: 95vw !important; padding: 20px 16px !important; }
+
+  /* Formulario nueva tutoría */
+  .formulario-caja { padding: 16px; }
+  .campo__entrada { font-size: 16px; } /* Evita zoom automático en iOS */
+
+  /* Panel izquierdo (barra lateral) en móvil */
+  .barra-lateral { z-index: 400; }
+
+  /* Sección de perfil */
+  .perfil-portada { height: 140px; }
+
+  /* Grilla de estadísticas del panel — 2x2 en móvil */
+  .franja-estadisticas { grid-template-columns: repeat(2,1fr); gap: 10px; padding: 12px 14px; }
+  .tarjeta-estadistica { padding: 14px 12px; }
+
+  /* Encabezado con logo del acceso */
+  .tarjeta-acceso__encabezado { gap: 10px; }
+
+  /* Selector de rol en login — 3 en fila siempre */
+  .tarjeta-selector-rol { grid-template-columns: repeat(3,1fr); gap: 8px; }
+}
+
+/* Móvil pequeño < 480px */
+@media (max-width: 480px) {
+  .cal-layout   { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .form-dos-col { grid-template-columns: 1fr !important; gap: 12px !important; }
+
+  /* Estadísticas — 1 columna en pantallas muy pequeñas */
+  .franja-estadisticas { grid-template-columns: repeat(2,1fr); gap: 8px; padding: 10px 12px; }
+
+  /* Botones de acción en tabla */
+  .btn-accion { width: 34px; height: 34px; font-size: 15px; }
+
+  /* Campo input más grande para dedo */
+  .campo__entrada, select.campo__entrada { min-height: 46px; font-size: 16px; }
+
+  /* Ocultar columnas menos importantes de la tabla en móvil pequeño */
+  .tabla-datos th:nth-child(4),
+  .tabla-datos td:nth-child(4),
+  .tabla-datos th:nth-child(6),
+  .tabla-datos td:nth-child(6) { display: none; }
+}
