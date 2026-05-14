@@ -2302,3 +2302,20 @@ html { scroll-behavior: smooth; }
   color: #aaa;
   text-align: center;
 }
+
+/* ── Animaciones de botones de acción ────────────────── */
+@keyframes btnSpin  { 0%{transform:rotate(0deg) scale(1)} 50%{transform:rotate(180deg) scale(1.2)} 100%{transform:rotate(360deg) scale(1)} }
+@keyframes btnPulse { 0%{transform:scale(1)} 40%{transform:scale(1.35)} 70%{transform:scale(0.9)} 100%{transform:scale(1)} }
+@keyframes btnShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+@keyframes btnPop   { 0%{transform:scale(1)} 30%{transform:scale(1.4)} 60%{transform:scale(0.85)} 100%{transform:scale(1)} }
+
+.btn-animar-editar  { animation: btnPulse 0.45s ease; }
+.btn-animar-toggle  { animation: btnSpin  0.5s ease; }
+.btn-animar-eliminar{ animation: btnShake 0.4s ease; }
+.btn-animar-ok      { animation: btnPop   0.35s ease; }
+
+.btn-accion--eliminar {
+  color: #dc2626 !important;
+  background: #fef2f2;
+}
+.btn-accion--eliminar:hover { background: #fee2e2 !important; }
