@@ -234,14 +234,28 @@ async function eliminarUsuario(req, res) {
     if (existe.rol === 'admin') {
       return res.status(400).json({ error: 'No se puede eliminar a otro administrador' });
     }
-    // Eliminar perfil y datos relacionados (CASCADE lo maneja)
+
+    // Borrar registros relacionados en orden correcto (respetar llaves foráneas)
+    await db.prepare('DELETE FROM notificaciones WHERE usuario_id=?').run(id);
+    await db.prepare('DELETE FROM tutorias WHERE estudiante_id=? OR docente_id=?').run(id, id);
+    await db.prepare('DELETE FROM asignaciones WHERE estudiante_id=? OR docente_id=?').run(id, id);
+    await db.prepare('DELETE FROM clases_admin WHERE estudiante_id=? OR docente_id=?').run(id, id);
+    await db.prepare('DELETE FROM docente_programas WHERE docente_id IN (SELECT id FROM perfiles_docente WHERE usuario_id=?)').run(id);
+    await db.prepare('DELETE FROM docente_horarios WHERE docente_id IN (SELECT id FROM perfiles_docente WHERE usuario_id=?)').run(id);
+    await db.prepare('DELETE FROM docente_asignaturas WHERE docente_id IN (SELECT id FROM perfiles_docente WHERE usuario_id=?)').run(id);
+    await db.prepare('DELETE FROM fotos_usuario WHERE usuario_id=?').run(id);
+    await db.prepare('DELETE FROM perfiles_estudiante WHERE usuario_id=?').run(id);
+    await db.prepare('DELETE FROM perfiles_docente WHERE usuario_id=?').run(id);
+    await db.prepare('DELETE FROM perfiles_admin WHERE usuario_id=?').run(id);
     await db.prepare('DELETE FROM usuarios WHERE id=?').run(id);
+
     try {
       await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(
         req.usuario.id, 'ELIMINAR_USUARIO',
         'Usuario #' + id + ' (' + existe.nombres + ' ' + existe.apellidos + ') eliminado permanentemente'
       );
     } catch(e) {}
+
     res.json({ mensaje: existe.nombres + ' ' + existe.apellidos + ' eliminado permanentemente' });
   } catch(err) {
     console.error('eliminarUsuario error:', err.message);
