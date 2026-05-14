@@ -223,7 +223,31 @@ async function buscarUsuario(req, res) {
 }
 
 // ── PUT /api/admin/usuarios/:id ────────────────────────
-async function actualizarUsuario(req, res) {
+async function eliminarUsuario(req, res) {
+  try {
+    const id = parseInt(req.params.id);
+    if (id === req.usuario.id) {
+      return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta' });
+    }
+    const existe = await db.prepare('SELECT id, nombres, apellidos, rol FROM usuarios WHERE id=?').get(id);
+    if (!existe) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (existe.rol === 'admin') {
+      return res.status(400).json({ error: 'No se puede eliminar a otro administrador' });
+    }
+    // Eliminar perfil y datos relacionados (CASCADE lo maneja)
+    await db.prepare('DELETE FROM usuarios WHERE id=?').run(id);
+    try {
+      await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(
+        req.usuario.id, 'ELIMINAR_USUARIO',
+        'Usuario #' + id + ' (' + existe.nombres + ' ' + existe.apellidos + ') eliminado permanentemente'
+      );
+    } catch(e) {}
+    res.json({ mensaje: existe.nombres + ' ' + existe.apellidos + ' eliminado permanentemente' });
+  } catch(err) {
+    console.error('eliminarUsuario error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+}
   try {
     const id = parseInt(req.params.id);
     const { nombres, apellidos, correo, rol, contrasena } = req.body;
@@ -354,4 +378,4 @@ async function listarClasesAdmin(req, res) {
   res.json(clases);
 }
 
-module.exports = { listarUsuarios, cambiarEstado, crearUsuario, actualizarUsuario, estadisticas, enviarNotificacion, historialNotificaciones, verAuditoria, listarAsignaciones, crearAsignacion, eliminarAsignacion, obtenerConfiguracion, guardarConfiguracion, resetearConfiguracion, listarPeriodos, crearPeriodo, cerrarPeriodo, buscarUsuario, programarClase, listarClasesAdmin };
+module.exports = { listarUsuarios, cambiarEstado, crearUsuario, actualizarUsuario, eliminarUsuario, estadisticas, enviarNotificacion, historialNotificaciones, verAuditoria, listarAsignaciones, crearAsignacion, eliminarAsignacion, obtenerConfiguracion, guardarConfiguracion, resetearConfiguracion, listarPeriodos, crearPeriodo, cerrarPeriodo, buscarUsuario, programarClase, listarClasesAdmin };
