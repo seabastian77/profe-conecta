@@ -14,6 +14,7 @@
 
   <div class="splash" id="splash" aria-hidden="true">
     <div class="splash__contenido">
+    
       <div class="splash__escudo-wrap">
         <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" class="splash__escudo" style="width:110px;height:auto;object-fit:contain;background:rgba(255,255,255,0.95);border-radius:10px;padding:6px 10px"/>
         <div class="splash__anillo"></div>
@@ -38,6 +39,7 @@
     </symbol>
   </svg>
 
+  <!-- ═══ BARRA LATERAL ═══════════════════════════════════════════ -->
   <nav class="barra-lateral" id="barraLateral">
     <div class="lateral-encabezado">
       <div class="lateral-logo__fila">
@@ -55,6 +57,7 @@
       </div>
     </div>
 
+    <!-- Chip de usuario — solo visible cuando hay sesión activa -->
     <div class="lateral-usuario oculto" id="lateralUsuario">
       <div class="lateral-usuario__avatar" id="barraAvatar">?</div>
       <div>
@@ -64,6 +67,7 @@
       <span class="lateral-usuario__insignia" id="barraEtiqueta">—</span>
     </div>
 
+    <!-- Menú de Acceso — visible solo cuando NO hay sesión activa -->
     <div id="menuAcceso">
       <p class="lateral-seccion__titulo">Acceso</p>
       <ul class="lateral-lista">
@@ -72,6 +76,7 @@
       </ul>
     </div>
 
+    <!-- Menú Estudiante — oculto hasta que inicia sesión -->
     <div id="menuEstudiante" class="oculto">
       <p class="lateral-seccion__titulo">Estudiante</p>
       <ul class="lateral-lista">
@@ -81,6 +86,7 @@
       </ul>
     </div>
 
+    <!-- Menú Docente -->
     <div id="menuDocente" class="oculto">
       <p class="lateral-seccion__titulo">Docente</p>
       <ul class="lateral-lista">
@@ -90,6 +96,7 @@
       </ul>
     </div>
 
+    <!-- Menú Admin — oculto hasta que inicia sesión -->
     <div id="menuAdmin" class="oculto">
       <p class="lateral-seccion__titulo">Administración</p>
       <ul class="lateral-lista">
@@ -108,9 +115,11 @@
     </div>
   </nav>
 
+  <!-- ═══ ZONA PRINCIPAL ══════════════════════════════════════════ -->
   <main class="zona-principal">
 
     <header class="barra-superior">
+      <!-- Botón ☰ solo visible en celular -->
       <button class="bs-menu" id="botonMenu" onclick="alternarMenu()">☰</button>
       <div class="bs-logo">
         <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:110px;height:auto;object-fit:contain;display:block"/>
@@ -118,6 +127,7 @@
       <nav class="bs-ruta">
         <span class="bs-ruta__base">ConectaProfe</span>
         <span class="bs-ruta__sep">›</span>
+        <!-- JavaScript cambia este texto al navegar entre páginas -->
         <span class="bs-ruta__actual" id="tituloPaginaActual">Inicio de Sesión</span>
       </nav>
       <div class="bs-der">
@@ -132,33 +142,43 @@
       </div>
     </header>
 
+    <!-- Panel de notificaciones (se muestra al hacer clic en la campana) -->
     <div class="notif-panel oculto" id="notifPanel">
       <div class="notif-panel__cabecera">
         <span class="notif-panel__titulo">🔔 Notificaciones</span>
         <button class="notif-panel__limpiar" onclick="marcarTodasLeidas()" type="button">Marcar todo como leído</button>
       </div>
       <div class="notif-panel__lista" id="notifLista">
+      
       </div>
     </div>
 
+    <!-- Mensaje emergente que aparece en la esquina inferior derecha -->
     <div class="tostada" id="tostada" role="alert"></div>
 
+
+    <!-- ─── PÁGINA 1: INICIO DE SESIÓN ──────────────────────── -->
     <section class="pagina activa" id="pagina-inicio-sesion">
       <div class="diseno-acceso">
 
+        <!-- COLUMNA IZQUIERDA: visual, informativa, decorativa -->
         <div class="acceso-izquierda">
+          <!-- Elementos de fondo decorativos (hechos solo con CSS) -->
           <div class="acceso-izquierda__blob1"></div>
           <div class="acceso-izquierda__blob2"></div>
           <div class="acceso-izquierda__deco-o">ó</div>
+          <!-- Cuadrícula de puntos decorativa -->
           <div class="acceso-izquierda__puntos"></div>
 
           <div class="acceso-izquierda__cuerpo">
+            <!-- Logo -->
             <div class="acceso-logo">
               <div class="acceso-logo__escudo" style="background:rgba(255,255,255,0.97);border-radius:10px;padding:6px 10px;display:inline-flex;align-items:center;justify-content:center">
                 <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;display:block"/>
               </div>
             </div>
 
+            <!-- Título y descripción -->
             <div class="acceso-izquierda__banner">
               <p class="acceso-izquierda__etiqueta">Sistema de Tutorías Académicas</p>
               <h2 class="acceso-izquierda__titulo">
@@ -170,6 +190,7 @@
               </p>
             </div>
 
+            <!-- Estadísticas de la plataforma -->
             <div class="acceso-estadisticas">
               <div class="acceso-estadistica">
                 <span class="acceso-estadistica__numero">+389</span>
@@ -187,8 +208,10 @@
               </div>
             </div>
 
+            <!-- Lista de características del sistema -->
             <ul class="acceso-caracteristicas">
               <li><span class="acceso-caracteristica__icono">🎓</span> Seguimiento personalizado por estudiante</li>
+              
               <li><span class="acceso-caracteristica__icono">📅</span> Programación de tutorías sin conflictos</li>
               <li><span class="acceso-caracteristica__icono">🔐</span> Datos protegidos — Ley 1581 de 2012</li>
             </ul>
@@ -200,19 +223,20 @@
           </div>
         </div>
 
+        <!-- COLUMNA DERECHA: el formulario de login -->
         <div class="acceso-derecha">
           <div class="tarjeta-acceso">
 
+            <!-- Encabezado de la tarjeta del formulario -->
             <div class="tarjeta-acceso__encabezado">
-              <div class="tarjeta-acceso__encabezado-icono">
-                <img src="img/logo-funlam.png" alt="FUNLAM" style="width:38px;height:auto;object-fit:contain;filter:brightness(0) invert(1)"/>
-              </div>
+              <div class="tarjeta-acceso__encabezado-icono">🎓</div>
               <div>
                 <p class="tarjeta-acceso__encabezado-sistema">ConectaProfe · Acceso Seguro</p>
                 <h1 class="tarjeta-acceso__encabezado-titulo">Iniciar Sesión</h1>
               </div>
             </div>
 
+  
             <div class="selector-rol" id="selectorRolLogin">
               <button class="tarjeta-rol seleccionada" data-rol="estudiante" onclick="seleccionarRolLogin(this)" type="button">
                 <span class="tarjeta-rol__icono">🎓</span>
@@ -231,6 +255,7 @@
               </button>
             </div>
 
+            <!-- Botón de acceso con Google -->
             <div class="botones-sociales">
               <button class="boton-social boton-social--google" onclick="loginSocial('Google')" type="button">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -243,12 +268,15 @@
               </button>
             </div>
 
+            <!-- Separador "o" entre botones boton-sociales y formulario de correo -->
             <div class="divisor-o">
               <span></span><span>o con tu correo institucional</span><span></span>
             </div>
 
+            
             <form id="formularioLogin" novalidate>
 
+              <!-- Aviso de bloqueo: aparece después de 5 intentos fallidos -->
               <div class="aviso-bloqueo oculto" id="avisoBloqueo">
                 <span class="aviso-bloqueo__icono">🔒</span>
                 <div>
@@ -257,31 +285,39 @@
                 </div>
               </div>
 
+              <!-- Aviso de sesión expirada -->
               <div class="aviso-sesion-exp" id="avisoSesionExpirada">
                 ⏰ <span>Tu sesión expiró por inactividad. Por favor vuelve a ingresar.</span>
               </div>
 
+              <!-- Campo: correo con ícono de sobre a la izquierda -->
               <div class="campo">
                 <label class="campo__etiqueta" for="loginCorreo">Correo institucional</label>
                 <div class="campo__contenedor">
                   <span class="campo__icono-izquierda">
+                    <!-- Ícono de correo en SVG (no depende de una librería externa) -->
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                   </span>
                   <input type="email" id="loginCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co" autocomplete="email"/>
+                  <!-- Ícono verde ✓ que aparece cuando el campo está correcto -->
                   <span class="campo__icono-derecha" id="okLoginCorreo"></span>
                 </div>
                 <span class="campo__mensaje-error" id="errorLoginCorreo"></span>
               </div>
 
+              <!-- Campo: contraseña con ícono de candado y botón de mostrar/ocultar -->
               <div class="campo">
                 <div class="campo__etiqueta-fila">
                   <label class="campo__etiqueta" for="loginContrasena">Contraseña</label>
+                  <!-- El "return false" evita que el enlace navegue a otra página -->
                   <a href="#" class="campo__enlace" onclick="irAPagina('recuperar-contrasena'); return false;">¿Olvidaste tu contraseña?</a>
                 </div>
                 <div class="campo__contenedor">
                   <span class="campo__icono-izquierda">
+                    <!-- Ícono de candado en SVG -->
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   </span>
+                 
                   <input type="password" id="loginContrasena" class="campo__entrada" placeholder="Tu contraseña" autocomplete="current-password"/>
                   <button type="button" class="campo__boton-ver" onclick="alternarContrasena('loginContrasena', this)" aria-label="Mostrar contraseña">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -290,15 +326,18 @@
                 <span class="campo__mensaje-error" id="errorLoginContrasena"></span>
               </div>
 
+              <!-- Checkbox "Recordarme" con diseño personalizado -->
               <label class="recordar">
                 <input type="checkbox" id="loginRecordar" class="recordar__input"/>
                 <span class="recordar__caja"></span>
                 Recordarme en este dispositivo
               </label>
 
+              <!-- Botón principal de ingreso al sistema -->
               <button type="submit" class="btn-submit" id="btnLogin">
                 <span id="btnLoginTexto">Ingresar al Sistema</span>
                 <span id="btnLoginCargando" class="oculto">⏳ Verificando...</span>
+                <!-- Flecha a la derecha como ícono -->
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
 
@@ -309,6 +348,7 @@
               <a href="#" class="texto-naranja" onclick="irAPagina('crear-cuenta'); return false;">Regístrate aquí</a>
             </p>
 
+            <!-- Aviso de seguridad al pie de la tarjeta -->
             <div class="acceso-seguridad">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               Conexión cifrada · Datos protegidos bajo Ley 1581/2012
@@ -320,9 +360,12 @@
       </div>
     </section>
 
+
+    <!-- ─── PÁGINA 2: CREAR CUENTA ───────────────────────────── -->
     <section class="pagina" id="pagina-crear-cuenta">
       <div class="diseno-acceso">
 
+        <!-- Panel izquierdo (mismo estilo que login) -->
         <div class="acceso-izquierda">
           <div class="acceso-izquierda__blob1"></div>
           <div class="acceso-izquierda__blob2"></div>
@@ -343,6 +386,7 @@
               <h2 class="acceso-izquierda__titulo">Crea tu cuenta<br/><em>en minutos</em></h2>
               <p class="acceso-izquierda__descripcion">Regístrate con tu correo institucional, elige tu rol y completa tu perfil académico.</p>
             </div>
+            <!-- Pasos del proceso de registro -->
             <div class="registro-pasos">
               <div class="registro-paso"><div class="registro-paso__numero">1</div><div class="registro-paso__etiqueta">Cuenta</div></div>
               <div class="registro-paso__icono">→</div>
@@ -357,13 +401,12 @@
           </div>
         </div>
 
+        <!-- Panel derecho: formulario de registro -->
         <div class="acceso-derecha">
           <div class="tarjeta-acceso">
 
             <div class="tarjeta-acceso__encabezado">
-              <div class="tarjeta-acceso__encabezado-icono">
-                <img src="img/logo-funlam.png" alt="FUNLAM" style="width:38px;height:auto;object-fit:contain;filter:brightness(0) invert(1)"/>
-              </div>
+              <div class="tarjeta-acceso__encabezado-icono">🎓</div>
               <div>
                 <p class="tarjeta-acceso__encabezado-sistema">ConectaProfe · Nuevo Usuario</p>
                 <h1 class="tarjeta-acceso__encabezado-titulo">Crear Cuenta</h1>
@@ -425,6 +468,7 @@
                     <input type="password" id="regContrasena" class="campo__entrada" placeholder="Mín. 8 caracteres" oninput="medirFortaleza(this.value)"/>
                     <button type="button" class="campo__boton-ver" onclick="alternarContrasena('regContrasena', this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                   </div>
+                  <!-- Indicador de fortaleza: barra de colores + texto descriptivo -->
                   <div class="fortaleza-wrap" id="fortalezaWrap" style="display:none">
                     <div class="fortaleza-barra"><div class="fortaleza-relleno" id="fortalezaBarra"></div></div>
                     <span class="fortaleza-texto" id="fortalezaTexto"></span>
@@ -464,48 +508,1230 @@
       </div>
     </section>
 
+
+    <!-- ─── PÁGINA 3: COMPLETAR PERFIL ──────────────────────── -->
     <section class="pagina" id="pagina-completar-perfil">
-      <div class="perfil-wrap">
-        <div class="perfil-caja">
-          <div class="perfil-header">
+      <div class="perfil-wrap"><div class="perfil-caja">
+        <div class="perfil-header">
+          <img src="img/logo-funlam.png" alt="FUNLAM" style="width:38px;height:auto;object-fit:contain;filter:brightness(0) invert(1)"/>
+          <div>
+            <h2 class="perfil-header__titulo">Completa tu Perfil</h2>
+            <p class="perfil-header__sub">Universidad Católica Luis Amigó · <span id="perfilRolEtiqueta">Estudiante</span></p>
+          </div>
+        </div>
+        <div class="perfil-pasos">
+          <div class="perfil-paso perfil-paso--completado">✓ Cuenta creada</div>
+          <div class="perfil-paso perfil-paso--activo" id="perfilPaso2">Datos académicos</div>
+          <div class="perfil-paso" id="perfilPaso3">Listo 🎉</div>
+        </div>
+        <div class="perfil-body">
+          <!-- Formulario ESTUDIANTE -->
+          <div id="perfilFormEstudiante">
+            <span class="pastilla">Perfil Estudiante</span>
+            <form id="formularioPerfilEstudiante" novalidate>
+              <div class="campo"><label class="campo__etiqueta" for="estDocumento">Número de Documento <span class="campo__ayuda">(CC o TI)</span></label><input type="text" id="estDocumento" class="campo__entrada" placeholder="Ej: 1098765432"/><span class="campo__mensaje-error" id="errorEstDocumento"></span></div>
+              <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="estPrograma">Programa</label><div class="campo__selector-contenedor"><select id="estPrograma" class="campo__entrada campo__selector"><option value="">— Programa —</option><option>Ingeniería de Software</option><option>Ingeniería de Sistemas</option><option>Administración de Empresas</option><option>Psicología</option><option>Derecho</option><option>Comunicación y Publicidad</option><option>Trabajo Social</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorEstPrograma"></span></div><div class="campo"><label class="campo__etiqueta" for="estSemestre">Semestre</label><div class="campo__selector-contenedor"><select id="estSemestre" class="campo__entrada campo__selector"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorEstSemestre"></span></div></div>
+              <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="estTelefono">Teléfono</label><input type="tel" id="estTelefono" class="campo__entrada" placeholder="3001234567"/><span class="campo__mensaje-error" id="errorEstTelefono"></span></div><div class="campo"><label class="campo__etiqueta" for="estPromedio">Promedio <span class="campo__ayuda">(0–5)</span></label><input type="number" id="estPromedio" class="campo__entrada" placeholder="Ej: 3.8" min="0" max="5" step="0.1"/></div></div>
+              <button type="submit" class="btn-submit">Guardar Perfil y Continuar →</button>
+            </form>
+          </div>
+          <!-- Formulario DOCENTE (empieza oculto) -->
+          <div id="perfilFormDocente" class="oculto">
+            <span class="pastilla">Perfil Docente / Tutor</span>
+            <form id="formularioPerfilDocente" novalidate>
+              <div class="campo"><label class="campo__etiqueta" for="docCedula">Número de Cédula</label><input type="text" id="docCedula" class="campo__entrada" placeholder="Número de documento"/><span class="campo__mensaje-error" id="errorDocCedula"></span></div>
+              <!-- Facultad — select con búsqueda integrada -->
+              <div class="campo">
+                <label class="campo__etiqueta" for="docFacultadInput">Facultad</label>
+                <div class="select-buscable" id="docFacultadWrap">
+                  <div class="select-buscable__caja">
+                    <span class="select-buscable__lupa" aria-hidden="true">🔍</span>
+                    <input type="text" id="docFacultadInput" class="campo__entrada select-buscable__input"
+                      placeholder="Buscar facultad..."
+                      oninput="filtrarFacultades(this.value)"
+                      onfocus="mostrarDropdownFacultad()"
+                      autocomplete="off" readonly/>
+                    <input type="hidden" id="docFacultad" name="docFacultad"/>
+                  </div>
+                  <div id="docFacultadDropdown" class="select-buscable__dropdown" style="display:none"></div>
+                </div>
+                <span class="campo__mensaje-error" id="errorDocFacultad"></span>
+              </div>
+
+              <!-- Programas — se carga dinámicamente al elegir facultad -->
+              <div class="campo" id="docProgramasContenedor" style="display:none">
+                <label class="campo__etiqueta">Programas que atiende <span class="campo__ayuda">(selecciona uno o más)</span></label>
+                <div class="chips" id="docProgramas"></div>
+              </div>
+              <div class="campo">
+                <label class="campo__etiqueta">📚 Materias que dictas <span class="campo__ayuda">(busca o escribe una nueva)</span></label>
+                <!-- Tags de materias seleccionadas -->
+                <div id="docAsignaturasSeleccionadas" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:28px"></div>
+                <!-- Input de búsqueda -->
+                <div style="position:relative">
+                  <input type="text" id="docAsignaturaInput" class="campo__entrada"
+                    placeholder="Escribe para buscar o crea una nueva..."
+                    oninput="buscarAsignatura(this.value)"
+                    onkeydown="manejarTeclaAsignatura(event)"
+                    autocomplete="off"/>
+                  <div id="docAsignaturaDropdown" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+                </div>
+                <input type="hidden" id="docAsignaturasJSON" value="[]"/>
+                <span class="campo__mensaje-error" id="errorDocAsignaturas"></span>
+                <p style="font-size:11px;color:#999;margin-top:6px">💡 Si la materia no existe, escríbela y selecciona "Crear nueva materia" — quedará disponible para todos.</p>
+              </div>
+              <div class="campo">
+                <label class="campo__etiqueta">🕒 Horarios disponibles <span class="campo__ayuda">(agrega tus franjas)</span></label>
+                <div id="docHorariosContainer"></div>
+                <button type="button" class="btn-secundario" style="margin-top:8px;font-size:12px" onclick="agregarFilaHorario()">+ Agregar franja horaria</button>
+              </div>
+              <div class="campo"><label class="campo__etiqueta" for="docTelefono">Teléfono</label><input type="tel" id="docTelefono" class="campo__entrada" placeholder="3001234567"/><span class="campo__mensaje-error" id="errorDocTelefono"></span></div>
+              <button type="submit" class="btn-submit">Guardar Perfil y Continuar →</button>
+            </form>
+          </div>
+
+          <!-- Formulario ADMINISTRADOR (empieza oculto) -->
+          <div id="perfilFormAdmin" class="oculto">
+            <span class="pastilla">Perfil Administrador</span>
+            <form id="formularioPerfilAdmin" novalidate>
+              <div class="grilla-dos">
+                <div class="campo">
+                  <label class="campo__etiqueta" for="admCedula">Cédula</label>
+                  <input type="text" id="admCedula" class="campo__entrada" placeholder="Número de documento"/>
+                  <span class="campo__mensaje-error" id="errorAdmCedula"></span>
+                </div>
+                <div class="campo">
+                  <label class="campo__etiqueta" for="admCargo">Cargo</label>
+                  <div class="campo__selector-contenedor">
+                    <select id="admCargo" class="campo__entrada campo__selector">
+                      <option value="">— Selecciona —</option>
+                      <option>Director Académico</option>
+                      <option>Coordinador de Tutorías</option>
+                      <option>Secretario Académico</option>
+                      <option>Soporte del Sistema</option>
+                    </select>
+                    <span class="campo__flecha">▾</span>
+                  </div>
+                  <span class="campo__mensaje-error" id="errorAdmCargo"></span>
+                </div>
+              </div>
+              <div class="grilla-dos">
+                <div class="campo">
+                  <label class="campo__etiqueta" for="admDependencia">Dependencia</label>
+                  <input type="text" id="admDependencia" class="campo__entrada" placeholder="Ej: Vicerrectoría Académica"/>
+                  <span class="campo__mensaje-error" id="errorAdmDependencia"></span>
+                </div>
+                <div class="campo">
+                  <label class="campo__etiqueta" for="admTelefono">Teléfono ext.</label>
+                  <input type="tel" id="admTelefono" class="campo__entrada" placeholder="3001234567"/>
+                  <span class="campo__mensaje-error" id="errorAdmTelefono"></span>
+                </div>
+              </div>
+              <button type="submit" class="btn-submit">Guardar y Entrar al Panel →</button>
+            </form>
+          </div>
+        </div>
+      </div></div>
+    </section>
+
+
+    <!-- ─── PÁGINAS 4-8: Paneles y demás ────────────────────── -->
+
+    <section class="pagina" id="pagina-panel-estudiante">
+
+      <!-- Banner de bienvenida -->
+      <div class="banner">
+        <div class="banner__circulo-deco"></div>
+        <div class="banner__letra-deco">ó</div>
+        <div class="banner__contenido">
+          <div class="banner__logo-fila">
             <img src="img/logo-funlam.png" alt="FUNLAM" style="width:38px;height:auto;object-fit:contain;filter:brightness(0) invert(1)"/>
-            <div>
-              <h2 class="perfil-header__titulo">Completa tu Perfil</h2>
-              <p class="perfil-header__sub">Universidad Católica Luis Amigó · <span id="perfilRolEtiqueta">Estudiante</span></p>
+            <span class="banner__universidad">Universidad Católica Luis Amigó</span>
+          </div>
+          <div class="banner__etiqueta">🎓 Panel del Estudiante</div>
+          <h1 class="banner__titulo">Hola, <em id="estudianteSaludo">Estudiante</em></h1>
+          <p class="banner__descripcion">Revisa tu desempeño, programa tutorías y consulta tus alertas académicas.</p>
+          <button class="banner__boton" onclick="irAPagina('programar-tutoria')" type="button">+ Programar Tutoría</button>
+        </div>
+      </div>
+
+      <!-- Estadísticas dinámicas del estudiante -->
+      <div class="franja-estadisticas">
+        <div class="tarjeta-estadistica">
+          <div class="tarjeta-estadistica__icono">📊</div>
+          <div><div class="tarjeta-estadistica__valor" id="panelEstPromedio">—</div><div class="tarjeta-estadistica__etiqueta">Promedio</div></div>
+        </div>
+        <div class="tarjeta-estadistica">
+          <div class="tarjeta-estadistica__icono naranja">📅</div>
+          <div><div class="tarjeta-estadistica__valor" id="estTutoriasCount">0</div><div class="tarjeta-estadistica__etiqueta">Tutorías</div></div>
+        </div>
+        <div class="tarjeta-estadistica">
+          <div class="tarjeta-estadistica__icono">🏆</div>
+          <div><div class="tarjeta-estadistica__valor" id="panelEstSemestre">—</div><div class="tarjeta-estadistica__etiqueta">Semestre</div></div>
+        </div>
+        <div class="tarjeta-estadistica" id="estAlertaTarjeta">
+          <div class="tarjeta-estadistica__icono naranja" id="estAlertaIcono">✅</div>
+          <div><div class="tarjeta-estadistica__valor" id="estAlertaValor">Sin</div><div class="tarjeta-estadistica__etiqueta">Alertas</div></div>
+        </div>
+      </div>
+
+      <!-- Medidor de promedio actual -->
+      <div class="grafica-wrap">
+        <div class="grafica-cabecera">
+          <span class="grafica-titulo">📊 Mi Rendimiento Académico Actual</span>
+          <div class="grafica-leyenda">
+            <div class="grafica-leyenda__item"><div class="grafica-leyenda__punto" style="background:var(--teal)"></div> Mi promedio</div>
+            <div class="grafica-leyenda__item"><div class="grafica-leyenda__punto" style="background:var(--naranja)"></div> Mínimo aprobatorio (3.0)</div>
+          </div>
+        </div>
+        <div class="grafica-svg-wrap" id="estGraficaWrap">
+          <!-- SVG generado por JS -->
+        </div>
+        <div class="grafica-pie" id="estGraficaPie">
+          <!-- Stats generados por JS -->
+        </div>
+      </div>
+
+      <!-- ═══ CALENDARIO DINÁMICO ══════════════════════════ -->
+      <div style="margin-bottom:28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <h2 class="seccion__titulo" style="margin:0">📅 Mi <span class="texto-teal">Calendario</span></h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid #d1d5db;border-radius:8px;padding:5px 12px">
+              <span style="color:#007b99;font-size:14px">🔍</span>
+              <input type="text" id="calBuscarMes" placeholder="Buscar mes..."
+                oninput="calBuscarMesInput(this.value)"
+                style="border:none;outline:none;font-size:12px;background:transparent;width:90px"/>
+            </div>
+            <select id="calFiltroMateria" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:130px">
+              <option value="">📚 Todas</option>
+            </select>
+            <select id="calFiltroEstado" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:110px">
+              <option value="">🔵 Todos</option>
+              <option value="pendiente">⏳ Pendientes</option>
+              <option value="confirmada">✅ Confirmadas</option>
+              <option value="completada">🎓 Completadas</option>
+              <option value="cancelada">❌ Canceladas</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 260px;gap:14px;align-items:start">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <button class="btn-secundario" type="button" onclick="calNavegar(-1)" style="padding:6px 14px;font-size:13px">←</button>
+              <h3 id="calTitulo" style="font-size:16px;font-weight:600;color:#007b99;text-align:center"></h3>
+              <button class="btn-secundario" type="button" onclick="calNavegar(1)" style="padding:6px 14px;font-size:13px">→</button>
+            </div>
+            <div class="tabla-contenedor" style="padding:8px">
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">LUN</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">MAR</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">MIÉ</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">JUE</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">VIE</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#ef4444;padding:4px 0">SÁB</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#ef4444;padding:4px 0">DOM</div>
+              </div>
+              <div id="calCeldas" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#007b99;display:inline-block"></span>Pendiente</span>
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#059669;display:inline-block"></span>Confirmada</span>
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;display:inline-block"></span>Completada</span>
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block"></span>Cancelada</span>
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Festivo</span>
+            </div>
+            <div id="calDetalleDia" class="tabla-contenedor" style="margin-top:14px;display:none">
+              <div class="tabla-encabezado" id="calDetalleTitulo">
+                <h3 style="font-size:14px">Sesiones del día</h3>
+                <button class="btn-secundario" onclick="document.getElementById('calDetalleDia').style.display='none'" style="font-size:12px;padding:4px 10px">✕</button>
+              </div>
+              <div id="calDetalleContenido" style="padding:14px"></div>
             </div>
           </div>
-          <div class="perfil-pasos">
-            <div class="perfil-paso perfil-paso--completado">✓ Cuenta creada</div>
-            <div class="perfil-paso perfil-paso--activo" id="perfilPaso2">Datos académicos</div>
-            <div class="perfil-paso" id="perfilPaso3">Listo 🎉</div>
+          <div class="tabla-contenedor" style="position:sticky;top:72px">
+            <div class="tabla-encabezado"><h3 style="font-size:13px">📋 Próximas</h3></div>
+            <div id="calProximas" style="padding:10px;max-height:420px;overflow-y:auto">
+              <p class="sin-datos" style="font-size:12px">Cargando...</p>
+            </div>
           </div>
-          <div class="perfil-body">
-            <div id="perfilFormEstudiante">
-              <span class="pastilla">Perfil Estudiante</span>
-              <form id="formularioPerfilEstudiante" novalidate>
+        </div>
+      </div>
+
+      <!-- Mis tutorías -->
+      <div class="seccion__encabezado">
+        <h2 class="seccion__titulo">Mis <span class="texto-teal">Tutorías Programadas</span></h2>
+        <p class="seccion__subtitulo" id="estTutoriasSubtitulo">Cargando...</p>
+      </div>
+      <div id="estListaTutorias" class="grilla-tres">
+        <!-- Se rellena con JS -->
+      </div>
+
+      <!-- Franja institucional -->
+      <div class="franja-institucional">
+        <div class="franja-institucional__logo">
+          <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;mix-blend-mode:multiply"/>
+          <div>
+            <h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3>
+            <p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p>
+          </div>
+        </div>
+        <div class="franja-institucional__cifras">
+          <div class="cifra"><span class="cifra__numero">+30</span><span class="cifra__etiqueta">Años</span></div>
+          <div class="cifra"><span class="cifra__numero">5</span><span class="cifra__etiqueta">Sedes</span></div>
+          <div class="cifra"><span class="cifra__numero">+12k</span><span class="cifra__etiqueta">Estudiantes</span></div>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="pagina" id="pagina-panel-docente">
+
+      <!-- Banner -->
+      <div class="banner">
+        <div class="banner__circulo-deco"></div>
+        <div class="banner__letra-deco">ó</div>
+        <div class="banner__contenido">
+          <div class="banner__logo-fila">
+            <img src="img/logo-funlam.png" alt="FUNLAM" style="width:38px;height:auto;object-fit:contain;filter:brightness(0) invert(1)"/>
+            <span class="banner__universidad">Universidad Católica Luis Amigó</span>
+          </div>
+          <div class="banner__etiqueta">👩‍🏫 Panel del Docente</div>
+          <h1 class="banner__titulo">Hola, <em id="docenteSaludo">Docente</em></h1>
+          <p class="banner__descripcion">Gestiona tus estudiantes, alertas académicas y sesiones de tutoría.</p>
+          <button class="banner__boton" onclick="irAPagina('programar-tutoria')" type="button">+ Nueva Sesión</button>
+        </div>
+      </div>
+
+      <!-- Estadísticas dinámicas -->
+      <div class="franja-estadisticas">
+        <div class="tarjeta-estadistica">
+          <div class="tarjeta-estadistica__icono">👥</div>
+          <div><div class="tarjeta-estadistica__valor" id="docEstudiantesCount">0</div><div class="tarjeta-estadistica__etiqueta">Estudiantes</div></div>
+        </div>
+        <div class="tarjeta-estadistica">
+          <div class="tarjeta-estadistica__icono naranja">⚠️</div>
+          <div><div class="tarjeta-estadistica__valor" id="docAlertasCount">0</div><div class="tarjeta-estadistica__etiqueta">Alertas</div></div>
+        </div>
+        <div class="tarjeta-estadistica">
+          <div class="tarjeta-estadistica__icono">📅</div>
+          <div><div class="tarjeta-estadistica__valor" id="docTutoriasMes">0</div><div class="tarjeta-estadistica__etiqueta">Tutorías Mes</div></div>
+        </div>
+        <div class="tarjeta-estadistica">
+          <div class="tarjeta-estadistica__icono naranja">🏆</div>
+          <div><div class="tarjeta-estadistica__valor" id="docRecuperacion">—</div><div class="tarjeta-estadistica__etiqueta">Recuperación</div></div>
+        </div>
+      </div>
+
+      <!-- Sección: Tutorías próximas -->
+      <div class="seccion__encabezado">
+        <h2 class="seccion__titulo">Tutorías <span class="texto-teal">Programadas</span></h2>
+        <p class="seccion__subtitulo" id="docTutoriasSubtitulo">Cargando...</p>
+      </div>
+      <div id="docListaTutorias" class="grilla-tres">
+        <!-- Se rellena con JS -->
+      </div>
+
+      <!-- Calendario visual del docente -->
+      <!-- ═══ CALENDARIO DINÁMICO ══════════════════════════ -->
+      <div style="margin-top:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <h2 class="seccion__titulo" style="margin:0">📅 Mi <span class="texto-teal">Calendario</span></h2>
+          <!-- Barra de herramientas -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid #d1d5db;border-radius:8px;padding:5px 12px">
+              <span style="color:#007b99;font-size:14px">🔍</span>
+              <input type="text" id="calBuscarMes" placeholder="Buscar mes..."
+                oninput="calBuscarMesInput(this.value)"
+                style="border:none;outline:none;font-size:12px;background:transparent;width:100px;color:#333"/>
+            </div>
+            <select id="calFiltroMateria" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:140px">
+              <option value="">📚 Todas</option>
+            </select>
+            <select id="calFiltroEstado" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:120px">
+              <option value="">🔵 Todos</option>
+              <option value="pendiente">⏳ Pendientes</option>
+              <option value="confirmada">✅ Confirmadas</option>
+              <option value="completada">🎓 Completadas</option>
+              <option value="cancelada">❌ Canceladas</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Layout 70/30 -->
+        <div style="display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:start">
+
+          <!-- Calendario principal -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <button class="btn-secundario" type="button" onclick="calNavegar(-1)" style="padding:6px 14px;font-size:13px">←</button>
+              <h3 id="calTitulo" style="font-size:16px;font-weight:600;color:#007b99;text-align:center"></h3>
+              <button class="btn-secundario" type="button" onclick="calNavegar(1)" style="padding:6px 14px;font-size:13px">→</button>
+            </div>
+            <div class="tabla-contenedor" style="padding:8px">
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">LUN</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">MAR</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">MIÉ</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">JUE</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">VIE</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#ef4444;padding:4px 0">SÁB</div>
+                <div style="text-align:center;font-size:10px;font-weight:600;color:#ef4444;padding:4px 0">DOM</div>
+              </div>
+              <div id="calCeldas" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+            </div>
+            <!-- Leyenda -->
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;padding:0 4px">
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#007b99;display:inline-block"></span>Pendiente</span>
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#059669;display:inline-block"></span>Confirmada</span>
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;display:inline-block"></span>Completada</span>
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block"></span>Cancelada</span>
+              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Festivo</span>
+            </div>
+            <!-- Detalle del día -->
+            <div id="calDetalleDia" class="tabla-contenedor" style="margin-top:14px;display:none">
+              <div class="tabla-encabezado" id="calDetalleTitulo">
+                <h3 style="font-size:14px">Sesiones del día</h3>
+                <button class="btn-secundario" onclick="document.getElementById('calDetalleDia').style.display='none'" style="font-size:12px;padding:4px 10px">✕</button>
+              </div>
+              <div id="calDetalleContenido" style="padding:14px"></div>
+            </div>
+          </div>
+
+          <!-- Panel próximas actividades -->
+          <div class="tabla-contenedor" style="position:sticky;top:72px">
+            <div class="tabla-encabezado"><h3 style="font-size:13px">📋 Próximas</h3></div>
+            <div id="calProximas" style="padding:10px;max-height:480px;overflow-y:auto">
+              <p class="sin-datos" style="font-size:12px">Cargando...</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Sección: Alertas académicas -->
+      <div class="seccion__encabezado" style="margin-top:28px">
+        <h2 class="seccion__titulo">Estudiantes con <span class="texto-teal">Alerta Académica</span></h2>
+        <p class="seccion__subtitulo">Promedio menor a 3.0 — requieren seguimiento (RN01)</p>
+      </div>
+      <div id="docListaAlertas" class="grilla-alertas">
+        <!-- Se rellena con JS -->
+      </div>
+
+      <!-- Franja institucional -->
+      <div class="franja-institucional">
+        <div class="franja-institucional__logo">
+          <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;mix-blend-mode:multiply"/>
+          <div>
+            <h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3>
+            <p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p>
+          </div>
+        </div>
+        <div class="franja-institucional__cifras">
+          <div class="cifra"><span class="cifra__numero">+30</span><span class="cifra__etiqueta">Años</span></div>
+          <div class="cifra"><span class="cifra__numero">5</span><span class="cifra__etiqueta">Sedes</span></div>
+          <div class="cifra"><span class="cifra__numero">+12k</span><span class="cifra__etiqueta">Estudiantes</span></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PANEL PRINCIPAL DE ADMINISTRACIÓN
+    ════════════════════════════════════════════════════════ -->
+    <section class="pagina" id="pagina-panel-admin">
+      <div class="seccion__encabezado">
+        <h2 class="seccion__titulo">Panel de <span class="texto-teal">Administración</span></h2>
+        <p class="seccion__subtitulo">Gestión completa del sistema</p>
+      </div>
+
+      <!-- Las 6 tarjetas ahora navegan a sus páginas con irAPagina() -->
+      <div class="grilla-admin">
+        <div class="tarjeta-admin" onclick="irAPagina('admin-usuarios')" role="button" tabindex="0">
+          <div class="tarjeta-admin__icono">👥</div>
+          <h3>Usuarios</h3><p>Crea, edita y desactiva cuentas.</p>
+          <span class="tarjeta-admin__numero">389</span>
+        </div>
+        <div class="tarjeta-admin" onclick="irAPagina('admin-reportes')" role="button" tabindex="0">
+          <div class="tarjeta-admin__icono">📊</div>
+          <h3>Reportes</h3><p>Estadísticas por período.</p>
+          <span class="tarjeta-admin__numero">12</span>
+        </div>
+        <div class="tarjeta-admin" onclick="irAPagina('admin-notificaciones')" role="button" tabindex="0">
+          <div class="tarjeta-admin__icono">🔔</div>
+          <h3>Notificaciones</h3><p>Alertas automáticas.</p>
+          <span class="tarjeta-admin__numero">28</span>
+        </div>
+        <div class="tarjeta-admin" onclick="irAPagina('admin-asignacion')" role="button" tabindex="0">
+          <div class="tarjeta-admin__icono">🔗</div>
+          <h3>Asignación</h3><p>Vincula estudiantes con tutores.</p>
+          <span class="tarjeta-admin__numero">18</span>
+        </div>
+        <div class="tarjeta-admin" onclick="irAPagina('admin-auditoria')" role="button" tabindex="0">
+          <div class="tarjeta-admin__icono">🔐</div>
+          <h3>Auditoría</h3><p>Historial de accesos.</p>
+          <span class="tarjeta-admin__numero">∞</span>
+        </div>
+        <div class="tarjeta-admin" onclick="irAPagina('admin-configuracion')" role="button" tabindex="0">
+          <div class="tarjeta-admin__icono">⚙️</div>
+          <h3>Configuración</h3><p>Parámetros y ciclos.</p>
+          <span class="tarjeta-admin__numero">RN</span>
+        </div>
+      </div>
+
+      <!-- Tabla resumen de usuarios recientes -->
+      <div class="tabla-contenedor">
+        <div class="tabla-encabezado">
+          <h3>Usuarios Recientes</h3>
+          <button class="btn-secundario" type="button" onclick="irAPagina('admin-usuarios')">Ver Todos →</button>
+        </div>
+        <div class="tabla-desplazable">
+          <table class="tabla-datos">
+            <thead><tr><th>Nombre</th><th>Rol</th><th>Programa</th><th>Estado</th><th>Último Acceso</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Carlos Martínez</strong></td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--alerta">⚠ Alerta</span></td><td>Hace 2h</td></tr>
+              <tr><td><strong>Lina M. Montoya</strong></td><td>Docente</td><td>Fac. Ingeniería</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 30min</td></tr>
+              <tr><td><strong>Laura González</strong></td><td>Estudiante</td><td>Administración</td><td><span class="insignia insignia--alerta">⚠ Seguimiento</span></td><td>Ayer</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="franja-institucional">
+        <div class="franja-institucional__logo"><img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;mix-blend-mode:multiply"/><div><h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3><p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p></div></div>
+        <div class="franja-institucional__cifras"><div class="cifra"><span class="cifra__numero">+30</span><span class="cifra__etiqueta">Años</span></div><div class="cifra"><span class="cifra__numero">5</span><span class="cifra__etiqueta">Sedes</span></div><div class="cifra"><span class="cifra__numero">+12k</span><span class="cifra__etiqueta">Estudiantes</span></div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MÓDULO 1 — GESTIÓN DE USUARIOS
+    ════════════════════════════════════════════════════════ -->
+    <section class="pagina" id="pagina-admin-usuarios">
+      <div class="seccion__encabezado">
+        <div class="modulo-cabecera">
+          <button class="btn-volver" onclick="irAPagina('panel-admin')" type="button">← Volver</button>
+          <div>
+            <h2 class="seccion__titulo">Gestión de <span class="texto-teal">Usuarios</span></h2>
+            <p class="seccion__subtitulo">Crea, edita y controla el acceso de todos los usuarios del sistema</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de herramientas: buscar + filtrar + nuevo usuario -->
+      <div class="barra-herramientas">
+        <div class="barra-herramientas__buscar">
+          <span class="buscador__icono">🔍</span>
+          <input type="text" id="buscarUsuario" class="campo__entrada buscador__input" placeholder="Buscar por nombre o correo..." oninput="filtrarTablaUsuarios(this.value)"/>
+        </div>
+        <select class="campo__entrada campo__selector barra-herramientas__filtro" id="filtroRolUsuarios" onchange="filtrarTablaUsuarios()">
+          <option value="">Todos los roles</option>
+          <option value="Estudiante">Estudiantes</option>
+          <option value="Docente">Docentes</option>
+          <option value="Admin">Administradores</option>
+        </select>
+        <select class="campo__entrada campo__selector barra-herramientas__filtro" id="filtroEstadoUsuarios" onchange="filtrarTablaUsuarios()">
+          <option value="">Todos los estados</option>
+          <option value="Activo">Activos</option>
+          <option value="Inactivo">Inactivos</option>
+          <option value="Alerta">En Alerta</option>
+        </select>
+        <button class="btn-primario" type="button" onclick="abrirModalNuevoUsuario()">+ Nuevo Usuario</button>
+      </div>
+
+      <!-- Tabla de usuarios -->
+      <div class="tabla-contenedor">
+        <div class="tabla-desplazable">
+          <table class="tabla-datos" id="tablaUsuarios">
+            <thead>
+              <tr>
+                <th>Nombre completo</th><th>Correo</th><th>Rol</th><th>Programa / Facultad</th><th>Estado</th><th>Último acceso</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoTablaUsuarios">
+              <tr><td><strong>Carlos A. Martínez</strong></td><td>carlos.martinez@amigo.edu.co</td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--alerta">⚠ Alerta</span></td><td>Hace 2h</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Carlos A. Martínez')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Lina M. Montoya</strong></td><td>lina.montoya@amigo.edu.co</td><td>Docente</td><td>Fac. Ingeniería</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 30min</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Lina M. Montoya')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Laura González</strong></td><td>laura.gonzalez@amigo.edu.co</td><td>Estudiante</td><td>Administración</td><td><span class="insignia insignia--alerta">⚠ Seguimiento</span></td><td>Ayer</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Laura González')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Andrés Felipe Ríos</strong></td><td>andres.rios@amigo.edu.co</td><td>Estudiante</td><td>Psicología</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 1h</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Andrés Felipe Ríos')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Sandra M. Ríos</strong></td><td>sandra.rios@amigo.edu.co</td><td>Docente</td><td>Fac. Ciencias Sociales</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 3h</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Sandra M. Ríos')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Valentina Osorio</strong></td><td>valentina.osorio@amigo.edu.co</td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--inactivo">○ Inactivo</span></td><td>Hace 5 días</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Valentina Osorio')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle btn-accion--activar" onclick="toggleEstadoUsuario(this)" title="Activar">🟢</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="tabla-conteo" id="conteoUsuarios">Mostrando 6 usuarios</p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MÓDULO 2 — REPORTES Y ESTADÍSTICAS
+    ════════════════════════════════════════════════════════ -->
+    <section class="pagina" id="pagina-admin-reportes">
+      <div class="seccion__encabezado">
+        <div class="modulo-cabecera">
+          <button class="btn-volver" onclick="irAPagina('panel-admin')" type="button">← Volver</button>
+          <div>
+            <h2 class="seccion__titulo">Reportes y <span class="texto-teal">Estadísticas</span></h2>
+            <p class="seccion__subtitulo">Indicadores académicos del período actual</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtro de período -->
+      <div class="barra-herramientas">
+        <select class="campo__entrada campo__selector" id="filtroPeriodo">
+          <option>2026-1 (Actual)</option><option>2025-2</option><option>2025-1</option>
+        </select>
+        <button class="btn-primario" type="button" onclick="exportarReportePDF()">📥 Exportar PDF</button>
+        <button class="btn-secundario" type="button" onclick="exportarReporteExcel()">📊 Exportar Excel</button>
+      </div>
+
+      <!-- Tarjetas de resumen -->
+      <div class="grilla-tres">
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--teal">📚</div><div><p class="tarjeta-reporte__etiqueta">Total tutorías</p><p class="tarjeta-reporte__valor">284</p><p class="tarjeta-reporte__cambio texto-verde">↑ 18% vs período anterior</p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--naranja">⚠️</div><div><p class="tarjeta-reporte__etiqueta">Alertas activas</p><p class="tarjeta-reporte__valor">47</p><p class="tarjeta-reporte__cambio texto-rojo">↑ 3 nuevas esta semana</p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--verde">✅</div><div><p class="tarjeta-reporte__etiqueta">Tasa recuperación</p><p class="tarjeta-reporte__valor">83%</p><p class="tarjeta-reporte__cambio texto-verde">↑ 5% vs período anterior</p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--teal">👨‍🎓</div><div><p class="tarjeta-reporte__etiqueta">Estudiantes activos</p><p class="tarjeta-reporte__valor">312</p><p class="tarjeta-reporte__cambio texto-gris">Sin cambio</p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--naranja">👩‍🏫</div><div><p class="tarjeta-reporte__etiqueta">Docentes tutores</p><p class="tarjeta-reporte__valor">24</p><p class="tarjeta-reporte__cambio texto-verde">↑ 2 nuevos</p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--verde">🎯</div><div><p class="tarjeta-reporte__etiqueta">Promedio general</p><p class="tarjeta-reporte__valor">3.6</p><p class="tarjeta-reporte__cambio texto-verde">↑ 0.2 vs 2025-2</p></div></div>
+      </div>
+
+      <!-- Tabla de programas con más alertas -->
+      <div class="tabla-contenedor" style="margin-top:20px">
+        <div class="tabla-encabezado"><h3>Alertas por Programa Académico</h3></div>
+        <div class="tabla-desplazable">
+          <table class="tabla-datos">
+            <thead><tr><th>Programa</th><th>Estudiantes</th><th>Alertas</th><th>% Alerta</th><th>Tutorías realizadas</th><th>Recuperación</th></tr></thead>
+            <tbody>
+              <tr><td>Ing. de Software</td><td>89</td><td>12</td><td><span class="insignia insignia--alerta">13.5%</span></td><td>56</td><td>78%</td></tr>
+              <tr><td>Administración de Empresas</td><td>74</td><td>9</td><td><span class="insignia insignia--alerta">12.2%</span></td><td>41</td><td>82%</td></tr>
+              <tr><td>Psicología</td><td>63</td><td>7</td><td><span class="insignia insignia--alerta">11.1%</span></td><td>38</td><td>90%</td></tr>
+              <tr><td>Trabajo Social</td><td>48</td><td>4</td><td><span class="insignia insignia--activo">8.3%</span></td><td>22</td><td>95%</td></tr>
+              <tr><td>Derecho</td><td>38</td><td>5</td><td><span class="insignia insignia--alerta">13.2%</span></td><td>29</td><td>80%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MÓDULO 3 — NOTIFICACIONES
+    ════════════════════════════════════════════════════════ -->
+    <section class="pagina" id="pagina-admin-notificaciones">
+      <div class="seccion__encabezado">
+        <div class="modulo-cabecera">
+          <button class="btn-volver" onclick="irAPagina('panel-admin')" type="button">← Volver</button>
+          <div>
+            <h2 class="seccion__titulo">Centro de <span class="texto-teal">Notificaciones</span></h2>
+            <p class="seccion__subtitulo">Gestiona y envía alertas automáticas a estudiantes y docentes</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enviar nueva notificación -->
+      <div class="tabla-contenedor" style="margin-bottom:20px">
+        <div class="tabla-encabezado"><h3>📨 Enviar Notificación</h3></div>
+        <div style="padding:20px">
+          <div class="grilla-dos" style="margin-bottom:14px">
+            <div class="campo">
+              <label class="campo__etiqueta" for="notifDestinatario">Destinatario</label>
+              <div class="campo__selector-contenedor"><select id="notifDestinatario" class="campo__entrada campo__selector"><option>Todos los estudiantes en alerta</option><option>Todos los docentes tutores</option><option>Programa: Ing. de Software</option><option>Programa: Psicología</option><option>Usuario específico</option></select><span class="campo__flecha">▾</span></div>
+            </div>
+            <div class="campo">
+              <label class="campo__etiqueta" for="notifTipo">Tipo de alerta</label>
+              <div class="campo__selector-contenedor"><select id="notifTipo" class="campo__entrada campo__selector"><option>⚠️ Alerta académica</option><option>📅 Recordatorio de tutoría</option><option>📋 Reunión obligatoria</option><option>ℹ️ Información general</option></select><span class="campo__flecha">▾</span></div>
+            </div>
+          </div>
+          <div class="campo" style="margin-bottom:14px">
+            <label class="campo__etiqueta" for="notifAsunto">Asunto</label>
+            <input type="text" id="notifAsunto" class="campo__entrada" placeholder="Ej: Alerta de promedio bajo — acción requerida"/>
+          </div>
+          <div class="campo" style="margin-bottom:16px">
+            <label class="campo__etiqueta" for="notifMensaje">Mensaje</label>
+            <textarea id="notifMensaje" class="campo__entrada" rows="4" placeholder="Escribe el mensaje completo aquí..."></textarea>
+          </div>
+          <button class="btn-primario" type="button" onclick="enviarNotificacion()">📤 Enviar Notificación</button>
+        </div>
+      </div>
+
+      <!-- Historial de notificaciones enviadas -->
+      <div class="tabla-contenedor">
+        <div class="tabla-encabezado"><h3>Historial de Envíos</h3></div>
+        <div class="tabla-desplazable">
+          <table class="tabla-datos">
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Destinatario</th><th>Asunto</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>10/03/2026 09:15</td><td>⚠️ Alerta</td><td>47 estudiantes</td><td>Promedio por debajo de 3.0 — Semana 8</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
+              <tr><td>08/03/2026 14:30</td><td>📅 Recordatorio</td><td>Todos los tutores</td><td>Tutorías programadas para semana 9</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
+              <tr><td>05/03/2026 08:00</td><td>📋 Reunión</td><td>Docentes Ing. Software</td><td>Reunión obligatoria seguimiento académico</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
+              <tr><td>01/03/2026 10:00</td><td>ℹ️ Info</td><td>Todos los usuarios</td><td>Inicio de período académico 2026-1</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
+              <tr><td>25/02/2026 16:45</td><td>⚠️ Alerta</td><td>12 estudiantes</td><td>Primera alerta académica del período</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MÓDULO 4 — ASIGNACIÓN ESTUDIANTE-TUTOR
+    ════════════════════════════════════════════════════════ -->
+    <section class="pagina" id="pagina-admin-asignacion">
+      <div class="seccion__encabezado">
+        <div class="modulo-cabecera">
+          <button class="btn-volver" onclick="irAPagina('panel-admin')" type="button">← Volver</button>
+          <div>
+            <h2 class="seccion__titulo">Sesiones de <span class="texto-teal">Asesoría</span></h2>
+            <p class="seccion__subtitulo">Programa una asesoría entre docente y estudiante — se crea la vinculación y se envía notificación automática</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ FORMULARIO UNIFICADO DE ASESORÍA ════════════════════ -->
+      <div class="tabla-contenedor" style="margin-bottom:24px;border:2px solid #007b99;border-radius:14px;overflow:visible">
+
+        <!-- Cabecera del formulario -->
+        <div style="background:linear-gradient(135deg,#007b99 0%,#005f77 100%);padding:18px 24px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <h3 style="color:#fff;font-size:16px;font-weight:600;margin:0">📋 Nueva Sesión de Asesoría</h3>
+            <p style="color:#b2e4f0;font-size:12px;margin:4px 0 0">El docente y el estudiante recibirán una notificación automática</p>
+          </div>
+          <span style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px">RN04 · máx 15 estudiantes/tutor</span>
+        </div>
+
+        <div style="padding:24px">
+
+          <!-- FILA 1: Participantes | Detalles -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px">
+
+            <!-- COLUMNA IZQUIERDA: Participantes -->
+            <div>
+              <p style="font-size:11px;font-weight:600;color:#007b99;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #e5e7eb">👤 Participantes</p>
+
+              <!-- Docente -->
+              <div class="campo" style="margin-bottom:14px">
+                <label class="campo__etiqueta">Docente / Tutor</label>
+                <input type="text" id="claseDocente" class="campo__entrada"
+                  placeholder="Buscar por nombre o cédula..."
+                  oninput="buscarUsuarioAdmin('claseDocente','docente')"
+                  autocomplete="off"/>
+                <input type="hidden" id="claseDocenteId"/>
+                <div id="claseDocenteResults" class="busqueda-dropdown"></div>
+              </div>
+
+              <!-- Estudiante -->
+              <div class="campo">
+                <label class="campo__etiqueta">Estudiante</label>
+                <input type="text" id="claseEstudiante" class="campo__entrada"
+                  placeholder="Buscar por nombre o cédula..."
+                  oninput="buscarUsuarioAdmin('claseEstudiante','estudiante')"
+                  autocomplete="off"/>
+                <input type="hidden" id="claseEstudianteId"/>
+                <div id="claseEstudianteResults" class="busqueda-dropdown"></div>
+              </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: Detalles -->
+            <div>
+              <p style="font-size:11px;font-weight:600;color:#007b99;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #e5e7eb">📚 Detalles de la Sesión</p>
+
+              <!-- Materia (select del catálogo) -->
+              <div class="campo" style="margin-bottom:14px">
+                <label class="campo__etiqueta">Materia</label>
+                <div class="campo__selector-contenedor">
+                  <select id="claseAsignatura" class="campo__entrada campo__selector">
+                    <option value="">— Cargando materias... —</option>
+                  </select>
+                  <span class="campo__flecha">▾</span>
+                </div>
+              </div>
+
+              <!-- Fecha y Hora -->
+              <div class="grilla-dos" style="margin-bottom:14px">
                 <div class="campo">
-                  <label class="campo__etiqueta" for="estDocumento">Número de Documento <span class="campo__ayuda">(CC o TI)</span></label>
-                  <input type="text" id="estDocumento" class="campo__entrada" placeholder="Ej: 1098765432"/>
-                  <span class="campo__mensaje-error" id="errorEstDocumento"></span>
+                  <label class="campo__etiqueta">📆 Fecha</label>
+                  <input type="date" id="claseFecha" class="campo__entrada"/>
                 </div>
-                <div class="grilla-dos">
-                  <div class="campo">
-                    <label class="campo__etiqueta" for="estPrograma">Programa</label>
-                    <div class="campo__selector-contenedor">
-                      <select id="estPrograma" class="campo__entrada campo__selector">
-                        <option value="">— Programa —</option>
-                        <option>Ingeniería de Software</option>
-                        <option>Ingeniería de Sistemas</option>
-                        <option>Administración de Empresas</option>
-                        <option>Psicología</option>
-                        <option>Derecho</option>
-                        <option>Comunicación y Publicidad</option>
-                        <option>Trabajo Social</option>
-                      </select>
-                    </div>
-                  </div>
+                <div class="campo">
+                  <label class="campo__etiqueta">⏰ Hora</label>
+                  <input type="time" id="claseHora" class="campo__entrada"/>
                 </div>
-              </form>
+              </div>
+
+              <!-- Modalidad -->
+              <div class="campo">
+                <label class="campo__etiqueta">🖥️ Modalidad</label>
+                <div class="campo__selector-contenedor">
+                  <select id="claseModalidad" class="campo__entrada campo__selector">
+                    <option value="Virtual">💻 Virtual</option>
+                    <option value="Presencial">🏫 Presencial</option>
+                    <option value="Híbrida">🔀 Híbrida</option>
+                  </select>
+                  <span class="campo__flecha">▾</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FILA 2: Observaciones (ancho completo) -->
+          <div class="campo" style="margin-bottom:20px">
+            <label class="campo__etiqueta">📝 Observaciones <span style="color:#aaa;font-weight:400">(opcional)</span></label>
+            <textarea id="claseObservaciones" class="campo__entrada" rows="3"
+              placeholder="Tema de la sesión, enlace Meet, número de aula, material a llevar..."></textarea>
+          </div>
+
+          <!-- FILA 3: Botón crear (alineado a la derecha) -->
+          <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px">
+            <button class="btn-secundario" type="button" onclick="limpiarFormularioAsesoria()">🗑️ Limpiar</button>
+            <button class="btn-primario" type="button" onclick="confirmarProgramarClase()"
+              style="background:linear-gradient(135deg,#007b99,#005f77);padding:12px 28px;font-size:14px;font-weight:600">
+              📅 Crear Asesoría (+)
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ═══ TABLAS DE RESULTADOS ══════════════════════════════════ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+        <!-- Asignaciones activas -->
+        <div class="tabla-contenedor">
+          <div class="tabla-encabezado">
+            <h3>🔗 Asignaciones Activas</h3>
+            <span class="texto-gris" id="conteoAsignaciones" style="font-size:12px"></span>
+          </div>
+          <div class="tabla-desplazable">
+            <table class="tabla-datos">
+              <thead><tr><th>Estudiante</th><th>Tutor</th><th>Estado</th><th>Acción</th></tr></thead>
+              <tbody id="cuerpoTablaAsignaciones">
+                <tr><td colspan="4" class="sin-datos">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Clases programadas -->
+        <div class="tabla-contenedor">
+          <div class="tabla-encabezado">
+            <h3>📅 Sesiones Programadas</h3>
+            <button class="btn-secundario" type="button" onclick="cargarClasesProgramadas()" style="font-size:12px">↻</button>
+          </div>
+          <div class="tabla-desplazable">
+            <table class="tabla-datos">
+              <thead><tr><th>Materia</th><th>Docente</th><th>Estudiante</th><th>Fecha</th><th>Hora</th></tr></thead>
+              <tbody id="cuerpoClasesProgramadas">
+                <tr><td colspan="5" class="sin-datos">Sin sesiones programadas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MÓDULO 5 — AUDITORÍA
+    ════════════════════════════════════════════════════════ -->
+    <section class="pagina" id="pagina-admin-auditoria">
+      <div class="seccion__encabezado">
+        <div class="modulo-cabecera">
+          <button class="btn-volver" onclick="irAPagina('panel-admin')" type="button">← Volver</button>
+          <div>
+            <h2 class="seccion__titulo">Auditoría del <span class="texto-teal">Sistema</span></h2>
+            <p class="seccion__subtitulo">Registro completo de accesos, cambios y eventos del sistema</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros de auditoría -->
+      <div class="barra-herramientas">
+        <select class="campo__entrada campo__selector" id="filtroAuditTipo" onchange="filtrarAuditoria()">
+          <option value="">Todos los eventos</option>
+          <option>Inicio de sesión</option>
+          <option>Cierre de sesión</option>
+          <option>Intento fallido</option>
+          <option>Cambio de datos</option>
+          <option>Asignación creada</option>
+          <option>Notificación enviada</option>
+        </select>
+        <input type="date" class="campo__entrada" id="filtroAuditFecha" style="max-width:160px" onchange="filtrarAuditoria()"/>
+        <button class="btn-secundario" type="button" onclick="exportarLogAuditoria()">📥 Exportar Log</button>
+      </div>
+
+      <!-- Tabla de eventos -->
+      <div class="tabla-contenedor">
+        <div class="tabla-desplazable">
+          <table class="tabla-datos">
+            <thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Evento</th><th>Detalle</th><th>IP / Dispositivo</th><th>Resultado</th></tr></thead>
+            <tbody>
+              <tr><td>10/03/2026 14:32</td><td>lina.montoya@amigo.edu.co</td><td>🔑 Inicio de sesión</td><td>Login con correo institucional</td><td>192.168.1.42 — Chrome/Win</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
+              <tr><td>10/03/2026 13:50</td><td>carlos.martinez@amigo.edu.co</td><td>🔑 Inicio de sesión</td><td>Login con correo institucional</td><td>192.168.1.87 — Safari/iOS</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
+              <tr><td>10/03/2026 12:15</td><td>unknown@gmail.com</td><td>❌ Intento fallido</td><td>Correo no institucional</td><td>201.234.56.78 — Chrome/Mac</td><td><span class="insignia insignia--alerta">✗ Bloqueado</span></td></tr>
+              <tr><td>10/03/2026 11:08</td><td>admin@amigo.edu.co</td><td>✏️ Cambio de datos</td><td>Usuario Valentina Osorio desactivada</td><td>192.168.1.1 — Chrome/Win</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
+              <tr><td>10/03/2026 09:15</td><td>admin@amigo.edu.co</td><td>📤 Notificación</td><td>Alerta masiva a 47 estudiantes</td><td>192.168.1.1 — Chrome/Win</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
+              <tr><td>09/03/2026 16:40</td><td>sandra.rios@amigo.edu.co</td><td>🔗 Asignación</td><td>Tutoría programada — Valentina Osorio</td><td>192.168.1.55 — Firefox/Win</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
+              <tr><td>09/03/2026 08:00</td><td>unknown</td><td>❌ Intento fallido</td><td>5 intentos fallidos — cuenta bloqueada</td><td>45.123.67.90 — Chrome/Linux</td><td><span class="insignia insignia--alerta">✗ Bloqueado</span></td></tr>
+              <tr><td>08/03/2026 17:30</td><td>andres.rios@amigo.edu.co</td><td>🚪 Cierre de sesión</td><td>Cierre manual por el usuario</td><td>192.168.2.14 — Chrome/Android</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MÓDULO 6 — CONFIGURACIÓN DEL SISTEMA
+    ════════════════════════════════════════════════════════ -->
+    <section class="pagina" id="pagina-admin-configuracion">
+      <div class="seccion__encabezado">
+        <div class="modulo-cabecera">
+          <button class="btn-volver" onclick="irAPagina('panel-admin')" type="button">← Volver</button>
+          <div>
+            <h2 class="seccion__titulo">Configuración del <span class="texto-teal">Sistema</span></h2>
+            <p class="seccion__subtitulo">Parámetros académicos, reglas de negocio y ciclos del sistema</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grilla-dos">
+        <!-- Parámetros académicos (Reglas de Negocio) -->
+        <div class="tabla-contenedor">
+          <div class="tabla-encabezado"><h3>📐 Parámetros Académicos</h3></div>
+          <div style="padding:20px;display:flex;flex-direction:column;gap:18px">
+
+            <div class="config-item">
+              <div class="config-item__info">
+                <p class="config-item__nombre">Umbral de alerta (promedio mínimo)</p>
+                <p class="config-item__desc">RN01 — Estudiantes por debajo activan seguimiento obligatorio</p>
+              </div>
+              <div class="config-item__control">
+                <input type="number" class="campo__entrada config-item__input" id="cfgUmbral" value="3.0" min="1.0" max="5.0" step="0.1"/>
+                <button class="btn-guardar-config" onclick="guardarConfig('cfgUmbral','Umbral de alerta')" type="button">✓</button>
+              </div>
+            </div>
+
+            <div class="config-item">
+              <div class="config-item__info">
+                <p class="config-item__nombre">Máx. estudiantes por tutor</p>
+                <p class="config-item__desc">RN04 — Límite de asignaciones simultáneas por docente</p>
+              </div>
+              <div class="config-item__control">
+                <input type="number" class="campo__entrada config-item__input" id="cfgMaxEst" value="15" min="1" max="30"/>
+                <button class="btn-guardar-config" onclick="guardarConfig('cfgMaxEst','Máx. estudiantes por tutor')" type="button">✓</button>
+              </div>
+            </div>
+
+            <div class="config-item">
+              <div class="config-item__info">
+                <p class="config-item__nombre">Horas mínimas para cancelar tutoría</p>
+                <p class="config-item__desc">RN03 — Cancelaciones con menos tiempo quedan como inasistencia</p>
+              </div>
+              <div class="config-item__control">
+                <input type="number" class="campo__entrada config-item__input" id="cfgCancelacion" value="24" min="1" max="72"/>
+                <button class="btn-guardar-config" onclick="guardarConfig('cfgCancelacion','Horas para cancelación')" type="button">✓</button>
+              </div>
+            </div>
+
+            <div class="config-item">
+              <div class="config-item__info">
+                <p class="config-item__nombre">Sesión expira tras (minutos inactividad)</p>
+                <p class="config-item__desc">Seguridad — Usuarios son desconectados automáticamente</p>
+              </div>
+              <div class="config-item__control">
+                <input type="number" class="campo__entrada config-item__input" id="cfgSesion" value="120" min="15" max="480"/>
+                <button class="btn-guardar-config" onclick="guardarConfig('cfgSesion','Expiración de sesión')" type="button">✓</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Configuración de períodos académicos -->
+        <div class="tabla-contenedor">
+          <div class="tabla-encabezado"><h3>📅 Períodos Académicos</h3></div>
+          <div style="padding:20px">
+            <div class="config-periodo activo-periodo">
+              <div class="config-periodo__estado">● Activo</div>
+              <div class="config-periodo__nombre">Período 2026-1</div>
+              <div class="config-periodo__fechas">03 Feb — 15 Jun 2026</div>
+            </div>
+            <div class="config-periodo">
+              <div class="config-periodo__estado texto-gris">○ Cerrado</div>
+              <div class="config-periodo__nombre">Período 2025-2</div>
+              <div class="config-periodo__fechas">28 Jul — 22 Nov 2025</div>
+            </div>
+            <div class="config-periodo">
+              <div class="config-periodo__estado texto-gris">○ Cerrado</div>
+              <div class="config-periodo__nombre">Período 2025-1</div>
+              <div class="config-periodo__fechas">03 Feb — 14 Jun 2025</div>
+            </div>
+            <button class="btn-primario" style="margin-top:16px;width:100%" type="button" onclick="crearNuevoPeriodo()">+ Crear Nuevo Período</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zona peligrosa -->
+      <div class="zona-peligrosa">
+        <h3 class="zona-peligrosa__titulo">⚠️ Zona de Acciones Críticas</h3>
+        <p class="zona-peligrosa__desc">Estas acciones son irreversibles. Úsalas con precaución.</p>
+        <div class="zona-peligrosa__botones">
+          <button class="btn-peligro" type="button" onclick="confirmarAccionCritica('Cerrar el período 2026-1')">Cerrar Período Actual</button>
+          <button class="btn-peligro" type="button" onclick="confirmarAccionCritica('Archivar todos los registros de auditoría')">Archivar Auditoría</button>
+          <button class="btn-peligro" type="button" onclick="confirmarAccionCritica('Resetear configuración a valores por defecto')">Resetear Configuración</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="pagina" id="pagina-programar-tutoria">
+      <div class="seccion__encabezado"><h2 class="seccion__titulo">Programar <span class="texto-teal">Tutoría</span></h2><p class="seccion__subtitulo">RF03 — Agenda una sesión de acompañamiento académico</p></div>
+      <div class="formulario-centrado"><div class="formulario-caja">
+        <div class="aviso-naranja"><span>⚠</span><p>Cancelaciones con mínimo <strong>24 horas de anticipación</strong>. Sin esto queda como inasistencia. <strong>(RN03)</strong></p></div>
+        <form id="formularioTutoria" novalidate>
+          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutEstudiante">Número de documento del estudiante</label><input type="text" id="tutEstudiante" class="campo__entrada" placeholder="Ej: 1098765432"/><span class="campo__mensaje-error" id="errorTutEstudiante"></span></div><div class="campo"><label class="campo__etiqueta" for="tutTutor">Tutor</label><div class="campo__selector-contenedor"><select id="tutTutor" class="campo__entrada campo__selector"><option value="">— Selecciona —</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutTutor"></span></div></div>
+          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutAsignatura">Asignatura</label><div class="campo__selector-contenedor"><select id="tutAsignatura" class="campo__entrada campo__selector"><option value="">— Cargando materias... —</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutAsignatura"></span></div><div class="campo"><label class="campo__etiqueta" for="tutModalidad">Modalidad</label><div class="campo__selector-contenedor"><select id="tutModalidad" class="campo__entrada campo__selector"><option value="">—</option><option>Presencial</option><option>Virtual</option><option>Híbrida</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutModalidad"></span></div></div>
+          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutFecha">Fecha</label><input type="date" id="tutFecha" class="campo__entrada"/><span class="campo__mensaje-error" id="errorTutFecha"></span></div><div class="campo"><label class="campo__etiqueta" for="tutHora">Hora</label><input type="time" id="tutHora" class="campo__entrada"/><span class="campo__mensaje-error" id="errorTutHora"></span></div></div>
+          <div class="campo"><label class="campo__etiqueta" for="tutObservaciones">Observaciones</label><textarea id="tutObservaciones" class="campo__entrada" rows="3" placeholder="Describe los temas o dificultades del estudiante..."></textarea></div>
+          <button type="submit" class="btn-submit btn-submit--naranja">📅 Programar Tutoría</button>
+        </form>
+      </div></div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PÁGINA CALENDARIO — Estudiante y Docente
+    ════════════════════════════════════════════════════════ -->
+    <section class="pagina" id="pagina-mi-calendario">
+      <div class="seccion__encabezado">
+        <h2 class="seccion__titulo">📅 Mi <span class="texto-teal">Calendario</span></h2>
+        <p class="seccion__subtitulo">Visualiza y filtra todas tus asesorías del mes</p>
+      </div>
+
+      <!-- Barra de herramientas del calendario -->
+      <div class="barra-herramientas" id="calBarra" style="flex-wrap:wrap;gap:10px;margin-bottom:20px;align-items:center">
+        <!-- Búsqueda por mes -->
+        <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #d1d5db;border-radius:10px;padding:6px 14px;flex:1;min-width:180px">
+          <span style="color:#007b99;font-size:16px">🔍</span>
+          <input type="text" id="calBuscarMes" placeholder="Buscar mes (ej: Mayo, Junio...)"
+            oninput="calBuscarMesInput(this.value)"
+            style="border:none;outline:none;font-size:13px;background:transparent;width:100%;color:#333"/>
+        </div>
+        <!-- Filtro materia -->
+        <div class="campo__selector-contenedor" style="min-width:160px;flex:1">
+          <select id="calFiltroMateria" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:13px;padding:8px 12px">
+            <option value="">📚 Todas las materias</option>
+          </select>
+          <span class="campo__flecha">▾</span>
+        </div>
+        <!-- Filtro estado -->
+        <div class="campo__selector-contenedor" style="min-width:130px">
+          <select id="calFiltroEstado" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:13px;padding:8px 12px">
+            <option value="">🔵 Todos</option>
+            <option value="pendiente">⏳ Pendientes</option>
+            <option value="confirmada">✅ Confirmadas</option>
+            <option value="completada">🎓 Completadas</option>
+            <option value="cancelada">❌ Canceladas</option>
+          </select>
+          <span class="campo__flecha">▾</span>
+        </div>
+      </div>
+
+      <!-- Layout 70/30 -->
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start">
+
+        <!-- Columna principal: Calendario -->
+        <div>
+          <!-- Navegación de mes -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <button class="btn-secundario" type="button" onclick="calNavegar(-1)" style="padding:8px 16px">← Anterior</button>
+            <h3 id="calTitulo" style="font-size:18px;font-weight:600;color:#007b99;text-align:center;min-width:200px"></h3>
+            <button class="btn-secundario" type="button" onclick="calNavegar(1)" style="padding:8px 16px">Siguiente →</button>
+          </div>
+
+          <!-- Grid del calendario -->
+          <div class="tabla-contenedor" style="padding:0">
+            <div id="calGrid" style="padding:4px">
+              <!-- Encabezados de días -->
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">LUN</div>
+                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">MAR</div>
+                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">MIÉ</div>
+                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">JUE</div>
+                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">VIE</div>
+                <div style="text-align:center;font-size:11px;font-weight:600;color:#ef4444;padding:6px 0">SÁB</div>
+                <div style="text-align:center;font-size:11px;font-weight:600;color:#ef4444;padding:6px 0">DOM</div>
+              </div>
+              <!-- Celdas del mes — se llena con JS -->
+              <div id="calCeldas" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+            </div>
+          </div>
+
+          <!-- Leyenda de colores -->
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;padding:0 4px">
+            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#007b99;display:inline-block"></span>Pendiente</span>
+            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span>Confirmada</span>
+            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#8b5cf6;display:inline-block"></span>Completada</span>
+            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block"></span>Cancelada</span>
+            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Festivo</span>
+          </div>
+
+          <!-- Panel detalle del día seleccionado -->
+          <div id="calDetalleDia" class="tabla-contenedor" style="margin-top:16px;display:none">
+            <div class="tabla-encabezado" id="calDetalleTitulo">
+              <h3>Sesiones del día</h3>
+              <button class="btn-secundario" onclick="document.getElementById('calDetalleDia').style.display='none'" style="font-size:12px">✕</button>
+            </div>
+            <div id="calDetalleContenido" style="padding:16px"></div>
+          </div>
+        </div>
+
+        <!-- Columna lateral: Próximas actividades -->
+        <div>
+          <div class="tabla-contenedor" style="position:sticky;top:80px">
+            <div class="tabla-encabezado">
+              <h3 style="font-size:14px">📋 Próximas Actividades</h3>
+            </div>
+            <div id="calProximas" style="padding:12px;max-height:520px;overflow-y:auto">
+              <p class="sin-datos">Cargando...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="pagina" id="pagina-mi-perfil">
+      <div class="perfil-pagina">
+
+        <!-- ── Foto de portada ── -->
+        <div class="perfil-portada" id="perfilPortada">
+          <img class="perfil-portada__img oculto" id="perfilPortadaImg" src="" alt="Foto de portada"/>
+          <div class="perfil-portada__gradiente" id="perfilPortadaGradiente"></div>
+          <label class="perfil-portada__boton" for="perfilPortadaInput" title="Cambiar portada">
+            🖼️ Cambiar portada
+          </label>
+          <input type="file" id="perfilPortadaInput" class="perfil-foto-input" accept="image/*" onchange="subirPortada(this)"/>
+        </div>
+
+        <!-- ── Hero: foto + nombre + rol ── -->
+        <div class="perfil-hero">
+          <div class="perfil-foto-wrap">
+            <!-- La imagen real se inyecta por JS; si no hay foto muestra iniciales -->
+            <div class="perfil-foto-iniciales" id="perfilFotoIniciales">?</div>
+            <img class="perfil-foto oculto" id="perfilFotoImg" src="" alt="Foto de perfil"/>
+            <!-- Botón cámara para cambiar foto -->
+            <label class="perfil-foto-boton" for="perfilFotoInput" title="Cambiar foto">📷</label>
+            <input type="file" id="perfilFotoInput" class="perfil-foto-input" accept="image/*" onchange="subirFotoPerfil(this)"/>
+          </div>
+          <div class="perfil-hero__info">
+            <div class="perfil-hero__nombre" id="perfilHeroNombre">—</div>
+            <div class="perfil-hero__correo" id="perfilHeroCorreo">—</div>
+            <div class="perfil-hero__badges">
+              <span class="perfil-badge" id="perfilHeroRol">—</span>
+              
+            </div>
+            <button class="perfil-btn-editar" onclick="irAPagina('completar-perfil')" type="button">✏️ Editar datos</button>
+          </div>
+        </div>
+
+        <!-- ── Contenido dinámico según el rol ── -->
+        <div class="perfil-secciones" id="perfilContenido">
+          <!-- Se rellena con JavaScript -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         PÁGINA 9 — RECUPERAR CONTRASEÑA
+         Aparece cuando el usuario toca "¿Olvidaste tu contraseña?"
+    ═══════════════════════════════════════════════ -->
+    <section class="pagina" id="pagina-recuperar-contrasena">
+      <div class="diseno-acceso">
+
+        <!-- Panel izquierdo -->
+        <div class="acceso-izquierda">
+          <div class="acceso-izquierda__blob1"></div>
+          <div class="acceso-izquierda__blob2"></div>
+          <div class="acceso-izquierda__deco-o">ó</div>
+          <div class="acceso-izquierda__puntos"></div>
+
+          <div class="acceso-izquierda__cuerpo">
+            <div class="acceso-logo">
+              <div class="acceso-logo__escudo" style="background:rgba(255,255,255,0.97);border-radius:10px;padding:6px 10px;display:inline-flex;align-items:center;justify-content:center">
+                <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;display:block"/>
+              </div>
+            </div>
+
+            <div class="acceso-izquierda__banner">
+              <p class="acceso-izquierda__etiqueta">Recuperación Segura</p>
+              <h2 class="acceso-izquierda__titulo">
+                Recupera tu<br/><em>acceso</em>
+              </h2>
+              <p class="acceso-izquierda__descripcion">
+                Te enviaremos un enlace a tu correo institucional para que puedas
+                crear una nueva contraseña de forma segura.
+              </p>
+            </div>
+
+            <ul class="acceso-caracteristicas">
+              <li><span class="acceso-caracteristica__icono">📧</span> Enlace enviado a tu correo @amigo.edu.co</li>
+              <li><span class="acceso-caracteristica__icono">⏱</span> El enlace expira en 30 minutos</li>
+              <li><span class="acceso-caracteristica__icono">🔐</span> Tu contraseña actual sigue activa hasta cambiarla</li>
+            </ul>
+          </div>
+
+          <div class="acceso-izquierda__pie">
+            <img src="img/logo-funlam.png" alt="FUNLAM" style="width:38px;height:auto;object-fit:contain;filter:brightness(0) invert(1)"/>
+            <span>Institución de Educación Superior · Medellín, Colombia</span>
+          </div>
+        </div>
+
+        <!-- Panel derecho: formulario -->
+        <div class="acceso-derecha">
+          <div class="tarjeta-acceso">
+
+            <div class="tarjeta-acceso__encabezado">
+              <div class="tarjeta-acceso__encabezado-icono">🎓</div>
+              <div>
+                <p class="tarjeta-acceso__encabezado-sistema">ConectaProfe · Recuperación</p>
+                <h1 class="tarjeta-acceso__encabezado-titulo">¿Olvidaste tu contraseña?</h1>
+              </div>
+            </div>
+
+            <p style="color:#666;font-size:13px;margin-bottom:16px">
+              Ingresa tu correo y te enviamos el enlace de recuperación.
+            </p>
+
+            <!-- Caja de éxito — aparece después de "enviar" -->
+            <div class="caja-exito oculto" id="cajaMensajeRecuperacion">
+              <div class="caja-exito__icono">✅</div>
+              <h3 class="caja-exito__titulo">¡Enlace enviado!</h3>
+              <p class="caja-exito__texto">Revisa tu correo <strong id="correoRecuperacion"></strong>. El enlace expira en 30 minutos.</p>
+              <button class="btn-submit" onclick="irAPagina('inicio-sesion')" type="button">Volver al Login</button>
+            </div>
+
+            <form id="formularioRecuperacion" novalidate>
+              <div class="campo">
+                <label class="campo__etiqueta" for="recCorreo">Correo institucional</label>
+                <div class="campo__contenedor">
+                  <span class="campo__icono-izquierda">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  </span>
+                  <input type="email" id="recCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co" autocomplete="email"/>
+                </div>
+                <span class="campo__mensaje-error" id="errorRecCorreo"></span>
+              </div>
+
+              <button type="submit" class="btn-submit" id="btnRecuperar">
+                <span id="btnRecuperarTexto">📧 Enviar enlace de recuperación</span>
+                <span id="btnRecuperarCargando" class="oculto">⏳ Enviando...</span>
+              </button>
+            </form>
+
+            <p class="tarjeta-acceso__pie">
+              ¿Recordaste tu contraseña?
+              <a href="#" class="texto-naranja" onclick="irAPagina('inicio-sesion'); return false;">Volver al Login</a>
+            </p>
+
+            <div class="acceso-seguridad">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Conexión cifrada · Ley 1581/2012
             </div>
           </div>
         </div>
@@ -513,5 +1739,29 @@
     </section>
 
   </main>
+
+  <!-- Capa oscura que cubre la pantalla cuando el menú está abierto en celular -->
+  <div class="overlay-menu oculto" id="overlayMenu" onclick="cerrarMenu()"></div>
+
+  <!-- Script siempre al final del body para que el HTML ya exista cuando cargue -->
+  <!-- Archivos de configuración y storage -->
+  <script src="js/config.js"></script>
+  <script src="js/storage/auth.storage.js"></script>
+  <script src="js/storage/perfil.storage.js"></script>
+  <script src="js/storage/academico.storage.js"></script>
+
+  <!-- Módulos de funcionalidad -->
+  <script src="js/demo.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/tutorias.js"></script>
+  <script src="js/perfil.js"></script>
+  <script src="js/asignaturas.js"></script>
+  <script src="js/facultad.js"></script>
+  <script src="js/calendario.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- App principal (debe ir al final) -->
+  <script src="js/app.js"></script>
 </body>
 </html>
