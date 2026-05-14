@@ -9,6 +9,7 @@ router.use(autenticar, soloRol('admin'));
 router.get('/usuarios',              ctrl.listarUsuarios);
 router.post('/usuarios',             ctrl.crearUsuario);
 router.patch('/usuarios/:id/estado', ctrl.cambiarEstado);
+router.delete('/usuarios/:id',       ctrl.eliminarUsuario);
 
 // Estadísticas
 router.get('/estadisticas',          ctrl.estadisticas);
