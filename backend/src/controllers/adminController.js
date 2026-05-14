@@ -244,6 +244,7 @@ async function eliminarUsuario(req, res) {
     await db.prepare('DELETE FROM docente_horarios WHERE docente_id IN (SELECT id FROM perfiles_docente WHERE usuario_id=?)').run(id);
     await db.prepare('DELETE FROM docente_asignaturas WHERE docente_id IN (SELECT id FROM perfiles_docente WHERE usuario_id=?)').run(id);
     await db.prepare('DELETE FROM fotos_usuario WHERE usuario_id=?').run(id);
+    await db.prepare('DELETE FROM auditoria WHERE usuario_id=?').run(id);
     await db.prepare('DELETE FROM perfiles_estudiante WHERE usuario_id=?').run(id);
     await db.prepare('DELETE FROM perfiles_docente WHERE usuario_id=?').run(id);
     await db.prepare('DELETE FROM perfiles_admin WHERE usuario_id=?').run(id);
