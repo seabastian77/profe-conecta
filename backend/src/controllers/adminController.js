@@ -248,6 +248,8 @@ async function eliminarUsuario(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+
+async function actualizarUsuario(req, res) {
   try {
     const id = parseInt(req.params.id);
     const { nombres, apellidos, correo, rol, contrasena } = req.body;
