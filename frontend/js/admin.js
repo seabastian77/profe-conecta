@@ -174,6 +174,54 @@ async function toggleEstadoUsuario(boton) {
 // ── RF057 — EDITAR USUARIO ──────────────────────────────
 // ── EDITAR USUARIO ───────────────────────────────────────
 
+function animarBtn(btn, clase) {
+  btn.classList.remove(clase);
+  void btn.offsetWidth; // reflow
+  btn.classList.add(clase);
+  btn.addEventListener('animationend', function() { btn.classList.remove(clase); }, { once: true });
+}
+
+function animarYEditar(btn) {
+  animarBtn(btn, 'btn-animar-editar');
+  setTimeout(function() { abrirEditorUsuario(btn); }, 150);
+}
+
+function animarYToggle(btn) {
+  animarBtn(btn, 'btn-animar-toggle');
+  setTimeout(function() { toggleEstadoUsuario(btn); }, 200);
+}
+
+async function animarYEliminar(btn) {
+  var id    = btn.getAttribute('data-id');
+  var nombre = btn.getAttribute('data-nombre');
+  animarBtn(btn, 'btn-animar-eliminar');
+
+  // Confirmación visual antes de eliminar
+  setTimeout(async function() {
+    if (!confirm('⚠️ ¿Eliminar permanentemente a ' + nombre + '?\n\nEsta acción NO se puede deshacer.')) return;
+
+    btn.disabled = true;
+    btn.textContent = '⏳';
+    try {
+      var resp = await llamarAPI('/admin/usuarios/' + id, 'DELETE');
+      animarBtn(btn, 'btn-animar-ok');
+      mostrarTostada('🗑️ ' + (resp.mensaje || 'Usuario eliminado'), 'exito');
+      // Eliminar la fila con animación
+      var fila = btn.closest('tr');
+      if (fila) {
+        fila.style.transition = 'opacity 0.4s, transform 0.4s';
+        fila.style.opacity = '0';
+        fila.style.transform = 'translateX(30px)';
+        setTimeout(function() { fila.remove(); }, 400);
+      }
+    } catch(err) {
+      btn.disabled = false;
+      btn.textContent = '🗑️';
+      mostrarTostada('❌ ' + (err.error || err.mensaje || 'Error al eliminar'), 'error');
+    }
+  }, 250);
+}
+
 function abrirEditorUsuario(btn) {
   var id       = btn.getAttribute('data-id');
   var nombres  = btn.getAttribute('data-nombres');
@@ -370,8 +418,9 @@ async function cargarTablaUsuarios() {
       else if (parseFloat(u.promedio) < 3.0 && u.promedio) estadoHTML = '<span class="insignia insignia--alerta">⚠ Alerta</span>';
       else estadoHTML = '<span class="insignia insignia--activo">● Activo</span>';
       var btnToggle = (u.activo && u.activo != 0)
-        ? '<button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar" data-id="' + u.id + '" data-activo="1">🔴</button>'
-        : '<button class="btn-accion btn-accion--toggle btn-accion--activar" onclick="toggleEstadoUsuario(this)" title="Activar" data-id="' + u.id + '" data-activo="0">🟢</button>';
+        ? '<button class="btn-accion btn-accion--toggle" title="Desactivar" data-id="' + u.id + '" data-activo="1" onclick="animarYToggle(this)">🔴</button>'
+        : '<button class="btn-accion btn-accion--toggle btn-accion--activar" title="Activar" data-id="' + u.id + '" data-activo="0" onclick="animarYToggle(this)">🟢</button>';
+      var btnEliminar = '<button class="btn-accion btn-accion--eliminar" title="Eliminar permanente" data-id="' + u.id + '" data-nombre="' + (u.nombres + ' ' + u.apellidos).replace(/"/g,"&quot;") + '" onclick="animarYEliminar(this)">🗑️</button>';
       return '<tr data-user-id="' + u.id + '">' +
         '<td><strong>' + u.nombres + ' ' + u.apellidos + '</strong></td>' +
         '<td>' + u.correo + '</td>' +
@@ -386,8 +435,8 @@ async function cargarTablaUsuarios() {
             'data-apellidos="' + (u.apellidos||'').replace(/"/g,'&quot;') + '" ' +
             'data-correo="' + (u.correo||'').replace(/"/g,'&quot;') + '" ' +
             'data-rol="' + (u.rol||'') + '" ' +
-            'onclick="abrirEditorUsuario(this)">✏️</button>' +
-          btnToggle +
+            'onclick="animarYEditar(this)">✏️</button>' +
+          btnToggle + btnEliminar +
         '</td></tr>';
     }).join("");
     var conteo = document.getElementById("conteoUsuarios");
