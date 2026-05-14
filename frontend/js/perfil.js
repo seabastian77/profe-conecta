@@ -188,8 +188,8 @@ async function cargarMiPerfil() {
   let perfil = perfilStorage.getPerfil();
   const idSesion = sesion?.id || authStorage.getSesion()?.id;
 
-  // Si el caché es de otro usuario o no existe → buscar del API
-  if (!perfil || String(perfil.id) !== String(idSesion)) {
+  // Si el caché es de otro usuario, no existe, o no tiene fotos → buscar del API
+  if (!perfil || String(perfil.id) !== String(idSesion) || !perfil.fotos) {
     perfilStorage.clearPerfil();
     try {
       perfil = await llamarAPI("/perfil", "GET");
@@ -450,58 +450,84 @@ function perfilAdminHTML(p) {
 }
 
 // ── SUBIR FOTO DE PERFIL ────────────────────────────────
+// Comprime una imagen a máximo maxKB kilobytes
+function comprimirImagen(archivo, maxAncho, maxKB) {
+  return new Promise(function(resolve) {
+    var lector = new FileReader();
+    lector.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var ancho = Math.min(img.width, maxAncho);
+        var alto  = Math.round(img.height * (ancho / img.width));
+        canvas.width  = ancho;
+        canvas.height = alto;
+        canvas.getContext('2d').drawImage(img, 0, 0, ancho, alto);
+
+        // Reducir calidad hasta que quepa en maxKB
+        var calidad = 0.85;
+        var resultado = canvas.toDataURL('image/jpeg', calidad);
+        while (resultado.length > maxKB * 1024 && calidad > 0.2) {
+          calidad -= 0.1;
+          resultado = canvas.toDataURL('image/jpeg', calidad);
+        }
+        resolve(resultado);
+      };
+      img.src = e.target.result;
+    };
+    lector.readAsDataURL(archivo);
+  });
+}
+
 function subirFotoPerfil(input) {
   const archivo = input.files[0];
   if (!archivo) return;
 
-  const lector = new FileReader();
-  lector.onload = async (e) => {
-    const base64 = e.target.result;
-    perfilStorage.setFotoPerfil(base64);
+  mostrarTostada("⏳ Procesando foto...", "info");
 
-    // Mostrar inmediatamente
-    document.getElementById("perfilFotoImg").src = base64;
-    document.getElementById("perfilFotoImg").classList.remove("oculto");
-    document.getElementById("perfilFotoIniciales").classList.add("oculto");
+  comprimirImagen(archivo, 400, 300).then(async function(base64) {
+    // Mostrar inmediatamente en el DOM
+    var img = document.getElementById("perfilFotoImg");
+    var iniciales = document.getElementById("perfilFotoIniciales");
+    if (img) { img.src = base64; img.style.display = "block"; }
+    if (iniciales) iniciales.style.display = "none";
 
-    // Chip en la barra superior
-    const chipAv = document.getElementById("chipAvatar");
-    chipAv.style.backgroundImage = `url(${base64})`;
-    chipAv.textContent = "";
+    // Actualizar chip barra superior
+    var chipAv = document.getElementById("chipAvatar");
+    if (chipAv) { chipAv.style.backgroundImage = "url(" + base64 + ")"; chipAv.textContent = ""; }
 
-    // Subir al servidor
+    // Guardar en localStorage (con manejo de cuota)
+    try { perfilStorage.setFotoPerfil(base64); } catch(e) { console.warn("localStorage lleno"); }
+
+    // Subir al servidor (fuente de verdad)
     try {
-      await llamarAPI("/perfil/foto", "POST", {
-        foto_base64: base64,
-        tipo: "perfil",
-      });
+      await llamarAPI("/perfil/foto", "POST", { foto_base64: base64, tipo: "perfil" });
+      mostrarTostada("✅ Foto de perfil actualizada", "exito");
+      perfilStorage.clearPerfil(); // invalidar caché para recargar con foto nueva
     } catch (err) {
-      console.warn("No se pudo guardar la foto en el servidor:", err);
+      mostrarTostada("⚠️ Foto guardada localmente. Sin conexión con servidor.", "advertencia");
     }
-  };
-  lector.readAsDataURL(archivo);
+  });
 }
 
 function subirPortada(input) {
   const archivo = input.files[0];
   if (!archivo) return;
 
-  const lector = new FileReader();
-  lector.onload = async (e) => {
-    const base64 = e.target.result;
-    perfilStorage.setFotoPortada(base64);
+  mostrarTostada("⏳ Procesando portada...", "info");
 
-    document.getElementById("perfilPortadaImg").src = base64;
-    document.getElementById("perfilPortadaImg").classList.remove("oculto");
+  comprimirImagen(archivo, 1200, 400).then(async function(base64) {
+    var img = document.getElementById("perfilPortadaImg");
+    if (img) { img.src = base64; img.style.display = "block"; }
+
+    try { perfilStorage.setFotoPortada(base64); } catch(e) { console.warn("localStorage lleno"); }
 
     try {
-      await llamarAPI("/perfil/foto", "POST", {
-        foto_base64: base64,
-        tipo: "portada",
-      });
+      await llamarAPI("/perfil/foto", "POST", { foto_base64: base64, tipo: "portada" });
+      mostrarTostada("✅ Foto de portada actualizada", "exito");
+      perfilStorage.clearPerfil();
     } catch (err) {
-      console.warn("No se pudo guardar la portada:", err);
+      mostrarTostada("⚠️ Portada guardada localmente. Sin conexión con servidor.", "advertencia");
     }
-  };
-  lector.readAsDataURL(archivo);
+  });
 }
