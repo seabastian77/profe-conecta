@@ -1,9 +1,3 @@
-/* ================================================================
-   estilos.css — ConectaProfe
-   Universidad Católica Luis Amigó
-================================================================ */
-
-/* 1. VARIABLES CSS */
 :root {
   /* Colores institucionales del manual de identidad Luis Amigó */
   --teal:          #007b99;
@@ -18,8 +12,8 @@
   --texto:         #1e293b;
   --texto-cl:      #64748b;
   --blanco:        #ffffff;
-  --oscuro:        #1e293b;      /* Alias semántico de --texto, para paneles admin */
-  --fondo:         #f4f6f9;      /* Fondo general — en modo oscuro cambia */
+  --oscuro:        #1e293b;      
+  --fondo:         #f4f6f9;      
 
   /* Fuentes */
   --f-titulo: 'DM Serif Display', Georgia, serif;
@@ -40,7 +34,7 @@
 
 /* 2. RESET */
 *, *::before, *::after {
-  box-sizing: border-box;   /* El padding queda DENTRO del ancho, no por fuera */
+  box-sizing: border-box;   
   margin: 0;
   padding: 0;
 }
@@ -48,7 +42,7 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;  /* Evita que iOS agrande texto automáticamente */
+  -webkit-text-size-adjust: 100%;  
 }
 
 body {
