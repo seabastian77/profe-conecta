@@ -1,12 +1,3 @@
-/**
- * seed.js — Aplica contraseñas reales (bcrypt) a los usuarios de prueba
- * 
- * Ejecutar UNA SOLA VEZ después de instalar dependencias:
- *   node seed.js
- * 
- * Contraseña de todos los usuarios de prueba: 12345678
- */
-
 const bcrypt  = require('bcryptjs');
 const Database = require('better-sqlite3');
 const path    = require('path');
