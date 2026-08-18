@@ -7,4 +7,5 @@ repositorio de GitHub
 
 En [railway.app](https://railway.app)
 
-## Stack: Node.js + Express + SQLite + HTML/CSS/JS Vanilla
+profe-conecta-production-e40c.up.railway.app
+
