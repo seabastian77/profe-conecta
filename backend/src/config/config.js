@@ -1,4 +1,3 @@
-// config.js — Lee la configuración desde la BD en tiempo real
 const { db } = require('./db');
 
 async function getConfig(clave, defecto) {
