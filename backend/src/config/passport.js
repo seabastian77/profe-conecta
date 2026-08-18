@@ -1,5 +1,5 @@
 // Configuración de Google OAuth con Passport
-// Solo se activa si GOOGLE_CLIENT_ID está definido en el .env
+// falta por terminar 
 
 const passport = require('passport');
 const { db }   = require('./db');
