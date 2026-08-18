@@ -20,8 +20,7 @@ router.get('/google',
     session: false
   })
 );
-
-// Paso 2: Google redirige aquí con el código de autorización
+// Google redirige aquí con el código de autorización
 router.get('/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: `${FRONTEND_URL}?error=oauth` }),
   function(req, res) {
