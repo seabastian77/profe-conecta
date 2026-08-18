@@ -32,7 +32,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ── Servir frontend estático (producción) ───────────────
-// En dev se usa Live Server; en prod el mismo Express sirve los archivos
 const frontendPath = path.join(__dirname, '..', '..', 'frontend');
 app.use(express.static(frontendPath));
 
