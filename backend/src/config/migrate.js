@@ -333,3 +333,18 @@ async function sembrarUsuarios(c) {
 }
 
 module.exports = { migrar };
+
+// Permite ejecutar el archivo directamente:  node src/config/migrate.js
+// Antes solo exportaba la función, así que `npm run db:init` no hacía nada
+// y el CI no tenía forma de preparar la base antes de las pruebas.
+if (require.main === module) {
+  migrar()
+    .then(() => {
+      console.log('✅ Migración completada');
+      process.exit(0);
+    })
+    .catch(err => {
+      console.error('❌ La migración falló:', err.message);
+      process.exit(1);
+    });
+}

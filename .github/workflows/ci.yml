@@ -54,6 +54,15 @@ jobs:
           fi
           echo "Sin archivos .env versionados"
 
+      # Sin esto las pruebas chocan contra una base sin tablas y devuelven 500.
+      # De paso, si la migración se rompe, el CI lo detecta aquí.
+      - name: Preparar la base de datos de pruebas
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/conectaprofe_test
+        run: node src/config/migrate.js
+
       - name: Correr pruebas
         working-directory: backend
         env:
