@@ -157,7 +157,37 @@ async function migrar() {
       programado_por  INTEGER REFERENCES usuarios(id),
       creada_en       TEXT DEFAULT (to_char(NOW(),'YYYY-MM-DD"T"HH24:MI:SS'))
     );
+
+    -- Intentos de inicio de sesión: soporta el bloqueo por fuerza bruta.
+    -- creado_en es TIMESTAMPTZ (no TEXT) porque se consulta con
+    -- "NOW() - INTERVAL '5 minutes'" y comparar texto no serviría.
+    CREATE TABLE IF NOT EXISTS intentos_login (
+      id        SERIAL PRIMARY KEY,
+      correo    TEXT,
+      ip        TEXT,
+      exitoso   INTEGER DEFAULT 0,
+      creado_en TIMESTAMPTZ DEFAULT NOW()
+    );
   `);
+
+  // ── Índices ───────────────────────────────────────────
+  // Sin estos, cada login recorre la tabla entera de intentos y cada
+  // consulta por correo hace un escaneo secuencial de usuarios.
+  await c.query(`
+    CREATE INDEX IF NOT EXISTS idx_intentos_busqueda
+      ON intentos_login (correo, ip, creado_en);
+    CREATE INDEX IF NOT EXISTS idx_usuarios_correo
+      ON usuarios (correo);
+    CREATE INDEX IF NOT EXISTS idx_usuarios_google
+      ON usuarios (google_id);
+    CREATE INDEX IF NOT EXISTS idx_auditoria_fecha
+      ON auditoria (creada_en DESC);
+    CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario
+      ON notificaciones (usuario_id, leida);
+  `);
+
+  // Purga de intentos viejos para que la tabla no crezca sin control.
+  await c.query(`DELETE FROM intentos_login WHERE creado_en < NOW() - INTERVAL '1 day'`);
 
   // Datos base
   await c.query(`
