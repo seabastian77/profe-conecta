@@ -577,10 +577,10 @@ document.addEventListener("DOMContentLoaded", () => {
   mostrarSplash(async () => {
     // Detectar si venimos de un callback de Google OAuth
     if (
-      window.location.search.includes("token=") ||
+      window.location.search.includes("codigo=") ||
       window.location.search.includes("error=oauth")
     ) {
-      manejarCallbackGoogle();
+      await manejarCallbackGoogle();
       return;
     }
 

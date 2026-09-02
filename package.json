@@ -2,11 +2,14 @@
   "name": "conectaprofe",
   "version": "1.0.0",
   "description": "Sistema de Tutorías Académicas - Universidad Católica Luis Amigó",
+  "private": true,
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
     "start": "cd backend && node server.js",
-    "install": "cd backend && npm install"
+    "build": "cd backend && npm ci --omit=dev",
+    "test": "cd backend && npm test",
+    "dev": "cd backend && npm run dev"
   }
 }
