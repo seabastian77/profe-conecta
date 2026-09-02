@@ -100,9 +100,21 @@ async function enviarNotificacion(req, res) {
   } else {
     usuarios = await db.prepare("SELECT id FROM usuarios WHERE activo=1").all();
   }
-  var icono = (tipo && tipo.includes('Alerta')) ? '⚠️' : (tipo && tipo.includes('Recordatorio')) ? '📅' : '📢';
-  var insertar = db.prepare('INSERT INTO notificaciones (usuario_id, icono, titulo, descripcion) VALUES (?,?,?,?)');
-  for (const u of usuarios) { await insertar.run(u.id || u.usuario_id, icono, asunto, mensaje); }
+  const icono = (tipo && tipo.includes('Alerta')) ? '⚠️' : (tipo && tipo.includes('Recordatorio')) ? '📅' : '📢';
+
+  // Antes: un INSERT por usuario dentro de un bucle (N+1). Con 500 estudiantes
+  // eran 500 viajes a la base y 500 transacciones sueltas: lento, y si fallaba
+  // a la mitad quedaban unos notificados y otros no.
+  // Ahora: un solo INSERT con todas las filas, usando UNNEST.
+  const ids = usuarios.map(u => u.id || u.usuario_id).filter(Boolean);
+
+  if (ids.length > 0) {
+    await db.pool.query(
+      `INSERT INTO notificaciones (usuario_id, icono, titulo, descripcion)
+       SELECT id, $2, $3, $4 FROM UNNEST($1::int[]) AS t(id)`,
+      [ids, icono, asunto, mensaje]
+    );
+  }
   await db.prepare('INSERT INTO historial_notificaciones (destinatario, tipo, asunto, mensaje, cantidad, enviado_por) VALUES (?,?,?,?,?,?)').run(destinatario || 'Todos', tipo || 'General', asunto, mensaje, usuarios.length, req.usuario.id);
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'NOTIFICACION', 'A ' + usuarios.length + ' usuarios: ' + asunto);
   res.json({ mensaje: 'Enviado a ' + usuarios.length + ' usuarios', cantidad: usuarios.length });

@@ -19,3 +19,16 @@ const CONFIG = {
   // Dominio institucional permitido
   DOMINIO_CORREO: "@amigo.edu.co",
 };
+
+
+// ── Carga condicional del modo demo ─────────────────────
+// demo.js son ~940 líneas de lógica simulada que solo sirven cuando
+// MODO_DEMO está en true. Antes se descargaba en el navegador de TODOS
+// los usuarios aunque nunca se ejecutara. Ahora solo se pide si hace falta.
+//
+// Se usa document.write a propósito: escribe la etiqueta durante el análisis
+// del documento, así demo.js queda cargado ANTES que auth.js, que es quien lo
+// invoca. Un script inyectado con appendChild sería asíncrono y llegaría tarde.
+if (CONFIG.MODO_DEMO) {
+  document.write('<script src="js/demo.js"><\/script>');
+}

@@ -2385,3 +2385,28 @@ html { scroll-behavior: smooth; }
   .tabla-datos th:nth-child(6),
   .tabla-datos td:nth-child(6) { display: none; }
 }
+
+
+/* ── Pantalla de inicio de sesión: interfaz despejada ────
+   Mientras no hay sesión, el body lleva la clase .sin-sesion
+   (la pone aplicarEstadoInvitado y la quita aplicarSesion).
+
+   En esa pantalla sobran la barra superior —no hay usuario que
+   mostrar— y los escudos repetidos del menú lateral. Quedan solo
+   dos: el de la pantalla de carga y el de la tarjeta de bienvenida.
+
+   Los paneles NO se ven afectados: con sesión activa la barra
+   superior vuelve, con el nombre y el breadcrumb (RF017 y RF013). */
+
+body.sin-sesion .barra-superior { display: none; }
+
+body.sin-sesion .lateral-logo__fila { display: none; }
+
+/* !important porque ese contenedor trae un style="display:inline-flex"
+   en el HTML, y un estilo en línea le gana a la hoja de estilos. */
+body.sin-sesion .lateral-pie > div:first-child { display: none !important; }
+body.sin-sesion .lateral-pie__escudo { display: none !important; }
+
+/* Sin la barra superior el contenido subía y quedaba pegado arriba */
+body.sin-sesion .contenido,
+body.sin-sesion .principal { padding-top: 0; }

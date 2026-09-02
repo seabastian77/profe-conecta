@@ -239,45 +239,63 @@ function loginSocial(proveedor) {
   }
 }
 
-// Detectar si Google nos redirigió con un token en la URL
-function manejarCallbackGoogle() {
+// Detectar si Google nos redirigió con un código de un solo uso.
+//
+// Antes el backend mandaba el JWT completo en la URL (?token=eyJ...). Eso lo
+// dejaba en el historial del navegador, en los logs del servidor y en la
+// cabecera Referer. Ahora llega un código corto que caduca en 60 segundos y
+// que se canjea por POST: el token nunca viaja en la barra de direcciones.
+async function manejarCallbackGoogle() {
   var params = new URLSearchParams(window.location.search);
-  var token = params.get("token");
+  var codigo = params.get("codigo");
   var error = params.get("error");
 
   if (error) {
     mostrarTostada(
-      "No se pudo iniciar sesión con Google. Verifica que uses tu correo @amigo.edu.co",
+      "No se pudo iniciar sesión con Google. Verifica que uses tu correo " +
+        CONFIG.DOMINIO_CORREO,
       "error",
     );
     window.history.replaceState({}, document.title, window.location.pathname);
     return;
   }
 
-  if (!token) return;
+  if (!codigo) return;
 
-  // Limpiar la URL (quitar el ?token=...)
+  // Limpiar la URL antes de cualquier otra cosa.
   window.history.replaceState({}, document.title, window.location.pathname);
 
-  var usuario = {
-    id: params.get("id"),
-    nombres: decodeURIComponent(params.get("nombres") || ""),
-    apellidos: decodeURIComponent(params.get("apellidos") || ""),
-    correo: decodeURIComponent(params.get("correo") || ""),
-    rol: params.get("rol"),
-  };
+  try {
+    var respuesta = await fetch(API_URL + "/auth/google/canjear", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ codigo: codigo }),
+    });
 
-  authStorage.setToken(token);
-  authStorage.setSesion(usuario);
-  authStorage.setUltimaActividad();
-  aplicarSesion(usuario);
+    var data = await respuesta.json();
 
-  var paneles = {
-    estudiante: "panel-estudiante",
-    docente: "panel-docente",
-    admin: "panel-admin",
-  };
-  irAPagina(paneles[usuario.rol] || "panel-estudiante");
+    if (!respuesta.ok || !data.token) {
+      mostrarTostada(
+        data.error || "El enlace de acceso venció. Inicia sesión de nuevo.",
+        "error",
+      );
+      return;
+    }
+
+    authStorage.setToken(data.token);
+    authStorage.setSesion(data.usuario);
+    authStorage.setUltimaActividad();
+    aplicarSesion(data.usuario);
+
+    var paneles = {
+      estudiante: "panel-estudiante",
+      docente: "panel-docente",
+      admin: "panel-admin",
+    };
+    irAPagina(paneles[data.usuario.rol] || "panel-estudiante");
+  } catch (e) {
+    mostrarTostada("No se pudo completar el inicio de sesión con Google.", "error");
+  }
 }
 
 // ── ESTADO INVITADO (sin sesión activa) ─────────────────
@@ -286,6 +304,10 @@ function manejarCallbackGoogle() {
 // únicamente el menú de acceso. Se llama al arrancar la app y al
 // cerrar sesión.
 function aplicarEstadoInvitado() {
+  // Marca el body como "sin sesión": el CSS usa esta clase para ocultar la
+  // barra superior y los escudos repetidos del menú lateral en el login.
+  document.body.classList.add("sin-sesion");
+
   sesion.activa = false;
   sesion.id = null;
   sesion.nombre = "";
@@ -342,6 +364,9 @@ function cerrarSesion() {
 
 // ── APLICAR SESIÓN A LA UI ──────────────────────────────
 function aplicarSesion(usuario) {
+  // Con sesión activa vuelve la barra superior (nombre + breadcrumb, RF017/RF013)
+  document.body.classList.remove("sin-sesion");
+
   sesion.activa = true;
   sesion.id = usuario.id;
   sesion.nombre = (usuario.nombres + " " + usuario.apellidos).trim();

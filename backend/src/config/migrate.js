@@ -157,7 +157,39 @@ async function migrar() {
       programado_por  INTEGER REFERENCES usuarios(id),
       creada_en       TEXT DEFAULT (to_char(NOW(),'YYYY-MM-DD"T"HH24:MI:SS'))
     );
+
+    -- Intentos de inicio de sesión: soporta el bloqueo por fuerza bruta.
+    -- creado_en es TIMESTAMPTZ (no TEXT) porque se consulta con
+    -- "NOW() - INTERVAL '5 minutes'" y comparar texto no serviría.
+    CREATE TABLE IF NOT EXISTS intentos_login (
+      id        SERIAL PRIMARY KEY,
+      correo    TEXT,
+      ip        TEXT,
+      exitoso   INTEGER DEFAULT 0,
+      creado_en TIMESTAMPTZ DEFAULT NOW()
+    );
   `);
+
+  // ── Índices ───────────────────────────────────────────
+  // Sin estos, cada login recorre la tabla entera de intentos y cada
+  // consulta por correo hace un escaneo secuencial de usuarios.
+  await c.query(`
+    CREATE INDEX IF NOT EXISTS idx_intentos_busqueda
+      ON intentos_login (correo, ip, creado_en);
+    CREATE INDEX IF NOT EXISTS idx_usuarios_correo
+      ON usuarios (correo);
+    CREATE INDEX IF NOT EXISTS idx_usuarios_google
+      ON usuarios (google_id);
+    CREATE INDEX IF NOT EXISTS idx_auditoria_fecha
+      ON auditoria (creada_en DESC);
+    CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario
+      ON notificaciones (usuario_id, leida);
+  `);
+
+  // Purga de intentos viejos para que la tabla no crezca sin control.
+  await c.query(`DELETE FROM intentos_login WHERE creado_en < NOW() - INTERVAL '1 day'`);
+
+  await corregirClavesForaneas(c);
 
   // Datos base
   await c.query(`
@@ -302,4 +334,88 @@ async function sembrarUsuarios(c) {
   console.log('🌱 Seed: 10 docentes y 10 estudiantes creados (contraseña: 123456)');
 }
 
+// ── Claves foráneas hacia usuarios ──────────────────────
+//
+// Nueve claves foráneas se crearon sin ON DELETE. En PostgreSQL eso equivale
+// a NO ACTION: la base BLOQUEA el borrado. Efecto real: el botón "Eliminar
+// usuario" del panel admin devolvía 500 para cualquier usuario que tuviera
+// una tutoría, que en la práctica son todos.
+//
+// El criterio no es el mismo para todas:
+//
+//   CASCADE  → registros operativos que no tienen sentido sin su usuario
+//              (tutorías, asignaciones, clases programadas).
+//
+//   SET NULL → registros de AUDITORÍA e historial. Estos NO deben borrarse
+//              con el usuario: si al eliminar una cuenta desaparece su rastro,
+//              se pierde la evidencia y el registro de auditoría deja de servir
+//              para lo único que existe. Se conserva la fila y se deja el autor
+//              en NULL.
+//
+// Esta función es idempotente: se puede correr en cada arranque sin dañar nada.
+
+const CLAVES_FORANEAS = [
+  // tabla,                     columna,          restricción,                              acción
+  ['tutorias',                  'estudiante_id',  'tutorias_estudiante_id_fkey',            'CASCADE'],
+  ['tutorias',                  'docente_id',     'tutorias_docente_id_fkey',               'CASCADE'],
+  ['asignaciones',              'estudiante_id',  'asignaciones_estudiante_id_fkey',        'CASCADE'],
+  ['asignaciones',              'docente_id',     'asignaciones_docente_id_fkey',           'CASCADE'],
+  ['clases_admin',              'docente_id',     'clases_admin_docente_id_fkey',           'CASCADE'],
+  ['clases_admin',              'estudiante_id',  'clases_admin_estudiante_id_fkey',        'CASCADE'],
+  // Auditoría e historial: se conservan.
+  ['auditoria',                 'usuario_id',     'auditoria_usuario_id_fkey',              'SET NULL'],
+  ['historial_notificaciones',  'enviado_por',    'historial_notificaciones_enviado_por_fkey', 'SET NULL'],
+  ['clases_admin',              'programado_por', 'clases_admin_programado_por_fkey',       'SET NULL']
+];
+
+async function corregirClavesForaneas(c) {
+  let corregidas = 0;
+
+  for (const [tabla, columna, restriccion, accion] of CLAVES_FORANEAS) {
+    // ¿La restricción ya tiene la acción correcta? confdeltype: 'a'=NO ACTION,
+    // 'c'=CASCADE, 'n'=SET NULL. Si ya está bien, no se toca.
+    const { rows } = await c.query(
+      `SELECT confdeltype FROM pg_constraint WHERE conname = $1`,
+      [restriccion]
+    );
+
+    const actual = rows[0]?.confdeltype;
+    const esperado = accion === 'CASCADE' ? 'c' : 'n';
+    if (actual === esperado) continue;
+
+    // SET NULL exige que la columna admita NULL.
+    if (accion === 'SET NULL') {
+      await c.query(`ALTER TABLE ${tabla} ALTER COLUMN ${columna} DROP NOT NULL`)
+        .catch(() => { /* ya la admitía */ });
+    }
+
+    await c.query(`ALTER TABLE ${tabla} DROP CONSTRAINT IF EXISTS ${restriccion}`);
+    await c.query(
+      `ALTER TABLE ${tabla}
+         ADD CONSTRAINT ${restriccion}
+         FOREIGN KEY (${columna}) REFERENCES usuarios(id) ON DELETE ${accion}`
+    );
+    corregidas++;
+  }
+
+  if (corregidas > 0) {
+    console.log(`🔗 Claves foráneas corregidas: ${corregidas}`);
+  }
+}
+
 module.exports = { migrar };
+
+// Permite ejecutar el archivo directamente:  node src/config/migrate.js
+// Antes solo exportaba la función, así que `npm run db:init` no hacía nada
+// y el CI no tenía forma de preparar la base antes de las pruebas.
+if (require.main === module) {
+  migrar()
+    .then(() => {
+      console.log('✅ Migración completada');
+      process.exit(0);
+    })
+    .catch(err => {
+      console.error('❌ La migración falló:', err.message);
+      process.exit(1);
+    });
+}
