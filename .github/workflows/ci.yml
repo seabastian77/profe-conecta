@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pruebas:
+    name: Pruebas y verificación
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: conectaprofe_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        working-directory: backend
+        run: npm install
+
+      - name: Verificar sintaxis de todos los archivos
+        run: |
+          for f in $(find backend/src frontend/js -name "*.js"); do
+            node --check "$f" || exit 1
+          done
+          echo "Sintaxis OK"
+
+      - name: Comprobar que no se subieron secretos
+        run: |
+          if git ls-files | grep -E '^\.env$|/\.env$'; then
+            echo "ERROR: hay un archivo .env versionado en el repositorio"
+            exit 1
+          fi
+          echo "Sin archivos .env versionados"
+
+      - name: Preparar la base de datos de pruebas
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/conectaprofe_test
+        run: node src/config/migrate.js
+
+      - name: Correr pruebas
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          JWT_SECRET: secreto-de-integracion-continua-no-productivo
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/conectaprofe_test
+          DOMINIO_CORREO: '@amigo.edu.co'
+        run: npm test
+
+      - name: Auditoría de dependencias
+        working-directory: backend
+        run: npm audit --audit-level=high
+        continue-on-error: true

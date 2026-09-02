@@ -1,7 +1,10 @@
 const router = require('express').Router();
 const { autenticar } = require('../middlewares/autenticar');
 const { soloRol }    = require('../middlewares/soloRol');
-const ctrl = require('../controllers/adminController');
+const { envolverControlador } = require('../middlewares/envolver');
+// envolverControlador hace que un error en cualquier handler async
+// devuelva 500 en vez de tumbar el proceso entero.
+const ctrl = envolverControlador(require('../controllers/adminController'));
 
 router.use(autenticar, soloRol('admin'));
 

@@ -92,6 +92,13 @@ async function cancelar(req, res) {
   if (!puedeCancel) return res.status(403).json({ error: 'Sin permiso' });
   if (tutoria.estado === 'cancelada') return res.status(400).json({ error: 'Ya cancelada' });
 
+  // HORAS_CANCELACION se usaba sin haberse definido nunca: la línea lanzaba
+  // ReferenceError y, al ser un handler async sin captura, tumbaba el proceso
+  // entero cada vez que alguien cancelaba una tutoría.
+  // El valor vive en la tabla configuracion (RN_HORAS_CANCELACION, por defecto 24),
+  // que es justo para lo que se importó getConfigNum y nunca se llegó a usar.
+  const HORAS_CANCELACION = await getConfigNum('RN_HORAS_CANCELACION', 24);
+
   const horas = (new Date(`${tutoria.fecha}T${tutoria.hora}`) - new Date()) / 3600000;
   if (horas < HORAS_CANCELACION && usuario.rol !== 'admin') {
     return res.status(400).json({ error: `Solo con ${HORAS_CANCELACION}h de anticipación (RN03)` });
