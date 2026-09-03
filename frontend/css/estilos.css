@@ -1404,7 +1404,13 @@ textarea  { resize: vertical; }
   background: #fff;
   border: 1px solid var(--borde);
   border-radius: 12px;
-  overflow: hidden;
+  /* overflow-x: auto y no hidden. .tabla-datos declara min-width: 480px, así
+     que en un teléfono de 360px la tabla no cabe. Con hidden las columnas de
+     la derecha quedaban recortadas y no había forma de verlas: los datos
+     existían pero eran inalcanzables. Ahora la tabla se desplaza. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: 20px;
 }
 
@@ -2420,4 +2426,168 @@ body.sin-sesion .principal { padding-top: 0; }
   background: #fdf6e3;
   border-top: 1px solid #f0e3c0;
   text-align: center;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SISTEMA DE DISEÑO — escalas y componentes
+   ═══════════════════════════════════════════════════════════
+
+   Los colores institucionales ya estaban definidos arriba, pero el HTML los
+   ignoraba: había 181 atributos style= con hexadecimales escritos a mano
+   (#007b99 doce veces, #aaa dieciséis, #555 quince). Cambiar un color del
+   manual de identidad obligaba a buscar y reemplazar por todo el marcado.
+
+   Aquí se completan las escalas que faltaban —espaciado, radios, tipografía—
+   y se definen las clases que sustituyen a esos estilos sueltos. */
+
+:root {
+  /* Espaciado en múltiplos de 4px: evita los 6px, 7px y 14px arbitrarios */
+  --esp-1: 4px;
+  --esp-2: 8px;
+  --esp-3: 12px;
+  --esp-4: 16px;
+  --esp-5: 24px;
+  --esp-6: 32px;
+
+  /* Escala tipográfica */
+  --txt-xs: 10px;
+  --txt-sm: 11px;
+  --txt-md: 12px;
+  --txt-base: 13px;
+  --txt-lg: 14px;
+  --txt-xl: 16px;
+  --txt-2xl: 18px;
+
+  /* Radios */
+  --radio-sm: 4px;
+  --radio-md: 6px;
+  --radio-lg: 10px;
+  --radio-full: 999px;
+
+  /* Semánticos de estado */
+  --alerta:  #ef4444;
+  --aviso:   #f59e0b;
+  --exito:   #16a34a;
+  --tenue:   #aaaaaa;
+  --neutro:  #555555;
+}
+
+/* ── Calendario ──────────────────────────────────────────── */
+
+.cal-grilla {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: var(--esp-1);
+}
+
+.cal-dia-nombre {
+  text-align: center;
+  font-size: var(--txt-xs);
+  font-weight: 600;
+  color: var(--tenue);
+  padding: var(--esp-1) 0;
+}
+
+.cal-dia-nombre--sm {
+  font-size: var(--txt-sm);
+  padding: var(--esp-2) 0;
+}
+
+.cal-dia-nombre--alerta { color: var(--alerta); }
+
+.cal-titulo {
+  font-size: var(--txt-xl);
+  font-weight: 600;
+  color: var(--teal);
+  text-align: center;
+}
+
+.cal-titulo--lg {
+  font-size: var(--txt-2xl);
+  min-width: 180px;
+}
+
+/* ── Línea de metadatos (icono + texto pequeño) ──────────── */
+
+.meta-linea {
+  font-size: var(--txt-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--esp-1);
+  color: var(--neutro);
+}
+
+.meta-linea--holgada { gap: 5px; }
+
+/* ── Escudo institucional sobre fondo oscuro ─────────────── */
+
+.escudo-chip {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--radio-md);
+  padding: 2px 7px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.escudo-chip__img {
+  width: 70px;
+  height: auto;
+  object-fit: contain;
+}
+
+.escudo-grande {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+/* ── Utilidades mínimas ──────────────────────────────────── */
+
+.u-oculto      { display: none; }
+.u-mb-3        { margin-bottom: var(--esp-3); }
+.u-txt-md      { font-size: var(--txt-md); }
+.u-txt-lg      { font-size: var(--txt-lg); }
+.btn--compacto { padding: var(--esp-2) var(--esp-4); font-size: var(--txt-base); }
+
+
+/* ── Calendario en pantallas estrechas (RNF03: desde 360px) ──
+   La cabecera del calendario ponía el título con min-width de 200px entre dos
+   botones, lo que exigía unos 400px de ancho. En un teléfono de 360px el
+   domingo y el botón "Siguiente" quedaban fuera de la pantalla. */
+
+.cal-cabecera { flex-wrap: wrap; }
+
+@media (max-width: 480px) {
+  .cal-titulo--lg {
+    min-width: 0;
+    flex: 1 1 100%;
+    order: -1;
+    margin-bottom: var(--esp-2);
+  }
+
+  .cal-dia-nombre { font-size: 9px; }
+
+  /* Los filtros del calendario tenían min-width fijo y se salían */
+  .cal-filtros > * { min-width: 0 !important; flex: 1 1 auto; }
+}
+
+/* ── Chip de usuario del menú lateral ────────────────────────
+   La insignia del rol tiene flex-shrink: 0, pero el bloque del nombre no se
+   encogía: con un nombre largo ("Camilo Ríos Zapata") empujaba la insignia
+   fuera del panel y se veía cortada. Un nombre debe truncarse con puntos
+   suspensivos; una etiqueta de rol de tres palabras no puede quedar a medias. */
+
+.lateral-usuario__info {
+  min-width: 0;
+  flex: 1;
+}
+
+.lateral-usuario__nombre,
+.lateral-usuario__rol {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

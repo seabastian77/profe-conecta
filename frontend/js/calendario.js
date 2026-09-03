@@ -1,12 +1,19 @@
 // Busca elemento solo en la página activa del calendario
-function calEl(id) {
-  // Buscar primero en la página activa para evitar conflictos de IDs duplicados
+// El calendario se repite en los tres paneles (estudiante, docente y admin).
+// Antes cada copia llevaba los mismos id, lo que produce HTML inválido y hace
+// que getElementById devuelva siempre la primera copia — la de otro panel.
+// Ahora se identifican con data-cal y se busca SOLO dentro de la página activa.
+function calEl(nombre) {
   var pagina = document.querySelector('.pagina.activa');
-  if (pagina) {
-    var el = pagina.querySelector('#' + id);
-    if (el) return el;
-  }
-  return document.getElementById(id);
+  if (!pagina) return null;
+  return pagina.querySelector('[data-cal="' + nombre + '"]');
+}
+
+// Cierra el detalle del día. Antes esto era un getElementById en línea dentro
+// del HTML, que cerraba el panel equivocado cuando había varias copias.
+function cerrarDetalleCalendario() {
+  var det = calEl('calDetalleDia');
+  if (det) det.style.display = 'none';
 }
 
 // calendario.js — Calendario dinámico de asesorías

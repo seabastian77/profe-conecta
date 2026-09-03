@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ConectaProfe — Universidad Católica Luis Amigó</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/estilos.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body class="sin-sesion">
 
   <div class="splash" id="splash" aria-hidden="true">
     <div class="splash__contenido">
-    
+
       <div class="splash__escudo-wrap">
-        <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" class="splash__escudo" style="width:110px;height:auto;object-fit:contain;background:rgba(255,255,255,0.95);border-radius:10px;padding:6px 10px"/>
+        <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" class="splash__escudo" style="width:110px;height:auto;object-fit:contain;background:rgba(255,255,255,0.95);border-radius:10px;padding:6px 10px">
         <div class="splash__anillo"></div>
       </div>
       <p class="splash__universidad">Universidad Católica</p>
@@ -29,7 +29,7 @@
     </div>
   </div>
 
-  <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <svg class="u-oculto" xmlns="http://www.w3.org/2000/svg">
     <symbol id="escudo" viewBox="0 0 48 54">
       <path d="M4 4 H44 V36 C44 46 24 52 24 52 C24 52 4 46 4 36 Z" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
       <path d="M14 12 C14 12 20 18 24 27 C28 18 34 12 34 12" stroke="rgba(255,255,255,0.9)" stroke-width="3" stroke-linecap="round" fill="none"/>
@@ -40,14 +40,14 @@
   </svg>
 
   <!-- ═══ BARRA LATERAL ═══════════════════════════════════════════ -->
-  <nav class="barra-lateral" id="barraLateral">
+  <nav class="barra-lateral" id="barraLateral" aria-label="Menú principal">
     <div class="lateral-encabezado">
       <div class="lateral-logo__fila">
         <div class="lateral-logo-contenedor">
-          <img src="img/logo-funlam.png" class="lateral-escudo" alt="Universidad Católica Luis Amigó"/>
+          <img src="img/logo-funlam.png" class="lateral-escudo" alt="Universidad Católica Luis Amigó">
         </div>
       </div>
-      <hr class="lateral-divisor"/>
+      <hr class="lateral-divisor">
       <div class="lateral-app__fila">
         <span class="lateral-punto"></span>
         <div>
@@ -60,7 +60,7 @@
     <!-- Chip de usuario — solo visible cuando hay sesión activa -->
     <div class="lateral-usuario oculto" id="lateralUsuario">
       <div class="lateral-usuario__avatar" id="barraAvatar">?</div>
-      <div>
+      <div class="lateral-usuario__info">
         <div class="lateral-usuario__nombre" id="barraNombre">Invitado</div>
         <div class="lateral-usuario__rol" id="barraRol">Sin sesión</div>
       </div>
@@ -110,21 +110,21 @@
       <button class="lateral-cerrar__boton" onclick="cerrarSesion()" type="button">🚪 Cerrar Sesión</button>
     </div>
     <div class="lateral-pie">
-      <div style="background:rgba(255,255,255,0.92);border-radius:5px;padding:3px 5px;display:inline-flex"><img src="img/logo-funlam.png" class="lateral-pie__escudo" alt="FUNLAM" style="width:60px;height:auto"/></div>
-      <p class="lateral-pie__texto">Universidad Católica<br/>Luis Amigó · Medellín</p>
+      <div style="background:rgba(255,255,255,0.92);border-radius:5px;padding:3px 5px;display:inline-flex"><img src="img/logo-funlam.png" class="lateral-pie__escudo" alt="FUNLAM" style="width:60px;height:auto"></div>
+      <p class="lateral-pie__texto">Universidad Católica<br>Luis Amigó · Medellín</p>
     </div>
   </nav>
 
   <!-- ═══ ZONA PRINCIPAL ══════════════════════════════════════════ -->
   <main class="zona-principal">
 
-    <header class="barra-superior">
+    <header class="barra-superior" aria-label="Barra superior">
       <!-- Botón ☰ solo visible en celular -->
-      <button class="bs-menu" id="botonMenu" onclick="alternarMenu()">☰</button>
+      <button type="button" class="bs-menu" id="botonMenu" onclick="alternarMenu()">☰</button>
       <div class="bs-logo">
-        <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:110px;height:auto;object-fit:contain;display:block"/>
+        <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:110px;height:auto;object-fit:contain;display:block">
       </div>
-      <nav class="bs-ruta">
+      <nav class="bs-ruta" aria-label="Ruta de navegación">
         <span class="bs-ruta__base">ConectaProfe</span>
         <span class="bs-ruta__sep">›</span>
         <!-- JavaScript cambia este texto al navegar entre páginas -->
@@ -149,7 +149,7 @@
         <button class="notif-panel__limpiar" onclick="marcarTodasLeidas()" type="button">Marcar todo como leído</button>
       </div>
       <div class="notif-panel__lista" id="notifLista">
-      
+
       </div>
     </div>
 
@@ -174,7 +174,7 @@
             <!-- Logo -->
             <div class="acceso-logo">
               <div class="acceso-logo__escudo" style="background:rgba(255,255,255,0.97);border-radius:10px;padding:6px 10px;display:inline-flex;align-items:center;justify-content:center">
-                <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;display:block"/>
+                <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;display:block">
               </div>
             </div>
 
@@ -182,7 +182,7 @@
             <div class="acceso-izquierda__banner">
               <p class="acceso-izquierda__etiqueta">Sistema de Tutorías Académicas</p>
               <h2 class="acceso-izquierda__titulo">
-                Bienvenido<br/>a <em>ConectaProfe</em>
+                Bienvenido<br>a <em>ConectaProfe</em>
               </h2>
               <p class="acceso-izquierda__descripcion">
                 Conectamos estudiantes con sus tutores, gestionamos alertas
@@ -211,7 +211,7 @@
             <!-- Lista de características del sistema -->
             <ul class="acceso-caracteristicas">
               <li><span class="acceso-caracteristica__icono">🎓</span> Seguimiento personalizado por estudiante</li>
-              
+
               <li><span class="acceso-caracteristica__icono">📅</span> Programación de tutorías sin conflictos</li>
               <li><span class="acceso-caracteristica__icono">🔐</span> Datos protegidos — Ley 1581 de 2012</li>
             </ul>
@@ -235,7 +235,7 @@
               </div>
             </div>
 
-  
+
             <div class="selector-rol" id="selectorRolLogin">
               <button class="tarjeta-rol seleccionada" data-rol="estudiante" onclick="seleccionarRolLogin(this)" type="button">
                 <span class="tarjeta-rol__icono">🎓</span>
@@ -272,7 +272,7 @@
               <span></span><span>o con tu correo institucional</span><span></span>
             </div>
 
-            
+
             <form id="formularioLogin" novalidate>
 
               <!-- Aviso de bloqueo: aparece después de 5 intentos fallidos -->
@@ -297,7 +297,7 @@
                     <!-- Ícono de correo en SVG (no depende de una librería externa) -->
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                   </span>
-                  <input type="email" id="loginCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co" autocomplete="email"/>
+                  <input type="email" id="loginCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co" autocomplete="email">
                   <!-- Ícono verde ✓ que aparece cuando el campo está correcto -->
                   <span class="campo__icono-derecha" id="okLoginCorreo"></span>
                 </div>
@@ -316,9 +316,9 @@
                     <!-- Ícono de candado en SVG -->
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   </span>
-                 
-                  <input type="password" id="loginContrasena" class="campo__entrada" placeholder="Tu contraseña" autocomplete="current-password"/>
-                  <button type="button" class="campo__boton-ver" onclick="alternarContrasena('loginContrasena', this)" aria-label="Mostrar contraseña">
+
+                  <input type="password" id="loginContrasena" class="campo__entrada" placeholder="Tu contraseña" autocomplete="current-password">
+                  <button type="button" class="campo__boton-ver"  onclick="alternarContrasena('loginContrasena', this)" aria-label="Mostrar contraseña">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                 </div>
@@ -327,7 +327,7 @@
 
               <!-- Checkbox "Recordarme" con diseño personalizado -->
               <label class="recordar">
-                <input type="checkbox" id="loginRecordar" class="recordar__input"/>
+                <input type="checkbox" id="loginRecordar" class="recordar__input">
                 <span class="recordar__caja"></span>
                 Recordarme en este dispositivo
               </label>
@@ -373,7 +373,7 @@
           <div class="acceso-izquierda__cuerpo">
             <div class="acceso-logo">
               <div class="acceso-logo__escudo">
-                <img src="img/logo-funlam.png" alt="FUNLAM" style="width:100%;height:auto;object-fit:contain;display:block"/>
+                <img src="img/logo-funlam.png" alt="FUNLAM" style="width:100%;height:auto;object-fit:contain;display:block">
               </div>
               <div>
                 <p class="acceso-logo__superior">Universidad Católica</p>
@@ -382,7 +382,7 @@
             </div>
             <div class="acceso-izquierda__banner">
               <p class="acceso-izquierda__etiqueta">Nuevo en la plataforma</p>
-              <h2 class="acceso-izquierda__titulo">Crea tu cuenta<br/><em>en minutos</em></h2>
+              <h2 class="acceso-izquierda__titulo">Crea tu cuenta<br><em>en minutos</em></h2>
               <p class="acceso-izquierda__descripcion">Regístrate con tu correo institucional, elige tu rol y completa tu perfil académico.</p>
             </div>
             <!-- Pasos del proceso de registro -->
@@ -425,12 +425,12 @@
               <div class="grilla-dos">
                 <div class="campo">
                   <label class="campo__etiqueta" for="regNombres">Nombres</label>
-                  <input type="text" id="regNombres" class="campo__entrada" placeholder="María Camila"/>
+                  <input type="text" id="regNombres" class="campo__entrada" placeholder="María Camila">
                   <span class="campo__mensaje-error" id="errorRegNombres"></span>
                 </div>
                 <div class="campo">
                   <label class="campo__etiqueta" for="regApellidos">Apellidos</label>
-                  <input type="text" id="regApellidos" class="campo__entrada" placeholder="García López"/>
+                  <input type="text" id="regApellidos" class="campo__entrada" placeholder="García López">
                   <span class="campo__mensaje-error" id="errorRegApellidos"></span>
                 </div>
               </div>
@@ -439,7 +439,7 @@
                 <label class="campo__etiqueta" for="regCorreo">Correo institucional</label>
                 <div class="campo__contenedor">
                   <span class="campo__icono-izquierda"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
-                  <input type="email" id="regCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co"/>
+                  <input type="email" id="regCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co">
                 </div>
                 <span class="campo__mensaje-error" id="errorRegCorreo"></span>
               </div>
@@ -463,11 +463,11 @@
                   <label class="campo__etiqueta" for="regContrasena">Contraseña</label>
                   <div class="campo__contenedor">
                     <span class="campo__icono-izquierda"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                    <input type="password" id="regContrasena" class="campo__entrada" placeholder="Mín. 8 caracteres" oninput="medirFortaleza(this.value)"/>
-                    <button type="button" class="campo__boton-ver" onclick="alternarContrasena('regContrasena', this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <input type="password" autocomplete="new-password" id="regContrasena" class="campo__entrada" placeholder="Mín. 8 caracteres" oninput="medirFortaleza(this.value)">
+                    <button type="button" class="campo__boton-ver" aria-label="Mostrar u ocultar la contraseña" onclick="alternarContrasena('regContrasena', this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                   </div>
                   <!-- Indicador de fortaleza: barra de colores + texto descriptivo -->
-                  <div class="fortaleza-wrap" id="fortalezaWrap" style="display:none">
+                  <div class="fortaleza-wrap u-oculto" id="fortalezaWrap">
                     <div class="fortaleza-barra"><div class="fortaleza-relleno" id="fortalezaBarra"></div></div>
                     <span class="fortaleza-texto" id="fortalezaTexto"></span>
                   </div>
@@ -477,15 +477,15 @@
                   <label class="campo__etiqueta" for="regContrasena2">Confirmar</label>
                   <div class="campo__contenedor">
                     <span class="campo__icono-izquierda"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                    <input type="password" id="regContrasena2" class="campo__entrada" placeholder="Repite la contraseña"/>
-                    <button type="button" class="campo__boton-ver" onclick="alternarContrasena('regContrasena2', this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <input type="password" autocomplete="new-password" id="regContrasena2" class="campo__entrada" placeholder="Repite la contraseña">
+                    <button type="button" class="campo__boton-ver" aria-label="Mostrar u ocultar la contraseña" onclick="alternarContrasena('regContrasena2', this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                   </div>
                   <span class="campo__mensaje-error" id="errorRegContrasena2"></span>
                 </div>
               </div>
 
               <label class="recordar">
-                <input type="checkbox" id="regTerminos" class="recordar__input"/>
+                <input type="checkbox" id="regTerminos" class="recordar__input">
                 <span class="recordar__caja"></span>
                 Acepto los términos y la política de datos (Ley 1581/2012)
               </label>
@@ -511,7 +511,7 @@
     <section class="pagina" id="pagina-completar-perfil">
       <div class="perfil-wrap"><div class="perfil-caja">
         <div class="perfil-header">
-          <div style="background:rgba(255,255,255,0.95);border-radius:6px;padding:2px 7px;display:inline-flex;align-items:center"><img src="img/logo-funlam.png" alt="FUNLAM" style="width:70px;height:auto;object-fit:contain"/></div>
+          <div class="escudo-chip"><img src="img/logo-funlam.png" alt="FUNLAM" class="escudo-chip__img"></div>
           <div>
             <h2 class="perfil-header__titulo">Completa tu Perfil</h2>
             <p class="perfil-header__sub">Universidad Católica Luis Amigó · <span id="perfilRolEtiqueta">Estudiante</span></p>
@@ -527,9 +527,9 @@
           <div id="perfilFormEstudiante">
             <span class="pastilla">Perfil Estudiante</span>
             <form id="formularioPerfilEstudiante" novalidate>
-              <div class="campo"><label class="campo__etiqueta" for="estDocumento">Número de Documento <span class="campo__ayuda">(CC o TI)</span></label><input type="text" id="estDocumento" class="campo__entrada" placeholder="Ej: 1098765432"/><span class="campo__mensaje-error" id="errorEstDocumento"></span></div>
+              <div class="campo"><label class="campo__etiqueta" for="estDocumento">Número de Documento <span class="campo__ayuda">(CC o TI)</span></label><input type="text" id="estDocumento" class="campo__entrada" placeholder="Ej: 1098765432"><span class="campo__mensaje-error" id="errorEstDocumento"></span></div>
               <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="estPrograma">Programa</label><div class="campo__selector-contenedor"><select id="estPrograma" class="campo__entrada campo__selector"><option value="">— Programa —</option><option>Ingeniería de Software</option><option>Ingeniería de Sistemas</option><option>Administración de Empresas</option><option>Psicología</option><option>Derecho</option><option>Comunicación y Publicidad</option><option>Trabajo Social</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorEstPrograma"></span></div><div class="campo"><label class="campo__etiqueta" for="estSemestre">Semestre</label><div class="campo__selector-contenedor"><select id="estSemestre" class="campo__entrada campo__selector"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorEstSemestre"></span></div></div>
-              <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="estTelefono">Teléfono</label><input type="tel" id="estTelefono" class="campo__entrada" placeholder="3001234567"/><span class="campo__mensaje-error" id="errorEstTelefono"></span></div><div class="campo"><label class="campo__etiqueta" for="estPromedio">Promedio <span class="campo__ayuda">(0–5)</span></label><input type="number" id="estPromedio" class="campo__entrada" placeholder="Ej: 3.8" min="0" max="5" step="0.1"/></div></div>
+              <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="estTelefono">Teléfono</label><input type="tel" id="estTelefono" class="campo__entrada" placeholder="3001234567"><span class="campo__mensaje-error" id="errorEstTelefono"></span></div><div class="campo"><label class="campo__etiqueta" for="estPromedio">Promedio <span class="campo__ayuda">(0–5)</span></label><input type="number" id="estPromedio" class="campo__entrada" placeholder="Ej: 3.8" min="0" max="5" step="0.1"></div></div>
               <button type="submit" class="btn-submit">Guardar Perfil y Continuar →</button>
             </form>
           </div>
@@ -537,7 +537,7 @@
           <div id="perfilFormDocente" class="oculto">
             <span class="pastilla">Perfil Docente / Tutor</span>
             <form id="formularioPerfilDocente" novalidate>
-              <div class="campo"><label class="campo__etiqueta" for="docCedula">Número de Cédula</label><input type="text" id="docCedula" class="campo__entrada" placeholder="Número de documento"/><span class="campo__mensaje-error" id="errorDocCedula"></span></div>
+              <div class="campo"><label class="campo__etiqueta" for="docCedula">Número de Cédula</label><input type="text" id="docCedula" class="campo__entrada" placeholder="Número de documento"><span class="campo__mensaje-error" id="errorDocCedula"></span></div>
               <!-- Facultad — select con búsqueda integrada -->
               <div class="campo">
                 <label class="campo__etiqueta" for="docFacultadInput">Facultad</label>
@@ -548,16 +548,16 @@
                       placeholder="Buscar facultad..."
                       oninput="filtrarFacultades(this.value)"
                       onfocus="mostrarDropdownFacultad()"
-                      autocomplete="off" readonly/>
-                    <input type="hidden" id="docFacultad" name="docFacultad"/>
+                      autocomplete="off" readonly>
+                    <input type="hidden" id="docFacultad" name="docFacultad">
                   </div>
-                  <div id="docFacultadDropdown" class="select-buscable__dropdown" style="display:none"></div>
+                  <div id="docFacultadDropdown" class="select-buscable__dropdown u-oculto"></div>
                 </div>
                 <span class="campo__mensaje-error" id="errorDocFacultad"></span>
               </div>
 
               <!-- Programas — se carga dinámicamente al elegir facultad -->
-              <div class="campo" id="docProgramasContenedor" style="display:none">
+              <div class="campo u-oculto" id="docProgramasContenedor">
                 <label class="campo__etiqueta">Programas que atiende <span class="campo__ayuda">(selecciona uno o más)</span></label>
                 <div class="chips" id="docProgramas"></div>
               </div>
@@ -571,10 +571,10 @@
                     placeholder="Escribe para buscar o crea una nueva..."
                     oninput="buscarAsignatura(this.value)"
                     onkeydown="manejarTeclaAsignatura(event)"
-                    autocomplete="off"/>
+                    autocomplete="off">
                   <div id="docAsignaturaDropdown" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
                 </div>
-                <input type="hidden" id="docAsignaturasJSON" value="[]"/>
+                <input type="hidden" id="docAsignaturasJSON" value="[]">
                 <span class="campo__mensaje-error" id="errorDocAsignaturas"></span>
                 <p style="font-size:11px;color:#999;margin-top:6px">💡 Si la materia no existe, escríbela y selecciona "Crear nueva materia" — quedará disponible para todos.</p>
               </div>
@@ -583,7 +583,7 @@
                 <div id="docHorariosContainer"></div>
                 <button type="button" class="btn-secundario" style="margin-top:8px;font-size:12px" onclick="agregarFilaHorario()">+ Agregar franja horaria</button>
               </div>
-              <div class="campo"><label class="campo__etiqueta" for="docTelefono">Teléfono</label><input type="tel" id="docTelefono" class="campo__entrada" placeholder="3001234567"/><span class="campo__mensaje-error" id="errorDocTelefono"></span></div>
+              <div class="campo"><label class="campo__etiqueta" for="docTelefono">Teléfono</label><input type="tel" id="docTelefono" class="campo__entrada" placeholder="3001234567"><span class="campo__mensaje-error" id="errorDocTelefono"></span></div>
               <button type="submit" class="btn-submit">Guardar Perfil y Continuar →</button>
             </form>
           </div>
@@ -595,7 +595,7 @@
               <div class="grilla-dos">
                 <div class="campo">
                   <label class="campo__etiqueta" for="admCedula">Cédula</label>
-                  <input type="text" id="admCedula" class="campo__entrada" placeholder="Número de documento"/>
+                  <input type="text" id="admCedula" class="campo__entrada" placeholder="Número de documento">
                   <span class="campo__mensaje-error" id="errorAdmCedula"></span>
                 </div>
                 <div class="campo">
@@ -616,12 +616,12 @@
               <div class="grilla-dos">
                 <div class="campo">
                   <label class="campo__etiqueta" for="admDependencia">Dependencia</label>
-                  <input type="text" id="admDependencia" class="campo__entrada" placeholder="Ej: Vicerrectoría Académica"/>
+                  <input type="text" id="admDependencia" class="campo__entrada" placeholder="Ej: Vicerrectoría Académica">
                   <span class="campo__mensaje-error" id="errorAdmDependencia"></span>
                 </div>
                 <div class="campo">
                   <label class="campo__etiqueta" for="admTelefono">Teléfono ext.</label>
-                  <input type="tel" id="admTelefono" class="campo__entrada" placeholder="3001234567"/>
+                  <input type="tel" id="admTelefono" class="campo__entrada" placeholder="3001234567">
                   <span class="campo__mensaje-error" id="errorAdmTelefono"></span>
                 </div>
               </div>
@@ -643,7 +643,7 @@
         <div class="banner__letra-deco">ó</div>
         <div class="banner__contenido">
           <div class="banner__logo-fila">
-            <div style="background:rgba(255,255,255,0.95);border-radius:6px;padding:2px 7px;display:inline-flex;align-items:center"><img src="img/logo-funlam.png" alt="FUNLAM" style="width:70px;height:auto;object-fit:contain"/></div>
+            <div class="escudo-chip"><img src="img/logo-funlam.png" alt="FUNLAM" class="escudo-chip__img"></div>
             <span class="banner__universidad">Universidad Católica Luis Amigó</span>
           </div>
           <div class="banner__etiqueta">🎓 Panel del Estudiante</div>
@@ -697,14 +697,14 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid #d1d5db;border-radius:8px;padding:5px 12px">
               <span style="color:#007b99;font-size:14px">🔍</span>
-              <input type="text" id="calBuscarMes" placeholder="Buscar mes..."
+              <input type="text" data-cal="calBuscarMes" placeholder="Buscar mes..."
                 oninput="calBuscarMesInput(this.value)"
-                style="border:none;outline:none;font-size:12px;background:transparent;width:90px"/>
+                style="border:none;outline:none;font-size:12px;background:transparent;width:90px">
             </div>
-            <select id="calFiltroMateria" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:130px">
+            <select data-cal="calFiltroMateria" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:130px">
               <option value="">📚 Todas</option>
             </select>
-            <select id="calFiltroEstado" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:110px">
+            <select data-cal="calFiltroEstado" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:110px">
               <option value="">🔵 Todos</option>
               <option value="pendiente">⏳ Pendientes</option>
               <option value="confirmada">✅ Confirmadas</option>
@@ -715,42 +715,42 @@
         </div>
         <div style="display:grid;grid-template-columns:1fr 260px;gap:14px;align-items:start" class="cal-layout">
           <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-              <button class="btn-secundario" type="button" onclick="calNavegar(-1)" style="padding:6px 14px;font-size:13px">←</button>
-              <h3 id="calTitulo" style="font-size:16px;font-weight:600;color:#007b99;text-align:center"></h3>
-              <button class="btn-secundario" type="button" onclick="calNavegar(1)" style="padding:6px 14px;font-size:13px">→</button>
+            <div class="cal-cabecera" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <button class="btn-secundario btn--compacto" type="button" onclick="calNavegar(-1)">←</button>
+              <p role="heading" aria-level="3" data-cal="calTitulo" class="cal-titulo"></p>
+              <button class="btn-secundario btn--compacto" type="button" onclick="calNavegar(1)">→</button>
             </div>
             <div class="tabla-contenedor" style="padding:8px">
-              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">LUN</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">MAR</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">MIÉ</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">JUE</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">VIE</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#ef4444;padding:4px 0">SÁB</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#ef4444;padding:4px 0">DOM</div>
+              <div class="cal-grilla">
+                <div class="cal-dia-nombre">LUN</div>
+                <div class="cal-dia-nombre">MAR</div>
+                <div class="cal-dia-nombre">MIÉ</div>
+                <div class="cal-dia-nombre">JUE</div>
+                <div class="cal-dia-nombre">VIE</div>
+                <div class="cal-dia-nombre cal-dia-nombre--alerta">SÁB</div>
+                <div class="cal-dia-nombre cal-dia-nombre--alerta">DOM</div>
               </div>
-              <div id="calCeldas" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+              <div data-cal="calCeldas" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#007b99;display:inline-block"></span>Pendiente</span>
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#059669;display:inline-block"></span>Confirmada</span>
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;display:inline-block"></span>Completada</span>
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block"></span>Cancelada</span>
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Festivo</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#007b99;display:inline-block"></span>Pendiente</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#059669;display:inline-block"></span>Confirmada</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;display:inline-block"></span>Completada</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block"></span>Cancelada</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Festivo</span>
             </div>
-            <div id="calDetalleDia" class="tabla-contenedor" style="margin-top:14px;display:none">
-              <div class="tabla-encabezado" id="calDetalleTitulo">
-                <h3 style="font-size:14px">Sesiones del día</h3>
-                <button class="btn-secundario" onclick="document.getElementById('calDetalleDia').style.display='none'" style="font-size:12px;padding:4px 10px">✕</button>
+            <div data-cal="calDetalleDia" class="tabla-contenedor" style="margin-top:14px;display:none">
+              <div class="tabla-encabezado" data-cal="calDetalleTitulo">
+                <h3 class="u-txt-lg">Sesiones del día</h3>
+                <button type="button" class="btn-secundario" onclick="cerrarDetalleCalendario()" style="font-size:12px;padding:4px 10px">✕</button>
               </div>
-              <div id="calDetalleContenido" style="padding:14px"></div>
+              <div data-cal="calDetalleContenido" style="padding:14px"></div>
             </div>
           </div>
           <div class="tabla-contenedor" style="position:sticky;top:72px">
             <div class="tabla-encabezado"><h3 style="font-size:13px">📋 Próximas</h3></div>
-            <div id="calProximas" style="padding:10px;max-height:420px;overflow-y:auto">
-              <p class="sin-datos" style="font-size:12px">Cargando...</p>
+            <div data-cal="calProximas" style="padding:10px;max-height:420px;overflow-y:auto">
+              <p class="sin-datos u-txt-md">Cargando...</p>
             </div>
           </div>
         </div>
@@ -768,7 +768,7 @@
       <!-- Franja institucional -->
       <div class="franja-institucional">
         <div class="franja-institucional__logo">
-          <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;mix-blend-mode:multiply"/>
+          <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" class="escudo-grande">
           <div>
             <h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3>
             <p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p>
@@ -791,7 +791,7 @@
         <div class="banner__letra-deco">ó</div>
         <div class="banner__contenido">
           <div class="banner__logo-fila">
-            <div style="background:rgba(255,255,255,0.95);border-radius:6px;padding:2px 7px;display:inline-flex;align-items:center"><img src="img/logo-funlam.png" alt="FUNLAM" style="width:70px;height:auto;object-fit:contain"/></div>
+            <div class="escudo-chip"><img src="img/logo-funlam.png" alt="FUNLAM" class="escudo-chip__img"></div>
             <span class="banner__universidad">Universidad Católica Luis Amigó</span>
           </div>
           <div class="banner__etiqueta">👩‍🏫 Panel del Docente</div>
@@ -839,14 +839,14 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid #d1d5db;border-radius:8px;padding:5px 12px">
               <span style="color:#007b99;font-size:14px">🔍</span>
-              <input type="text" id="calBuscarMes" placeholder="Buscar mes..."
+              <input type="text" data-cal="calBuscarMes" placeholder="Buscar mes..."
                 oninput="calBuscarMesInput(this.value)"
-                style="border:none;outline:none;font-size:12px;background:transparent;width:100px;color:#333"/>
+                style="border:none;outline:none;font-size:12px;background:transparent;width:100px;color:#333">
             </div>
-            <select id="calFiltroMateria" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:140px">
+            <select data-cal="calFiltroMateria" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:140px">
               <option value="">📚 Todas</option>
             </select>
-            <select id="calFiltroEstado" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:120px">
+            <select data-cal="calFiltroEstado" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:12px;padding:6px 10px;border-radius:8px;min-width:120px">
               <option value="">🔵 Todos</option>
               <option value="pendiente">⏳ Pendientes</option>
               <option value="confirmada">✅ Confirmadas</option>
@@ -861,46 +861,46 @@
 
           <!-- Calendario principal -->
           <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-              <button class="btn-secundario" type="button" onclick="calNavegar(-1)" style="padding:6px 14px;font-size:13px">←</button>
-              <h3 id="calTitulo" style="font-size:16px;font-weight:600;color:#007b99;text-align:center"></h3>
-              <button class="btn-secundario" type="button" onclick="calNavegar(1)" style="padding:6px 14px;font-size:13px">→</button>
+            <div class="cal-cabecera" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <button class="btn-secundario btn--compacto" type="button" onclick="calNavegar(-1)">←</button>
+              <p role="heading" aria-level="3" data-cal="calTitulo" class="cal-titulo"></p>
+              <button class="btn-secundario btn--compacto" type="button" onclick="calNavegar(1)">→</button>
             </div>
             <div class="tabla-contenedor" style="padding:8px">
-              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">LUN</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">MAR</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">MIÉ</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">JUE</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#aaa;padding:4px 0">VIE</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#ef4444;padding:4px 0">SÁB</div>
-                <div style="text-align:center;font-size:10px;font-weight:600;color:#ef4444;padding:4px 0">DOM</div>
+              <div class="cal-grilla">
+                <div class="cal-dia-nombre">LUN</div>
+                <div class="cal-dia-nombre">MAR</div>
+                <div class="cal-dia-nombre">MIÉ</div>
+                <div class="cal-dia-nombre">JUE</div>
+                <div class="cal-dia-nombre">VIE</div>
+                <div class="cal-dia-nombre cal-dia-nombre--alerta">SÁB</div>
+                <div class="cal-dia-nombre cal-dia-nombre--alerta">DOM</div>
               </div>
-              <div id="calCeldas" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+              <div data-cal="calCeldas" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
             </div>
             <!-- Leyenda -->
             <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;padding:0 4px">
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#007b99;display:inline-block"></span>Pendiente</span>
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#059669;display:inline-block"></span>Confirmada</span>
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;display:inline-block"></span>Completada</span>
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block"></span>Cancelada</span>
-              <span style="font-size:11px;display:flex;align-items:center;gap:4px;color:#555"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Festivo</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#007b99;display:inline-block"></span>Pendiente</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#059669;display:inline-block"></span>Confirmada</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;display:inline-block"></span>Completada</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block"></span>Cancelada</span>
+              <span class="meta-linea"><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Festivo</span>
             </div>
             <!-- Detalle del día -->
-            <div id="calDetalleDia" class="tabla-contenedor" style="margin-top:14px;display:none">
-              <div class="tabla-encabezado" id="calDetalleTitulo">
-                <h3 style="font-size:14px">Sesiones del día</h3>
-                <button class="btn-secundario" onclick="document.getElementById('calDetalleDia').style.display='none'" style="font-size:12px;padding:4px 10px">✕</button>
+            <div data-cal="calDetalleDia" class="tabla-contenedor" style="margin-top:14px;display:none">
+              <div class="tabla-encabezado" data-cal="calDetalleTitulo">
+                <h3 class="u-txt-lg">Sesiones del día</h3>
+                <button type="button" class="btn-secundario" onclick="cerrarDetalleCalendario()" style="font-size:12px;padding:4px 10px">✕</button>
               </div>
-              <div id="calDetalleContenido" style="padding:14px"></div>
+              <div data-cal="calDetalleContenido" style="padding:14px"></div>
             </div>
           </div>
 
           <!-- Panel próximas actividades -->
           <div class="tabla-contenedor" style="position:sticky;top:72px">
             <div class="tabla-encabezado"><h3 style="font-size:13px">📋 Próximas</h3></div>
-            <div id="calProximas" style="padding:10px;max-height:480px;overflow-y:auto">
-              <p class="sin-datos" style="font-size:12px">Cargando...</p>
+            <div data-cal="calProximas" style="padding:10px;max-height:480px;overflow-y:auto">
+              <p class="sin-datos u-txt-md">Cargando...</p>
             </div>
           </div>
 
@@ -919,7 +919,7 @@
       <!-- Franja institucional -->
       <div class="franja-institucional">
         <div class="franja-institucional__logo">
-          <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;mix-blend-mode:multiply"/>
+          <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" class="escudo-grande">
           <div>
             <h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3>
             <p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p>
@@ -985,7 +985,7 @@
         </div>
         <div class="tabla-desplazable">
           <table class="tabla-datos">
-            <thead><tr><th>Nombre</th><th>Rol</th><th>Programa</th><th>Estado</th><th>Último Acceso</th></tr></thead>
+            <thead><tr><th scope="col">Nombre</th><th scope="col">Rol</th><th scope="col">Programa</th><th scope="col">Estado</th><th scope="col">Último Acceso</th></tr></thead>
             <tbody>
               <tr><td><strong>Carlos Martínez</strong></td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--alerta">⚠ Alerta</span></td><td>Hace 2h</td></tr>
               <tr><td><strong>Lina M. Montoya</strong></td><td>Docente</td><td>Fac. Ingeniería</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 30min</td></tr>
@@ -996,7 +996,7 @@
       </div>
 
       <div class="franja-institucional">
-        <div class="franja-institucional__logo"><img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;mix-blend-mode:multiply"/><div><h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3><p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p></div></div>
+        <div class="franja-institucional__logo"><img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" class="escudo-grande"><div><h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3><p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p></div></div>
         <div class="franja-institucional__cifras"><div class="cifra"><span class="cifra__numero">+30</span><span class="cifra__etiqueta">Años</span></div><div class="cifra"><span class="cifra__numero">5</span><span class="cifra__etiqueta">Sedes</span></div><div class="cifra"><span class="cifra__numero">+12k</span><span class="cifra__etiqueta">Estudiantes</span></div></div>
       </div>
     </section>
@@ -1019,7 +1019,7 @@
       <div class="barra-herramientas">
         <div class="barra-herramientas__buscar">
           <span class="buscador__icono">🔍</span>
-          <input type="text" id="buscarUsuario" class="campo__entrada buscador__input" placeholder="Buscar por nombre o correo..." oninput="filtrarTablaUsuarios(this.value)"/>
+          <input type="text" id="buscarUsuario" class="campo__entrada buscador__input" placeholder="Buscar por nombre o correo..." oninput="filtrarTablaUsuarios(this.value)">
         </div>
         <select class="campo__entrada campo__selector barra-herramientas__filtro" id="filtroRolUsuarios" onchange="filtrarTablaUsuarios()">
           <option value="">Todos los roles</option>
@@ -1042,16 +1042,16 @@
           <table class="tabla-datos" id="tablaUsuarios">
             <thead>
               <tr>
-                <th>Nombre completo</th><th>Correo</th><th>Rol</th><th>Programa / Facultad</th><th>Estado</th><th>Último acceso</th><th>Acciones</th>
+                <th scope="col">Nombre completo</th><th scope="col">Correo</th><th scope="col">Rol</th><th scope="col">Programa / Facultad</th><th scope="col">Estado</th><th scope="col">Último acceso</th><th scope="col">Acciones</th>
               </tr>
             </thead>
             <tbody id="cuerpoTablaUsuarios">
-              <tr><td><strong>Carlos A. Martínez</strong></td><td>carlos.martinez@amigo.edu.co</td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--alerta">⚠ Alerta</span></td><td>Hace 2h</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Carlos A. Martínez')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Lina M. Montoya</strong></td><td>lina.montoya@amigo.edu.co</td><td>Docente</td><td>Fac. Ingeniería</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 30min</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Lina M. Montoya')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Laura González</strong></td><td>laura.gonzalez@amigo.edu.co</td><td>Estudiante</td><td>Administración</td><td><span class="insignia insignia--alerta">⚠ Seguimiento</span></td><td>Ayer</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Laura González')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Andrés Felipe Ríos</strong></td><td>andres.rios@amigo.edu.co</td><td>Estudiante</td><td>Psicología</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 1h</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Andrés Felipe Ríos')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Sandra M. Ríos</strong></td><td>sandra.rios@amigo.edu.co</td><td>Docente</td><td>Fac. Ciencias Sociales</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 3h</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Sandra M. Ríos')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Valentina Osorio</strong></td><td>valentina.osorio@amigo.edu.co</td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--inactivo">○ Inactivo</span></td><td>Hace 5 días</td><td class="acciones-celda"><button class="btn-accion btn-accion--editar" onclick="editarUsuario('Valentina Osorio')" title="Editar">✏️</button><button class="btn-accion btn-accion--toggle btn-accion--activar" onclick="toggleEstadoUsuario(this)" title="Activar">🟢</button></td></tr>
+              <tr><td><strong>Carlos A. Martínez</strong></td><td>carlos.martinez@amigo.edu.co</td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--alerta">⚠ Alerta</span></td><td>Hace 2h</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Carlos A. Martínez')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Lina M. Montoya</strong></td><td>lina.montoya@amigo.edu.co</td><td>Docente</td><td>Fac. Ingeniería</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 30min</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Lina M. Montoya')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Laura González</strong></td><td>laura.gonzalez@amigo.edu.co</td><td>Estudiante</td><td>Administración</td><td><span class="insignia insignia--alerta">⚠ Seguimiento</span></td><td>Ayer</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Laura González')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Andrés Felipe Ríos</strong></td><td>andres.rios@amigo.edu.co</td><td>Estudiante</td><td>Psicología</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 1h</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Andrés Felipe Ríos')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Sandra M. Ríos</strong></td><td>sandra.rios@amigo.edu.co</td><td>Docente</td><td>Fac. Ciencias Sociales</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 3h</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Sandra M. Ríos')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
+              <tr><td><strong>Valentina Osorio</strong></td><td>valentina.osorio@amigo.edu.co</td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--inactivo">○ Inactivo</span></td><td>Hace 5 días</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Valentina Osorio')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle btn-accion--activar" onclick="toggleEstadoUsuario(this)" title="Activar">🟢</button></td></tr>
             </tbody>
           </table>
         </div>
@@ -1097,7 +1097,7 @@
         <div class="tabla-encabezado"><h3>Alertas por Programa Académico</h3></div>
         <div class="tabla-desplazable">
           <table class="tabla-datos">
-            <thead><tr><th>Programa</th><th>Estudiantes</th><th>Alertas</th><th>% Alerta</th><th>Tutorías realizadas</th><th>Recuperación</th></tr></thead>
+            <thead><tr><th scope="col">Programa</th><th scope="col">Estudiantes</th><th scope="col">Alertas</th><th scope="col">% Alerta</th><th scope="col">Tutorías realizadas</th><th scope="col">Recuperación</th></tr></thead>
             <tbody>
               <tr><td>Ing. de Software</td><td>89</td><td>12</td><td><span class="insignia insignia--alerta">13.5%</span></td><td>56</td><td>78%</td></tr>
               <tr><td>Administración de Empresas</td><td>74</td><td>9</td><td><span class="insignia insignia--alerta">12.2%</span></td><td>41</td><td>82%</td></tr>
@@ -1128,7 +1128,7 @@
       <div class="tabla-contenedor" style="margin-bottom:20px">
         <div class="tabla-encabezado"><h3>📨 Enviar Notificación</h3></div>
         <div style="padding:20px">
-          <div class="grilla-dos" style="margin-bottom:14px">
+          <div class="grilla-dos u-mb-3">
             <div class="campo">
               <label class="campo__etiqueta" for="notifDestinatario">Destinatario</label>
               <div class="campo__selector-contenedor"><select id="notifDestinatario" class="campo__entrada campo__selector"><option>Todos los estudiantes en alerta</option><option>Todos los docentes tutores</option><option>Programa: Ing. de Software</option><option>Programa: Psicología</option><option>Usuario específico</option></select><span class="campo__flecha">▾</span></div>
@@ -1138,9 +1138,9 @@
               <div class="campo__selector-contenedor"><select id="notifTipo" class="campo__entrada campo__selector"><option>⚠️ Alerta académica</option><option>📅 Recordatorio de tutoría</option><option>📋 Reunión obligatoria</option><option>ℹ️ Información general</option></select><span class="campo__flecha">▾</span></div>
             </div>
           </div>
-          <div class="campo" style="margin-bottom:14px">
+          <div class="campo u-mb-3">
             <label class="campo__etiqueta" for="notifAsunto">Asunto</label>
-            <input type="text" id="notifAsunto" class="campo__entrada" placeholder="Ej: Alerta de promedio bajo — acción requerida"/>
+            <input type="text" id="notifAsunto" class="campo__entrada" placeholder="Ej: Alerta de promedio bajo — acción requerida">
           </div>
           <div class="campo" style="margin-bottom:16px">
             <label class="campo__etiqueta" for="notifMensaje">Mensaje</label>
@@ -1155,7 +1155,7 @@
         <div class="tabla-encabezado"><h3>Historial de Envíos</h3></div>
         <div class="tabla-desplazable">
           <table class="tabla-datos">
-            <thead><tr><th>Fecha</th><th>Tipo</th><th>Destinatario</th><th>Asunto</th><th>Estado</th></tr></thead>
+            <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Destinatario</th><th scope="col">Asunto</th><th scope="col">Estado</th></tr></thead>
             <tbody>
               <tr><td>10/03/2026 09:15</td><td>⚠️ Alerta</td><td>47 estudiantes</td><td>Promedio por debajo de 3.0 — Semana 8</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
               <tr><td>08/03/2026 14:30</td><td>📅 Recordatorio</td><td>Todos los tutores</td><td>Tutorías programadas para semana 9</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
@@ -1204,13 +1204,13 @@
               <p style="font-size:11px;font-weight:600;color:#007b99;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #e5e7eb">👤 Participantes</p>
 
               <!-- Docente -->
-              <div class="campo" style="margin-bottom:14px">
+              <div class="campo u-mb-3">
                 <label class="campo__etiqueta">Docente / Tutor</label>
                 <input type="text" id="claseDocente" class="campo__entrada"
                   placeholder="Buscar por nombre o cédula..."
                   oninput="buscarUsuarioAdmin('claseDocente','docente')"
-                  autocomplete="off"/>
-                <input type="hidden" id="claseDocenteId"/>
+                  autocomplete="off">
+                <input type="hidden" id="claseDocenteId">
                 <div id="claseDocenteResults" class="busqueda-dropdown"></div>
               </div>
 
@@ -1220,8 +1220,8 @@
                 <input type="text" id="claseEstudiante" class="campo__entrada"
                   placeholder="Buscar por nombre o cédula..."
                   oninput="buscarUsuarioAdmin('claseEstudiante','estudiante')"
-                  autocomplete="off"/>
-                <input type="hidden" id="claseEstudianteId"/>
+                  autocomplete="off">
+                <input type="hidden" id="claseEstudianteId">
                 <div id="claseEstudianteResults" class="busqueda-dropdown"></div>
               </div>
             </div>
@@ -1231,7 +1231,7 @@
               <p style="font-size:11px;font-weight:600;color:#007b99;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #e5e7eb">📚 Detalles de la Sesión</p>
 
               <!-- Materia (select del catálogo) -->
-              <div class="campo" style="margin-bottom:14px">
+              <div class="campo u-mb-3">
                 <label class="campo__etiqueta">Materia</label>
                 <div class="campo__selector-contenedor">
                   <select id="claseAsignatura" class="campo__entrada campo__selector">
@@ -1242,14 +1242,14 @@
               </div>
 
               <!-- Fecha y Hora -->
-              <div class="grilla-dos" style="margin-bottom:14px">
+              <div class="grilla-dos u-mb-3">
                 <div class="campo">
                   <label class="campo__etiqueta">📆 Fecha</label>
-                  <input type="date" id="claseFecha" class="campo__entrada"/>
+                  <input type="date" id="claseFecha" class="campo__entrada">
                 </div>
                 <div class="campo">
                   <label class="campo__etiqueta">⏰ Hora</label>
-                  <input type="time" id="claseHora" class="campo__entrada"/>
+                  <input type="time" id="claseHora" class="campo__entrada">
                 </div>
               </div>
 
@@ -1294,11 +1294,11 @@
         <div class="tabla-contenedor">
           <div class="tabla-encabezado">
             <h3>🔗 Asignaciones Activas</h3>
-            <span class="texto-gris" id="conteoAsignaciones" style="font-size:12px"></span>
+            <span class="texto-gris u-txt-md" id="conteoAsignaciones"></span>
           </div>
           <div class="tabla-desplazable">
             <table class="tabla-datos">
-              <thead><tr><th>Estudiante</th><th>Tutor</th><th>Estado</th><th>Acción</th></tr></thead>
+              <thead><tr><th scope="col">Estudiante</th><th scope="col">Tutor</th><th scope="col">Estado</th><th scope="col">Acción</th></tr></thead>
               <tbody id="cuerpoTablaAsignaciones">
                 <tr><td colspan="4" class="sin-datos">Cargando...</td></tr>
               </tbody>
@@ -1310,11 +1310,11 @@
         <div class="tabla-contenedor">
           <div class="tabla-encabezado">
             <h3>📅 Sesiones Programadas</h3>
-            <button class="btn-secundario" type="button" onclick="cargarClasesProgramadas()" style="font-size:12px">↻</button>
+            <button class="btn-secundario u-txt-md" type="button" onclick="cargarClasesProgramadas()">↻</button>
           </div>
           <div class="tabla-desplazable">
             <table class="tabla-datos">
-              <thead><tr><th>Materia</th><th>Docente</th><th>Estudiante</th><th>Fecha</th><th>Hora</th></tr></thead>
+              <thead><tr><th scope="col">Materia</th><th scope="col">Docente</th><th scope="col">Estudiante</th><th scope="col">Fecha</th><th scope="col">Hora</th></tr></thead>
               <tbody id="cuerpoClasesProgramadas">
                 <tr><td colspan="5" class="sin-datos">Sin sesiones programadas</td></tr>
               </tbody>
@@ -1350,7 +1350,7 @@
           <option>Asignación creada</option>
           <option>Notificación enviada</option>
         </select>
-        <input type="date" class="campo__entrada" id="filtroAuditFecha" style="max-width:160px" onchange="filtrarAuditoria()"/>
+        <input type="date" class="campo__entrada" id="filtroAuditFecha" style="max-width:160px" onchange="filtrarAuditoria()">
         <button class="btn-secundario" type="button" onclick="exportarLogAuditoria()">📥 Exportar Log</button>
       </div>
 
@@ -1358,7 +1358,7 @@
       <div class="tabla-contenedor">
         <div class="tabla-desplazable">
           <table class="tabla-datos">
-            <thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Evento</th><th>Detalle</th><th>IP / Dispositivo</th><th>Resultado</th></tr></thead>
+            <thead><tr><th scope="col">Fecha y hora</th><th scope="col">Usuario</th><th scope="col">Evento</th><th scope="col">Detalle</th><th scope="col">IP / Dispositivo</th><th scope="col">Resultado</th></tr></thead>
             <tbody>
               <tr><td>10/03/2026 14:32</td><td>lina.montoya@amigo.edu.co</td><td>🔑 Inicio de sesión</td><td>Login con correo institucional</td><td>192.168.1.42 — Chrome/Win</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
               <tr><td>10/03/2026 13:50</td><td>carlos.martinez@amigo.edu.co</td><td>🔑 Inicio de sesión</td><td>Login con correo institucional</td><td>192.168.1.87 — Safari/iOS</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
@@ -1400,7 +1400,7 @@
                 <p class="config-item__desc">RN01 — Estudiantes por debajo activan seguimiento obligatorio</p>
               </div>
               <div class="config-item__control">
-                <input type="number" class="campo__entrada config-item__input" id="cfgUmbral" value="3.0" min="1.0" max="5.0" step="0.1"/>
+                <input type="number" class="campo__entrada config-item__input" id="cfgUmbral" value="3.0" min="1.0" max="5.0" step="0.1">
                 <button class="btn-guardar-config" onclick="guardarConfig('cfgUmbral','Umbral de alerta')" type="button">✓</button>
               </div>
             </div>
@@ -1411,7 +1411,7 @@
                 <p class="config-item__desc">RN04 — Límite de asignaciones simultáneas por docente</p>
               </div>
               <div class="config-item__control">
-                <input type="number" class="campo__entrada config-item__input" id="cfgMaxEst" value="15" min="1" max="30"/>
+                <input type="number" class="campo__entrada config-item__input" id="cfgMaxEst" value="15" min="1" max="30">
                 <button class="btn-guardar-config" onclick="guardarConfig('cfgMaxEst','Máx. estudiantes por tutor')" type="button">✓</button>
               </div>
             </div>
@@ -1422,7 +1422,7 @@
                 <p class="config-item__desc">RN03 — Cancelaciones con menos tiempo quedan como inasistencia</p>
               </div>
               <div class="config-item__control">
-                <input type="number" class="campo__entrada config-item__input" id="cfgCancelacion" value="24" min="1" max="72"/>
+                <input type="number" class="campo__entrada config-item__input" id="cfgCancelacion" value="24" min="1" max="72">
                 <button class="btn-guardar-config" onclick="guardarConfig('cfgCancelacion','Horas para cancelación')" type="button">✓</button>
               </div>
             </div>
@@ -1433,7 +1433,7 @@
                 <p class="config-item__desc">Seguridad — Usuarios son desconectados automáticamente</p>
               </div>
               <div class="config-item__control">
-                <input type="number" class="campo__entrada config-item__input" id="cfgSesion" value="120" min="15" max="480"/>
+                <input type="number" class="campo__entrada config-item__input" id="cfgSesion" value="120" min="15" max="480">
                 <button class="btn-guardar-config" onclick="guardarConfig('cfgSesion','Expiración de sesión')" type="button">✓</button>
               </div>
             </div>
@@ -1482,9 +1482,9 @@
       <div class="formulario-centrado"><div class="formulario-caja">
         <div class="aviso-naranja"><span>⚠</span><p>Cancelaciones con mínimo <strong>24 horas de anticipación</strong>. Sin esto queda como inasistencia. <strong>(RN03)</strong></p></div>
         <form id="formularioTutoria" novalidate>
-          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutEstudiante">Número de documento del estudiante</label><input type="text" id="tutEstudiante" class="campo__entrada" placeholder="Ej: 1098765432"/><span class="campo__mensaje-error" id="errorTutEstudiante"></span></div><div class="campo"><label class="campo__etiqueta" for="tutTutor">Tutor</label><div class="campo__selector-contenedor"><select id="tutTutor" class="campo__entrada campo__selector"><option value="">— Selecciona —</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutTutor"></span></div></div>
+          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutEstudiante">Número de documento del estudiante</label><input type="text" id="tutEstudiante" class="campo__entrada" placeholder="Ej: 1098765432"><span class="campo__mensaje-error" id="errorTutEstudiante"></span></div><div class="campo"><label class="campo__etiqueta" for="tutTutor">Tutor</label><div class="campo__selector-contenedor"><select id="tutTutor" class="campo__entrada campo__selector"><option value="">— Selecciona —</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutTutor"></span></div></div>
           <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutAsignatura">Asignatura</label><div class="campo__selector-contenedor"><select id="tutAsignatura" class="campo__entrada campo__selector"><option value="">— Cargando materias... —</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutAsignatura"></span></div><div class="campo"><label class="campo__etiqueta" for="tutModalidad">Modalidad</label><div class="campo__selector-contenedor"><select id="tutModalidad" class="campo__entrada campo__selector"><option value="">—</option><option>Presencial</option><option>Virtual</option><option>Híbrida</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutModalidad"></span></div></div>
-          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutFecha">Fecha</label><input type="date" id="tutFecha" class="campo__entrada"/><span class="campo__mensaje-error" id="errorTutFecha"></span></div><div class="campo"><label class="campo__etiqueta" for="tutHora">Hora</label><input type="time" id="tutHora" class="campo__entrada"/><span class="campo__mensaje-error" id="errorTutHora"></span></div></div>
+          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutFecha">Fecha</label><input type="date" id="tutFecha" class="campo__entrada"><span class="campo__mensaje-error" id="errorTutFecha"></span></div><div class="campo"><label class="campo__etiqueta" for="tutHora">Hora</label><input type="time" id="tutHora" class="campo__entrada"><span class="campo__mensaje-error" id="errorTutHora"></span></div></div>
           <div class="campo"><label class="campo__etiqueta" for="tutObservaciones">Observaciones</label><textarea id="tutObservaciones" class="campo__entrada" rows="3" placeholder="Describe los temas o dificultades del estudiante..."></textarea></div>
           <button type="submit" class="btn-submit btn-submit--naranja">📅 Programar Tutoría</button>
         </form>
@@ -1505,20 +1505,20 @@
         <!-- Búsqueda por mes -->
         <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #d1d5db;border-radius:10px;padding:6px 14px;flex:1;min-width:180px">
           <span style="color:#007b99;font-size:16px">🔍</span>
-          <input type="text" id="calBuscarMes" placeholder="Buscar mes (ej: Mayo, Junio...)"
+          <input type="text" data-cal="calBuscarMes" placeholder="Buscar mes (ej: Mayo, Junio...)"
             oninput="calBuscarMesInput(this.value)"
-            style="border:none;outline:none;font-size:13px;background:transparent;width:100%;color:#333"/>
+            style="border:none;outline:none;font-size:13px;background:transparent;width:100%;color:#333">
         </div>
         <!-- Filtro materia -->
         <div class="campo__selector-contenedor" style="min-width:160px;flex:1">
-          <select id="calFiltroMateria" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:13px;padding:8px 12px">
+          <select data-cal="calFiltroMateria" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:13px;padding:8px 12px">
             <option value="">📚 Todas las materias</option>
           </select>
           <span class="campo__flecha">▾</span>
         </div>
         <!-- Filtro estado -->
         <div class="campo__selector-contenedor" style="min-width:130px">
-          <select id="calFiltroEstado" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:13px;padding:8px 12px">
+          <select data-cal="calFiltroEstado" class="campo__entrada campo__selector" onchange="renderCalendario()" style="font-size:13px;padding:8px 12px">
             <option value="">🔵 Todos</option>
             <option value="pendiente">⏳ Pendientes</option>
             <option value="confirmada">✅ Confirmadas</option>
@@ -1535,46 +1535,46 @@
         <!-- Columna principal: Calendario -->
         <div>
           <!-- Navegación de mes -->
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <button class="btn-secundario" type="button" onclick="calNavegar(-1)" style="padding:8px 16px">← Anterior</button>
-            <h3 id="calTitulo" style="font-size:18px;font-weight:600;color:#007b99;text-align:center;min-width:200px"></h3>
-            <button class="btn-secundario" type="button" onclick="calNavegar(1)" style="padding:8px 16px">Siguiente →</button>
+          <div class="cal-cabecera" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <button class="btn-secundario btn--compacto" type="button" onclick="calNavegar(-1)">← Anterior</button>
+            <p role="heading" aria-level="3" data-cal="calTitulo" class="cal-titulo cal-titulo--lg"></p>
+            <button class="btn-secundario btn--compacto" type="button" onclick="calNavegar(1)">Siguiente →</button>
           </div>
 
           <!-- Grid del calendario -->
           <div class="tabla-contenedor" style="padding:0">
             <div id="calGrid" style="padding:4px">
               <!-- Encabezados de días -->
-              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
-                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">LUN</div>
-                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">MAR</div>
-                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">MIÉ</div>
-                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">JUE</div>
-                <div style="text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:6px 0">VIE</div>
+              <div class="cal-grilla">
+                <div class="cal-dia-nombre cal-dia-nombre--sm">LUN</div>
+                <div class="cal-dia-nombre cal-dia-nombre--sm">MAR</div>
+                <div class="cal-dia-nombre cal-dia-nombre--sm">MIÉ</div>
+                <div class="cal-dia-nombre cal-dia-nombre--sm">JUE</div>
+                <div class="cal-dia-nombre cal-dia-nombre--sm">VIE</div>
                 <div style="text-align:center;font-size:11px;font-weight:600;color:#ef4444;padding:6px 0">SÁB</div>
                 <div style="text-align:center;font-size:11px;font-weight:600;color:#ef4444;padding:6px 0">DOM</div>
               </div>
               <!-- Celdas del mes — se llena con JS -->
-              <div id="calCeldas" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+              <div data-cal="calCeldas" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
             </div>
           </div>
 
           <!-- Leyenda de colores -->
           <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;padding:0 4px">
-            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#007b99;display:inline-block"></span>Pendiente</span>
-            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span>Confirmada</span>
-            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#8b5cf6;display:inline-block"></span>Completada</span>
-            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block"></span>Cancelada</span>
-            <span style="font-size:11px;display:flex;align-items:center;gap:5px;color:#555"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Festivo</span>
+            <span class="meta-linea meta-linea--holgada"><span style="width:10px;height:10px;border-radius:50%;background:#007b99;display:inline-block"></span>Pendiente</span>
+            <span class="meta-linea meta-linea--holgada"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span>Confirmada</span>
+            <span class="meta-linea meta-linea--holgada"><span style="width:10px;height:10px;border-radius:50%;background:#8b5cf6;display:inline-block"></span>Completada</span>
+            <span class="meta-linea meta-linea--holgada"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block"></span>Cancelada</span>
+            <span class="meta-linea meta-linea--holgada"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Festivo</span>
           </div>
 
           <!-- Panel detalle del día seleccionado -->
-          <div id="calDetalleDia" class="tabla-contenedor" style="margin-top:16px;display:none">
-            <div class="tabla-encabezado" id="calDetalleTitulo">
+          <div data-cal="calDetalleDia" class="tabla-contenedor" style="margin-top:16px;display:none">
+            <div class="tabla-encabezado" data-cal="calDetalleTitulo">
               <h3>Sesiones del día</h3>
-              <button class="btn-secundario" onclick="document.getElementById('calDetalleDia').style.display='none'" style="font-size:12px">✕</button>
+              <button type="button" class="btn-secundario u-txt-md" onclick="cerrarDetalleCalendario()">✕</button>
             </div>
-            <div id="calDetalleContenido" style="padding:16px"></div>
+            <div data-cal="calDetalleContenido" style="padding:16px"></div>
           </div>
         </div>
 
@@ -1582,9 +1582,9 @@
         <div>
           <div class="tabla-contenedor" style="position:sticky;top:80px">
             <div class="tabla-encabezado">
-              <h3 style="font-size:14px">📋 Próximas Actividades</h3>
+              <h3 class="u-txt-lg">📋 Próximas Actividades</h3>
             </div>
-            <div id="calProximas" style="padding:12px;max-height:520px;overflow-y:auto">
+            <div data-cal="calProximas" style="padding:12px;max-height:520px;overflow-y:auto">
               <p class="sin-datos">Cargando...</p>
             </div>
           </div>
@@ -1598,12 +1598,12 @@
 
         <!-- ── Foto de portada ── -->
         <div class="perfil-portada" id="perfilPortada">
-          <img class="perfil-portada__img oculto" id="perfilPortadaImg" src="" alt="Foto de portada"/>
+          <img class="perfil-portada__img oculto" id="perfilPortadaImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Foto de portada">
           <div class="perfil-portada__gradiente" id="perfilPortadaGradiente"></div>
           <label class="perfil-portada__boton" for="perfilPortadaInput" title="Cambiar portada">
             🖼️ Cambiar portada
           </label>
-          <input type="file" id="perfilPortadaInput" class="perfil-foto-input" accept="image/*" onchange="subirPortada(this)"/>
+          <input type="file" id="perfilPortadaInput" class="perfil-foto-input" accept="image/*" onchange="subirPortada(this)">
         </div>
 
         <!-- ── Hero: foto + nombre + rol ── -->
@@ -1611,17 +1611,17 @@
           <div class="perfil-foto-wrap">
             <!-- La imagen real se inyecta por JS; si no hay foto muestra iniciales -->
             <div class="perfil-foto-iniciales" id="perfilFotoIniciales">?</div>
-            <img class="perfil-foto oculto" id="perfilFotoImg" src="" alt="Foto de perfil"/>
+            <img class="perfil-foto oculto" id="perfilFotoImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Foto de perfil">
             <!-- Botón cámara para cambiar foto -->
             <label class="perfil-foto-boton" for="perfilFotoInput" title="Cambiar foto">📷</label>
-            <input type="file" id="perfilFotoInput" class="perfil-foto-input" accept="image/*" onchange="subirFotoPerfil(this)"/>
+            <input type="file" id="perfilFotoInput" class="perfil-foto-input" accept="image/*" onchange="subirFotoPerfil(this)">
           </div>
           <div class="perfil-hero__info">
             <div class="perfil-hero__nombre" id="perfilHeroNombre">—</div>
             <div class="perfil-hero__correo" id="perfilHeroCorreo">—</div>
             <div class="perfil-hero__badges">
               <span class="perfil-badge" id="perfilHeroRol">—</span>
-              
+
             </div>
             <button class="perfil-btn-editar" onclick="irAPagina('completar-perfil')" type="button">✏️ Editar datos</button>
           </div>
@@ -1652,14 +1652,14 @@
           <div class="acceso-izquierda__cuerpo">
             <div class="acceso-logo">
               <div class="acceso-logo__escudo" style="background:rgba(255,255,255,0.97);border-radius:10px;padding:6px 10px;display:inline-flex;align-items:center;justify-content:center">
-                <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;display:block"/>
+                <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" style="width:120px;height:auto;object-fit:contain;display:block">
               </div>
             </div>
 
             <div class="acceso-izquierda__banner">
               <p class="acceso-izquierda__etiqueta">Recuperación Segura</p>
               <h2 class="acceso-izquierda__titulo">
-                Recupera tu<br/><em>acceso</em>
+                Recupera tu<br><em>acceso</em>
               </h2>
               <p class="acceso-izquierda__descripcion">
                 Te enviaremos un enlace a tu correo institucional para que puedas
@@ -1710,7 +1710,7 @@
                   <span class="campo__icono-izquierda">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                   </span>
-                  <input type="email" id="recCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co" autocomplete="email"/>
+                  <input type="email" id="recCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co" autocomplete="email">
                 </div>
                 <span class="campo__mensaje-error" id="errorRecCorreo"></span>
               </div>
