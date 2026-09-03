@@ -6,7 +6,7 @@ const { generarToken } = require('../config/jwt');
 const MAX_INTENTOS      = parseInt(process.env.MAX_INTENTOS || '5');
 const MINUTOS_BLOQUEO   = parseInt(process.env.MINUTOS_BLOQUEO || '5');
 const DOMINIO_PERMITIDO = process.env.DOMINIO_CORREO || '@amigo.edu.co';
-const RONDAS_BCRYPT     = 12; // antes 10 — más caro de romper por fuerza bruta
+const { RONDAS_BCRYPT } = require('../config/seguridad');
 
 // Auditoría (no crítica — no bloquea si falla)
 async function registrarAuditoria(usuario_id, evento, detalle) {

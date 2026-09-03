@@ -1,5 +1,6 @@
 const { db } = require('../config/db');
 const bcrypt = require('bcrypt');
+const { RONDAS_BCRYPT, validarContrasena } = require('../config/seguridad');
 
 // ── USUARIOS ──────────────────────────────────────────
 
@@ -58,14 +59,13 @@ async function crearUsuario(req, res) {
   // repositorio público, así que toda cuenta creada sin indicar contraseña
   // quedaba con una clave que cualquiera podía leer. Dos, 10 rondas cuando el
   // resto del sistema usa 12. Ahora la contraseña es obligatoria.
-  if (!contrasena || contrasena.length < 8) {
-    return res.status(400).json({ error: 'La contraseña es obligatoria y debe tener mínimo 8 caracteres' });
-  }
+  const errorClave = validarContrasena(contrasena);
+  if (errorClave) return res.status(400).json({ error: errorClave });
 
   const existe = await db.prepare('SELECT id FROM usuarios WHERE correo=?').get(correo);
   if (existe) return res.status(409).json({ error: 'Ya existe un usuario con ese correo' });
 
-  const hash = await bcrypt.hash(contrasena, 12);
+  const hash = await bcrypt.hash(contrasena, RONDAS_BCRYPT);
   // RETURNING id: sin él, result.id era undefined y la API respondía
   // {mensaje:'Usuario creado', id: undefined}.
   const result = await db.prepare('INSERT INTO usuarios (nombres, apellidos, correo, contrasena, rol) VALUES (?,?,?,?,?) RETURNING id').get(nombres, apellidos, correo, hash, rol);
@@ -303,11 +303,15 @@ async function actualizarUsuario(req, res) {
     }
 
     const existe = await db.prepare('SELECT id FROM usuarios WHERE id=?').get(id);
-    if (!existe) return res.status(404).json({ error: 'Usuario no encontrado (ID: ' + id + ')' });
+    if (!existe) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-    if (contrasena && contrasena.length >= 6) {
-      const bcrypt = require('bcrypt');
-      const hash = await bcrypt.hash(contrasena, 10);
+    // Antes aceptaba 6 caracteres y hasheaba con 10 rondas, mientras el
+    // registro exigía 8 y usaba 12. Un administrador podía dejar a un usuario
+    // con una contraseña más débil de lo que permite el requisito RF005.
+    if (contrasena) {
+      const errorClave = validarContrasena(contrasena);
+      if (errorClave) return res.status(400).json({ error: errorClave });
+      const hash = await bcrypt.hash(contrasena, RONDAS_BCRYPT);
       await db.prepare('UPDATE usuarios SET nombres=?, apellidos=?, correo=?, rol=?, contrasena=? WHERE id=?').run(nombres, apellidos, correo, rol, hash, id);
     } else {
       await db.prepare('UPDATE usuarios SET nombres=?, apellidos=?, correo=?, rol=? WHERE id=?').run(nombres, apellidos, correo, rol, id);

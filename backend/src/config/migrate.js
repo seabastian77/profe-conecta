@@ -1,4 +1,5 @@
 const { db } = require('./db');
+const { RONDAS_BCRYPT } = require('./seguridad');
 
 
 // Los correos del seed venían quemados con @funlam.edu.co y @est.funlam.edu.co,
@@ -283,6 +284,10 @@ async function sembrarUsuarios(c) {
   if (parseInt(rows[0].cnt) > 0) return;
 
   const bcrypt = require('bcrypt');
+  // 10 rondas y no RONDAS_BCRYPT a propósito: son 20 usuarios de ejemplo con
+  // una contraseña pública ('123456'), y hashear 20 veces con 12 rondas alarga
+  // el arranque sin proteger nada. Estos usuarios deben borrarse antes de
+  // cualquier uso real; no son cuentas que valga la pena endurecer.
   const hash = await bcrypt.hash('123456', 10);
   const ahora = new Date().toISOString();
 
@@ -382,7 +387,7 @@ async function sembrarAdminInicial(c) {
   }
 
   const bcrypt = require('bcrypt');
-  const hash = await bcrypt.hash(clave, 12);
+  const hash = await bcrypt.hash(clave, RONDAS_BCRYPT);
 
   await c.query(
     `INSERT INTO usuarios (nombres, apellidos, correo, contrasena, rol, activo)
