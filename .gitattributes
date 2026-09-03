@@ -1,6 +1,4 @@
-# Normaliza los finales de línea a LF dentro del repositorio.
-# En Windows se siguen usando CRLF en disco, pero lo versionado es LF, así que
-# el mismo archivo no aparece "modificado" según quién lo abra.
+
 * text=auto eol=lf
 
 *.png binary
