@@ -1,7 +1,3 @@
-// Pruebas de integración contra la API real.
-// Necesitan una PostgreSQL de pruebas: si no hay DATABASE_URL, se saltan
-// en vez de fallar, para que el CI no se ponga rojo por falta de base.
-
 process.env.NODE_ENV   = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'secreto-solo-para-pruebas';
 
