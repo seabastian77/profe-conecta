@@ -1,6 +1,4 @@
-# Mantiene el formato consistente entre editores y sistemas operativos.
-# Sin esto, quien trabaje en Windows introduce cambios de fin de línea que
-# ensucian los diffs y hacen ver como modificados archivos que nadie tocó.
+
 root = true
 
 [*]
