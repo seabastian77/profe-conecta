@@ -2702,3 +2702,91 @@ body.sin-sesion { --barra-superior-alto: 0px; }
   .acceso-estadistica__numero { font-size: 19px; }
   .acceso-estadistica__etiqueta { font-size: 9px; letter-spacing: 0.06em; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ACCIÓN DESTACADA — panel orientado a la acción (dirección C)
+   ═══════════════════════════════════════════════════════════
+   Una tarjeta que abre cada panel diciéndole al usuario qué hacer
+   ahora, calculada según su estado real. Tres variantes de tono:
+   alerta (algo requiere atención), info (hay algo próximo) y
+   ok (todo al día). Se rellena desde JS con renderAccion(). */
+
+.accion-destacada {
+  margin: 18px 0 4px;
+  border-radius: 14px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-left: 4px solid var(--teal);
+  box-shadow: 0 1px 2px rgba(18,36,42,.05), 0 10px 30px -18px rgba(0,60,75,.28);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  animation: accion-entra .4s ease both;
+}
+@keyframes accion-entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .accion-destacada { animation: none; } }
+
+.accion-destacada--alerta { border-left-color: var(--alerta); }
+.accion-destacada--info   { border-left-color: var(--teal); }
+.accion-destacada--ok     { border-left-color: var(--exito); }
+
+.accion-destacada__icono {
+  width: 46px; height: 46px; flex-shrink: 0;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  background: var(--teal-cl);
+}
+.accion-destacada--alerta .accion-destacada__icono { background: #fdecec; }
+.accion-destacada--ok     .accion-destacada__icono { background: #e7f6ec; }
+
+.accion-destacada__texto { flex: 1; min-width: 0; }
+.accion-destacada__eyebrow {
+  font-family: var(--f-cond);
+  font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--teal);
+}
+.accion-destacada--alerta .accion-destacada__eyebrow { color: var(--alerta); }
+.accion-destacada--ok     .accion-destacada__eyebrow { color: var(--exito); }
+.accion-destacada__titulo {
+  font-family: var(--f-titulo);
+  font-size: 1.25rem; line-height: 1.15; color: var(--texto);
+  margin: 2px 0 0; text-wrap: balance;
+}
+.accion-destacada__sub { font-size: 13.5px; color: var(--texto-cl, #64748b); margin: 4px 0 0; }
+
+.accion-destacada__boton {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-osc) 100%);
+  color: var(--blanco);
+  border: none; border-radius: 9px;
+  padding: 11px 18px; font-size: 13.5px; font-weight: 700;
+  font-family: var(--f-cuerpo); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: filter .15s ease, transform .15s ease;
+  white-space: nowrap;
+}
+.accion-destacada__boton:hover { filter: brightness(1.06); }
+.accion-destacada__boton:active { transform: translateY(1px); }
+.accion-destacada__boton:focus-visible { outline: 3px solid var(--naranja); outline-offset: 2px; }
+.accion-destacada--alerta .accion-destacada__boton {
+  background: linear-gradient(135deg, var(--naranja) 0%, var(--naranja-osc) 100%);
+}
+
+/* Chips de estado — hacen visible de un vistazo lo pendiente/hecho */
+.accion-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.accion-chip {
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.accion-chip--pend { background: rgba(243,146,0,.14); color: var(--naranja-osc); }
+.accion-chip--ok   { background: rgba(22,163,74,.13);  color: var(--exito); }
+.accion-chip--aler { background: rgba(239,68,68,.12);  color: var(--alerta); }
+.accion-chip--info { background: var(--teal-cl); color: var(--teal-osc); }
+
+/* En móvil la tarjeta se apila: el botón pasa abajo, ancho completo */
+@media (max-width: 620px) {
+  .accion-destacada { flex-wrap: wrap; }
+  .accion-destacada__boton { width: 100%; justify-content: center; }
+}

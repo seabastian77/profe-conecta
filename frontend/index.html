@@ -642,16 +642,15 @@
         <div class="banner__circulo-deco"></div>
         <div class="banner__letra-deco">ó</div>
         <div class="banner__contenido">
-          <div class="banner__logo-fila">
-            <div class="escudo-chip"><img src="img/logo-funlam.png" alt="FUNLAM" class="escudo-chip__img"></div>
-            <span class="banner__universidad">Universidad Católica Luis Amigó</span>
-          </div>
           <div class="banner__etiqueta">🎓 Panel del Estudiante</div>
           <h1 class="banner__titulo">Hola, <em id="estudianteSaludo">Estudiante</em></h1>
           <p class="banner__descripcion">Revisa tu desempeño, programa tutorías y consulta tus alertas académicas.</p>
           <button class="banner__boton" onclick="irAPagina('programar-tutoria')" type="button">+ Programar Tutoría</button>
         </div>
       </div>
+
+      <!-- Acción destacada (dirección C): se rellena en JS con renderAccion() -->
+      <div class="accion-destacada" id="accionEstudiante" hidden></div>
 
       <!-- Estadísticas dinámicas del estudiante -->
       <div class="franja-estadisticas">
@@ -768,7 +767,6 @@
       <!-- Franja institucional -->
       <div class="franja-institucional">
         <div class="franja-institucional__logo">
-          <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" class="escudo-grande">
           <div>
             <h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3>
             <p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p>
@@ -790,16 +788,15 @@
         <div class="banner__circulo-deco"></div>
         <div class="banner__letra-deco">ó</div>
         <div class="banner__contenido">
-          <div class="banner__logo-fila">
-            <div class="escudo-chip"><img src="img/logo-funlam.png" alt="FUNLAM" class="escudo-chip__img"></div>
-            <span class="banner__universidad">Universidad Católica Luis Amigó</span>
-          </div>
           <div class="banner__etiqueta">👩‍🏫 Panel del Docente</div>
           <h1 class="banner__titulo">Hola, <em id="docenteSaludo">Docente</em></h1>
           <p class="banner__descripcion">Gestiona tus estudiantes, alertas académicas y sesiones de tutoría.</p>
           <button class="banner__boton" onclick="irAPagina('programar-tutoria')" type="button">+ Nueva Sesión</button>
         </div>
       </div>
+
+      <!-- Acción destacada (dirección C): se rellena en JS con renderAccion() -->
+      <div class="accion-destacada" id="accionDocente" hidden></div>
 
       <!-- Estadísticas dinámicas -->
       <div class="franja-estadisticas">
@@ -919,7 +916,6 @@
       <!-- Franja institucional -->
       <div class="franja-institucional">
         <div class="franja-institucional__logo">
-          <img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" class="escudo-grande">
           <div>
             <h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3>
             <p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p>
@@ -942,6 +938,9 @@
         <h2 class="seccion__titulo">Panel de <span class="texto-teal">Administración</span></h2>
         <p class="seccion__subtitulo">Gestión completa del sistema</p>
       </div>
+
+      <!-- Acción destacada (dirección C) -->
+      <div class="accion-destacada" id="accionAdmin" hidden></div>
 
       <!-- Las 6 tarjetas ahora navegan a sus páginas con irAPagina() -->
       <div class="grilla-admin">
@@ -996,7 +995,7 @@
       </div>
 
       <div class="franja-institucional">
-        <div class="franja-institucional__logo"><img src="img/logo-funlam.png" alt="Universidad Católica Luis Amigó" class="escudo-grande"><div><h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3><p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p></div></div>
+        <div class="franja-institucional__logo"><div><h3 class="franja-institucional__nombre">Universidad Católica Luis Amigó</h3><p class="franja-institucional__lema">Formación humana y profesional al servicio de la sociedad</p></div></div>
         <div class="franja-institucional__cifras"><div class="cifra"><span class="cifra__numero">+30</span><span class="cifra__etiqueta">Años</span></div><div class="cifra"><span class="cifra__numero">5</span><span class="cifra__etiqueta">Sedes</span></div><div class="cifra"><span class="cifra__numero">+12k</span><span class="cifra__etiqueta">Estudiantes</span></div></div>
       </div>
     </section>
@@ -1755,6 +1754,7 @@
   <script src="js/asignaturas.js"></script>
   <script src="js/facultad.js"></script>
   <script src="js/calendario.js"></script>
+  <script src="js/accion.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/admin.js"></script>
 

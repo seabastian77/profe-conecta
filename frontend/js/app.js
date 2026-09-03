@@ -166,6 +166,13 @@ async function cargarPanelAdmin() {
     if (tarjetas[1]) tarjetas[1].textContent = stats.total_tutorias || 0;
     if (tarjetas[2]) tarjetas[2].textContent = stats.alertas_activas || 0;
     if (tarjetas[3]) tarjetas[3].textContent = stats.total_asignaciones || 0;
+
+    // Acción destacada (dirección C)
+    renderAccion("accionAdmin", accionAdmin({
+      alertas: stats.alertas_activas || 0,
+      totalUsuarios: stats.total_usuarios || 0,
+      totalAsignaciones: stats.total_asignaciones || 0,
+    }));
   } catch (e) {
     console.warn("No se pudieron cargar métricas admin:", e);
   }

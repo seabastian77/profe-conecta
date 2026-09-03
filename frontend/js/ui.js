@@ -1,6 +1,19 @@
 // ── CARGAR PANEL ESTUDIANTE ─────────────────────────────
 async function cargarPanelEstudiante() {
-  const perfil = perfilStorage.getPerfil();
+  // Antes solo leía el perfil del localStorage; en un login nuevo está vacío y
+  // el promedio salía en 0, así que la alerta académica nunca se disparaba.
+  // Ahora, si el caché falta o es de otro usuario, se pide al servidor: la
+  // acción destacada refleja el promedio real desde el primer momento.
+  let perfil = perfilStorage.getPerfil();
+  const idSesion = sesion?.id || authStorage.getSesion()?.id;
+  if (!perfil || String(perfil.id) !== String(idSesion) || !perfil.perfil) {
+    try {
+      perfil = await llamarAPI("/perfil", "GET");
+      perfilStorage.setPerfil(perfil);
+    } catch (e) {
+      // Sin perfil el panel sigue cargando; solo faltará el promedio.
+    }
+  }
   const nombre = perfil ? `${perfil.nombres}` : sesion.nombre.split(" ")[0];
   const datosPerfil = perfil?.perfil || {};
 
@@ -28,24 +41,26 @@ async function cargarPanelEstudiante() {
   }).length;
   document.getElementById("estTutoriasCount").textContent = tutoriasMes;
 
-  // RF039 — alerta por promedio bajo
+  // RF039 — alerta por promedio bajo: la tarjeta de resumen conserva su estado
   const tarjetaAlerta = document.getElementById("estAlertaTarjeta");
   const iconoAlerta = document.getElementById("estAlertaIcono");
   const valorAlerta = document.getElementById("estAlertaValor");
-  if (promedio > 0 && promedio < CONFIG.PROMEDIO_MINIMO) {
+  const hayAlerta = promedio > 0 && promedio < CONFIG.PROMEDIO_MINIMO;
+  if (hayAlerta) {
     iconoAlerta.textContent = "⚠️";
     iconoAlerta.classList.add("naranja");
     valorAlerta.textContent = "Activa";
     valorAlerta.style.color = "#ef4444";
     tarjetaAlerta.style.borderLeft = "4px solid #ef4444";
-    mostrarAvisoAlertaEstudiante();
   } else {
     iconoAlerta.textContent = "✅";
     valorAlerta.textContent = "Sin";
     valorAlerta.style.color = "";
     tarjetaAlerta.style.borderLeft = "";
-    quitarAvisoAlertaEstudiante();
   }
+
+  // Acción destacada (dirección C): reemplaza el viejo banner suelto de alerta
+  renderAccion("accionEstudiante", accionEstudiante({ promedio, tutorias, tutoriasMes }));
 
   // Mostrar tarjetas
   const lista = document.getElementById("estListaTutorias");
@@ -66,27 +81,6 @@ async function cargarPanelEstudiante() {
   renderizarCalendario("est", tutorias);
 }
 
-// RF039 — banner de aviso cuando el promedio está bajo
-function mostrarAvisoAlertaEstudiante() {
-  if (document.getElementById("avisoAlertaEst")) return;
-  const banner = document.createElement("div");
-  banner.id = "avisoAlertaEst";
-  banner.className = "aviso-naranja";
-  banner.style.margin = "16px 0";
-  banner.innerHTML =
-    '<span>⚠️</span><p><strong>Alerta académica activa:</strong> tu promedio está por debajo del mínimo (3.0). Te recomendamos <a href="#" onclick="irAPagina(\'programar-tutoria\'); return false;" class="texto-naranja"><strong>programar una tutoría</strong></a> lo antes posible.</p>';
-  const franja = document.querySelector(
-    "#pagina-panel-estudiante .franja-estadisticas",
-  );
-  if (franja && franja.parentNode) {
-    franja.parentNode.insertBefore(banner, franja.nextSibling);
-  }
-}
-
-function quitarAvisoAlertaEstudiante() {
-  const banner = document.getElementById("avisoAlertaEst");
-  if (banner) banner.remove();
-}
 
 // ── CARGAR PANEL DOCENTE ────────────────────────────────
 async function cargarPanelDocente() {
@@ -139,6 +133,13 @@ async function cargarPanelDocente() {
     document.getElementById("docTutoriasSubtitulo").textContent =
       `${tutorias.length} tutoría(s) — ${tutoriasMes.length} este mes`;
   }
+
+  // Acción destacada (dirección C)
+  renderAccion("accionDocente", accionDocente({
+    enAlerta: estudiantesEnAlerta.length,
+    tutorias,
+    tutoriasMes: tutoriasMes.length,
+  }));
 
   // RF044 — renderizar lista de alertas
   renderizarAlertasDocente(estudiantesEnAlerta);
