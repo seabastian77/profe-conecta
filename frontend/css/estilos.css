@@ -2591,3 +2591,14 @@ body.sin-sesion .principal { padding-top: 0; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── Sin barra superior, no hay que descontar su alto ────────
+   .diseno-acceso calcula min-height: calc(100vh - var(--barra-superior-alto)).
+   Al ocultar la barra en la pantalla de acceso, el layout seguía reservando
+   ese espacio y los paneles terminaban ~58px antes que el menú lateral: se
+   veía un escalón blanco en el borde inferior.
+
+   En vez de duplicar el cálculo, se pone la variable en cero mientras no hay
+   sesión. Así cualquier otra regla que dependa de ella se ajusta sola. */
+
+body.sin-sesion { --barra-superior-alto: 0px; }
