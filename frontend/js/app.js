@@ -36,10 +36,45 @@ const paginasPublicas = new Set([
 ]);
 
 // ── NAVEGACIÓN SPA ──────────────────────────────────────
+// Qué rol puede ver cada panel. El backend YA rechaza con 403 los datos que no
+// corresponden —esa es la barrera real—, pero sin esta comprobación el
+// navegador igual pintaba el panel de administración a un estudiante y lanzaba
+// una ráfaga de peticiones condenadas al 403. Se queda con el armazón vacío y
+// una consola llena de errores. Aquí ni se intenta.
+const rolesPorPanel = {
+  "panel-estudiante": ["estudiante"],
+  "panel-docente": ["docente"],
+  "panel-admin": ["admin"],
+  // Las secciones de administración son tan restringidas como el panel:
+  // sin esto, un estudiante que llegara a ellas disparaba una ráfaga de
+  // peticiones que el servidor rechazaba una por una con 403.
+  "admin-usuarios": ["admin"],
+  "admin-asignacion": ["admin"],
+  "admin-notificaciones": ["admin"],
+  "admin-auditoria": ["admin"],
+  "admin-configuracion": ["admin"],
+  "admin-reportes": ["admin"],
+};
+
+const panelDeRol = {
+  estudiante: "panel-estudiante",
+  docente: "panel-docente",
+  admin: "panel-admin",
+};
+
 function irAPagina(nombre) {
   if (!paginasPublicas.has(nombre) && !sesion.activa) {
     irAPagina("inicio-sesion");
     return;
+  }
+
+  const permitidos = rolesPorPanel[nombre];
+  if (permitidos && sesion.activa && !permitidos.includes(sesion.rol)) {
+    const propio = panelDeRol[sesion.rol];
+    if (propio && propio !== nombre) {
+      irAPagina(propio);
+      return;
+    }
   }
 
   document

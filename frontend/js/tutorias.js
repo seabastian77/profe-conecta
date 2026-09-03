@@ -251,16 +251,33 @@ function tarjetaTutoriaHTML(t, vistaRol) {
         <div class="tarjeta-tutoria__fecha">📅 ${formatearFecha(t.fecha)} · ⏰ ${t.hora?.slice(0, 5)}</div>
         <div class="tarjeta-tutoria__modo">${iconoModalidad(t.modalidad)} ${t.modalidad}</div>
       </div>
-      ${
-        t.estado === "pendiente"
-          ? `
-        <button class="tarjeta-tutoria__btn" onclick="cancelarTutoria(${t.id})" type="button">
-          Cancelar
-        </button>`
-          : ""
-      }
+      ${botonAccionTutoria(t)}
     </div>
   `;
+}
+
+// ¿La tutoría ya ocurrió?
+function tutoriaYaPaso(t) {
+  if (!t.fecha) return false;
+  const cuando = new Date(`${t.fecha}T${(t.hora || "00:00").slice(0, 5)}`);
+  return !isNaN(cuando) && cuando < new Date();
+}
+
+// Antes el botón "Cancelar" aparecía en TODA tutoría pendiente, incluidas las
+// que ya habían pasado. Al pulsarlo el servidor devolvía 400 y el usuario veía
+// un error sin entender por qué. Ofrecer una acción que no puede funcionar es
+// un defecto de interfaz, no del servidor: aquí ya no se ofrece.
+function botonAccionTutoria(t) {
+  if (t.estado !== "pendiente") return "";
+
+  if (tutoriaYaPaso(t)) {
+    return `<div class="tarjeta-tutoria__nota">Sesión vencida · pendiente de registrar</div>`;
+  }
+
+  return `
+    <button class="tarjeta-tutoria__btn" onclick="cancelarTutoria(${t.id})" type="button">
+      Cancelar
+    </button>`;
 }
 
 async function cancelarTutoria(id) {

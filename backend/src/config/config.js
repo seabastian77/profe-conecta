@@ -4,7 +4,7 @@ async function getConfig(clave, defecto) {
   try {
     const row = await db.prepare('SELECT valor FROM configuracion WHERE clave = ?').get(clave);
     return row?.valor || defecto;
-  } catch(e) {
+  } catch {
     return defecto;
   }
 }

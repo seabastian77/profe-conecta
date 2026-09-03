@@ -147,8 +147,18 @@ async function alEnviarRegistro(e) {
     ponerError("regRol", "Selecciona un rol");
     hayError = true;
   }
-  if (contrasena.length < 8) {
-    ponerError("regContrasena", "Mínimo 8 caracteres");
+  // Estas reglas deben ser LAS MISMAS que las del backend (authController).
+  // Antes el navegador solo comprobaba la longitud, así que una clave de 8
+  // letras pasaba el formulario y el servidor la rechazaba con un 400 y una
+  // notificación fugaz. El usuario no entendía qué había hecho mal.
+  var reglasContrasena = [
+    [contrasena.length >= 8, "Mínimo 8 caracteres"],
+    [/[A-Za-z]/.test(contrasena), "Debe incluir al menos una letra"],
+    [/[0-9]/.test(contrasena), "Debe incluir al menos un número"],
+  ];
+  var falla = reglasContrasena.find(function (r) { return !r[0]; });
+  if (falla) {
+    ponerError("regContrasena", falla[1]);
     hayError = true;
   }
   if (contrasena !== contra2) {
@@ -178,8 +188,15 @@ async function alEnviarRegistro(e) {
     aplicarSesion(data.usuario);
     irAPagina("completar-perfil");
   } catch (err) {
-    if (err.mensaje && err.mensaje.includes("correo")) {
+    // El error del servidor se muestra en el campo que lo causó, no como una
+    // notificación que se desvanece antes de que alcances a leerla.
+    var m = (err.mensaje || "").toLowerCase();
+    if (m.includes("correo")) {
       ponerError("regCorreo", err.mensaje);
+    } else if (m.includes("contraseña") || m.includes("contrasena")) {
+      ponerError("regContrasena", err.mensaje);
+    } else if (m.includes("rol")) {
+      ponerError("regRol", err.mensaje);
     } else {
       mostrarTostada(err.mensaje || "Error al crear la cuenta", "error");
     }

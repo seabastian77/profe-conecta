@@ -13,7 +13,7 @@ async function registrarAuditoria(usuario_id, evento, detalle) {
   try {
     await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)')
       .run(usuario_id, evento, detalle);
-  } catch (e) { /* no crítico */ }
+  } catch { /* no crítico */ }
 }
 
 // ── Bloqueo por intentos fallidos ───────────────────────
@@ -48,13 +48,13 @@ async function registrarIntento(correo, ip, exitoso) {
   try {
     await db.prepare('INSERT INTO intentos_login (correo, ip, exitoso) VALUES (?,?,?)')
       .run(correo, ip, exitoso ? 1 : 0);
-  } catch (e) { /* no crítico */ }
+  } catch { /* no crítico */ }
 }
 
 async function limpiarIntentos(correo) {
   try {
     await db.prepare('DELETE FROM intentos_login WHERE correo = ?').run(correo);
-  } catch (e) { /* no crítico */ }
+  } catch { /* no crítico */ }
 }
 
 // ── Reglas de validación ────────────────────────────────

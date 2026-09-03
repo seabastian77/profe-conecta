@@ -1,5 +1,17 @@
 const { db } = require('./db');
 
+
+// Los correos del seed venían quemados con @funlam.edu.co y @est.funlam.edu.co,
+// pero la aplicación solo acepta el dominio de DOMINIO_CORREO (@amigo.edu.co).
+// Resultado: los 20 usuarios de ejemplo existían en la base pero NINGUNO podía
+// iniciar sesión desde la interfaz, porque el formulario rechazaba su correo.
+// Aquí se les reescribe el dominio al que la aplicación realmente admite.
+const DOMINIO_INSTITUCIONAL = process.env.DOMINIO_CORREO || '@amigo.edu.co';
+
+function correoInstitucional(correo) {
+  return correo.split('@')[0].toLowerCase() + DOMINIO_INSTITUCIONAL;
+}
+
 async function migrar() {
   const c = db.pool; // acceso directo al pool para exec multi-statement
 
@@ -190,6 +202,7 @@ async function migrar() {
   await c.query(`DELETE FROM intentos_login WHERE creado_en < NOW() - INTERVAL '1 day'`);
 
   await corregirClavesForaneas(c);
+  await sembrarAdminInicial(c);
 
   // Datos base
   await c.query(`
@@ -289,7 +302,7 @@ async function sembrarUsuarios(c) {
   for (const d of docentes) {
     const r = await c.query(
       `INSERT INTO usuarios (nombres, apellidos, correo, contrasena, rol, activo, creado_en) VALUES ($1,$2,$3,$4,'docente',1,$5) ON CONFLICT (correo) DO NOTHING RETURNING id`,
-      [d.nombres, d.apellidos, d.correo, hash, ahora]
+      [d.nombres, d.apellidos, correoInstitucional(d.correo), hash, ahora]
     );
     if (!r.rows[0]) continue;
     const uid = r.rows[0].id;
@@ -322,7 +335,7 @@ async function sembrarUsuarios(c) {
   for (const e of estudiantes) {
     const r = await c.query(
       `INSERT INTO usuarios (nombres, apellidos, correo, contrasena, rol, activo, creado_en) VALUES ($1,$2,$3,$4,'estudiante',1,$5) ON CONFLICT (correo) DO NOTHING RETURNING id`,
-      [e.nombres, e.apellidos, e.correo, hash, ahora]
+      [e.nombres, e.apellidos, correoInstitucional(e.correo), hash, ahora]
     );
     if (!r.rows[0]) continue;
     await c.query(
@@ -332,6 +345,54 @@ async function sembrarUsuarios(c) {
   }
 
   console.log('🌱 Seed: 10 docentes y 10 estudiantes creados (contraseña: 123456)');
+}
+
+// ── Administrador inicial ───────────────────────────────
+//
+// El registro público solo acepta los roles estudiante y docente: dejar que
+// cualquiera se creara una cuenta de administrador desde el formulario abierto
+// era una escalada de privilegios. Pero entonces hace falta una forma de crear
+// el PRIMER administrador, o el panel de administración queda inalcanzable.
+//
+// Esta función lo crea desde variables de entorno, y solo si todavía no existe
+// ningún admin. No hay credenciales por defecto: si no se configuran, el
+// servidor avisa en el arranque y no inventa nada.
+async function sembrarAdminInicial(c) {
+  const { rows } = await c.query(`SELECT COUNT(*)::int AS n FROM usuarios WHERE rol = 'admin'`);
+  if (rows[0].n > 0) return; // ya hay administrador
+
+  const correo = (process.env.ADMIN_INICIAL_CORREO || '').trim().toLowerCase();
+  const clave  = process.env.ADMIN_INICIAL_CONTRASENA || '';
+
+  if (!correo || !clave) {
+    console.warn(
+      '\n⚠️  No hay ningún usuario administrador y no se puede crear uno.\n' +
+      '   El registro público solo permite estudiante y docente (a propósito).\n' +
+      '   Define estas dos variables de entorno y reinicia:\n' +
+      '     ADMIN_INICIAL_CORREO=tu.correo@amigo.edu.co\n' +
+      '     ADMIN_INICIAL_CONTRASENA=<una contraseña larga>\n' +
+      '   Se usan una sola vez; después puedes borrarlas.\n'
+    );
+    return;
+  }
+
+  if (clave.length < 8) {
+    console.warn('⚠️  ADMIN_INICIAL_CONTRASENA es demasiado corta (mínimo 8). No se creó el administrador.');
+    return;
+  }
+
+  const bcrypt = require('bcrypt');
+  const hash = await bcrypt.hash(clave, 12);
+
+  await c.query(
+    `INSERT INTO usuarios (nombres, apellidos, correo, contrasena, rol, activo)
+     VALUES ($1,$2,$3,$4,'admin',1)
+     ON CONFLICT (correo) DO UPDATE SET rol = 'admin', contrasena = EXCLUDED.contrasena`,
+    ['Administrador', 'del Sistema', correo, hash]
+  );
+
+  console.log(`👤 Administrador inicial creado: ${correo}`);
+  console.log('   Cambia la contraseña al entrar y borra las variables ADMIN_INICIAL_*.');
 }
 
 // ── Claves foráneas hacia usuarios ──────────────────────

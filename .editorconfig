@@ -1,0 +1,18 @@
+# Mantiene el formato consistente entre editores y sistemas operativos.
+# Sin esto, quien trabaje en Windows introduce cambios de fin de línea que
+# ensucian los diffs y hacen ver como modificados archivos que nadie tocó.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml}]
+indent_size = 2

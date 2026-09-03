@@ -1,7 +1,6 @@
 const { db } = require('../config/db');
 const { obtenerOCrearId } = require('./asignaturasController');
 
-const PROMEDIO_MINIMO = parseFloat(process.env.RN_PROMEDIO_MINIMO || 3.0);
 
 // ── POST /api/perfil/estudiante ─────────────────────────
 async function guardarPerfilEstudiante(req, res) {

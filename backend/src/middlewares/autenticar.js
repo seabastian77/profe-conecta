@@ -15,7 +15,7 @@ function autenticar(req, res, next) {
     const payload = verificarToken(token);
     req.usuario = payload; // { id, correo, rol }
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: 'Token inválido o expirado' });
   }
 }

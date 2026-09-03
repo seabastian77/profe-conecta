@@ -100,8 +100,21 @@ async function cancelar(req, res) {
   const HORAS_CANCELACION = await getConfigNum('RN_HORAS_CANCELACION', 24);
 
   const horas = (new Date(`${tutoria.fecha}T${tutoria.hora}`) - new Date()) / 3600000;
+
+  // Se separan los dos casos a propósito. Antes, una tutoría que ya había
+  // pasado caía en la misma rama que una próxima y devolvía "solo con 24h de
+  // anticipación", lo que no tiene sentido para una sesión de hace meses.
+  if (horas < 0) {
+    return res.status(400).json({
+      error: 'Esa tutoría ya pasó, no se puede cancelar. El docente puede marcarla como realizada o como no asistida.'
+    });
+  }
+
   if (horas < HORAS_CANCELACION && usuario.rol !== 'admin') {
-    return res.status(400).json({ error: `Solo con ${HORAS_CANCELACION}h de anticipación (RN03)` });
+    const faltan = Math.max(0, Math.round(horas));
+    return res.status(400).json({
+      error: `Faltan ${faltan}h para la tutoría y se requieren ${HORAS_CANCELACION}h de anticipación para cancelar (RN03). Escríbele al docente.`
+    });
   }
 
   await db.prepare("UPDATE tutorias SET estado='cancelada' WHERE id=?").run(id);

@@ -2410,3 +2410,14 @@ body.sin-sesion .lateral-pie__escudo { display: none !important; }
 /* Sin la barra superior el contenido subía y quedaba pegado arriba */
 body.sin-sesion .contenido,
 body.sin-sesion .principal { padding-top: 0; }
+
+/* Nota para tutorías que ya pasaron y siguen pendientes de registrar.
+   Ocupa el lugar donde antes iba un botón "Cancelar" que siempre fallaba. */
+.tarjeta-tutoria__nota {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #8a6d3b;
+  background: #fdf6e3;
+  border-top: 1px solid #f0e3c0;
+  text-align: center;
+}

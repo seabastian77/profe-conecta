@@ -31,7 +31,7 @@ async function listarUsuarios(req, res) {
     res.json(rows);
   } catch(err) {
     console.error('listarUsuarios error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error del servidor' });
   }
 }
 
@@ -48,10 +48,27 @@ async function cambiarEstado(req, res) {
 async function crearUsuario(req, res) {
   const { nombres, apellidos, correo, rol, contrasena } = req.body;
   if (!nombres || !apellidos || !correo || !rol) return res.status(400).json({ error: 'Faltan campos' });
+
+  if (!['estudiante', 'docente', 'admin'].includes(rol)) {
+    return res.status(400).json({ error: 'Rol inválido' });
+  }
+
+  // Antes: bcrypt.hashSync(contrasena || 'Cambiar123', 10).
+  // Dos problemas. Uno, la contraseña por defecto estaba escrita en un
+  // repositorio público, así que toda cuenta creada sin indicar contraseña
+  // quedaba con una clave que cualquiera podía leer. Dos, 10 rondas cuando el
+  // resto del sistema usa 12. Ahora la contraseña es obligatoria.
+  if (!contrasena || contrasena.length < 8) {
+    return res.status(400).json({ error: 'La contraseña es obligatoria y debe tener mínimo 8 caracteres' });
+  }
+
   const existe = await db.prepare('SELECT id FROM usuarios WHERE correo=?').get(correo);
   if (existe) return res.status(409).json({ error: 'Ya existe un usuario con ese correo' });
-  const hash = bcrypt.hashSync(contrasena || 'Cambiar123', 10);
-  const result = await db.prepare('INSERT INTO usuarios (nombres, apellidos, correo, contrasena, rol) VALUES (?,?,?,?,?)').run(nombres, apellidos, correo, hash, rol);
+
+  const hash = await bcrypt.hash(contrasena, 12);
+  // RETURNING id: sin él, result.id era undefined y la API respondía
+  // {mensaje:'Usuario creado', id: undefined}.
+  const result = await db.prepare('INSERT INTO usuarios (nombres, apellidos, correo, contrasena, rol) VALUES (?,?,?,?,?) RETURNING id').get(nombres, apellidos, correo, hash, rol);
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'CREAR_USUARIO', nombres + ' ' + apellidos);
   res.json({ mensaje: 'Usuario creado', id: result.id });
 }
@@ -147,7 +164,7 @@ async function crearAsignacion(req, res) {
   if (!estudiante_id || !docente_id) return res.status(400).json({ error: 'Faltan datos' });
   var existe = await db.prepare("SELECT id FROM asignaciones WHERE estudiante_id=? AND docente_id=? AND estado='activa'").get(estudiante_id, docente_id);
   if (existe) return res.status(409).json({ error: 'Ya existe esta asignación' });
-  var result = await db.prepare('INSERT INTO asignaciones (estudiante_id, docente_id) VALUES (?,?)').run(estudiante_id, docente_id);
+  const result = await db.prepare('INSERT INTO asignaciones (estudiante_id, docente_id) VALUES (?,?) RETURNING id').get(estudiante_id, docente_id);
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'ASIGNACION_CREADA', 'Est ' + estudiante_id + ' → Doc ' + docente_id);
   res.json({ mensaje: 'Asignación creada', id: result.id });
 }
@@ -267,12 +284,12 @@ async function eliminarUsuario(req, res) {
         req.usuario.id, 'ELIMINAR_USUARIO',
         'Usuario #' + id + ' (' + existe.nombres + ' ' + existe.apellidos + ') eliminado permanentemente'
       );
-    } catch(e) {}
+    } catch {}
 
     res.json({ mensaje: existe.nombres + ' ' + existe.apellidos + ' eliminado permanentemente' });
   } catch(err) {
     console.error('eliminarUsuario error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error del servidor' });
   }
 }
 
@@ -300,12 +317,12 @@ async function actualizarUsuario(req, res) {
       await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(
         req.usuario.id, 'EDITAR_USUARIO', 'Usuario #' + id + ' actualizado por admin'
       );
-    } catch(e) { /* auditoria no crítica */ }
+    } catch { /* auditoria no crítica */ }
 
     res.json({ mensaje: 'Usuario actualizado correctamente' });
   } catch(err) {
     console.error('Error actualizarUsuario:', err.message);
-    res.status(500).json({ error: err.message || 'Error al actualizar usuario' });
+    res.status(500).json({ error: 'Error al actualizar usuario' });
   }
 }
 
@@ -344,8 +361,8 @@ async function programarClase(req, res) {
   // Crear la tutoría con estado 'confirmada'
   const result = await db.prepare(`
     INSERT INTO tutorias (estudiante_id, docente_id, asignatura, fecha, hora, modalidad, estado, observaciones)
-    VALUES (?,?,?,?,?,?,?,?)
-  `).run(estudiante_id, docente_id, asignatura, fecha, hora, modalidad || 'Virtual', 'confirmada', observaciones || '');
+    VALUES (?,?,?,?,?,?,?,?) RETURNING id
+  `).get(estudiante_id, docente_id, asignatura, fecha, hora, modalidad || 'Virtual', 'confirmada', observaciones || '');
 
   const tutoriaId = result.id;
   const fechaHora = `${fecha} a las ${hora.slice(0,5)}`;

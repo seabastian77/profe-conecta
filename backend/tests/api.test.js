@@ -131,6 +131,8 @@ describe('Errores en handlers async no tumban el proceso', () => {
       .patch('/api/tutorias/no-es-un-numero/cancelar')
       .set('Authorization', `Bearer ${token}`);
 
+    // Restaurar el entorno es deliberado; la suite corre en serie (--runInBand).
+    // eslint-disable-next-line require-atomic-updates
     process.env.NODE_ENV = anterior;
 
     if (res.status === 500) {

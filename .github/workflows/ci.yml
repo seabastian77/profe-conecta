@@ -38,6 +38,10 @@ jobs:
         working-directory: backend
         run: npm install
 
+      - name: Análisis estático (ESLint)
+        working-directory: backend
+        run: npm run lint
+
       - name: Verificar sintaxis de todos los archivos
         run: |
           for f in $(find backend/src frontend/js -name "*.js"); do
