@@ -438,7 +438,8 @@ textarea  { resize: vertical; }
   position: relative; overflow: hidden;
 }
 /* En pantallas medianas (sidebar + contenido), este panel se oculta para dar espacio al formulario */
-@media (max-width: 1100px) { .acceso-izquierda { display: none; } }
+/* En móvil el panel NO se oculta: se compacta. Ver el bloque
+   "Panel de acceso compacto" más abajo. */
 
 /* Blobs decorativos: círculos borrosos de fondo */
 .acceso-izquierda__blob1 {
@@ -456,9 +457,11 @@ textarea  { resize: vertical; }
 
 /* La "ó" gigante de fondo — elemento gráfico del manual de identidad */
 .acceso-izquierda__deco-o {
-  position: absolute; right: 10px; bottom: -80px;
-  font-size: 320px; font-weight: 900; font-family: var(--f-cond);
-  color: rgba(255,255,255,0.04); line-height: 1;
+  /* La "ó" de Amigó como marca de agua. En serif —la misma familia del
+     titular— se lee como parte de la identidad y no como un adorno suelto. */
+  position: absolute; right: -18px; bottom: -110px;
+  font-size: 380px; font-family: var(--f-titulo); font-weight: 400;
+  color: rgba(255,255,255,0.055); line-height: 1;
   pointer-events: none; user-select: none;
 }
 
@@ -494,24 +497,66 @@ textarea  { resize: vertical; }
 .acceso-izquierda__banner { margin-bottom: 28px; }
 .acceso-izquierda__etiqueta {
   display: inline-block;
-  background: rgba(243,146,0,0.25); border: 1px solid rgba(243,146,0,0.4);
-  border-radius: 99px; padding: 3px 12px;
-  font-size: 10px; font-weight: 700; color: #ffc966;
-  text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px;
+  background: none;
+  border: 1px solid rgba(243,146,0,0.42);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-family: var(--f-cond);
+  font-size: 11px; font-weight: 600; color: #ffc470;
+  text-transform: uppercase; letter-spacing: 0.16em;
+  margin-bottom: 18px;
 }
 .acceso-izquierda__titulo {
   font-family: var(--f-titulo);
-  font-size: 2.5rem; color: var(--blanco); line-height: 1.1; margin-bottom: 12px;
+  /* Antes 2.5rem fijo. Una escala fluida da contraste real frente al párrafo
+     y evita que en pantallas anchas el titular se vea pequeño. */
+  font-size: clamp(2.4rem, 3.4vw, 3.4rem);
+  color: var(--blanco);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  margin-bottom: 14px;
 }
+/* El naranja aparece UNA sola vez en todo el panel, en la palabra que importa */
 .acceso-izquierda__titulo em { font-style: italic; color: var(--naranja); }
-.acceso-izquierda__descripcion    { font-size: 13.5px; color: rgba(255,255,255,0.68); line-height: 1.65; max-width: 320px; }
+.acceso-izquierda__descripcion {
+  font-size: 14px;
+  color: rgba(255,255,255,0.66);
+  line-height: 1.7;
+  max-width: 34ch;
+}
 
 /* Tres estadísticas en fila */
-.acceso-estadisticas      { display: flex; align-items: center; gap: 0; margin-bottom: 24px; background: rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 0; border: 1px solid rgba(255,255,255,0.10); }
-.acceso-estadistica       { flex: 1; text-align: center; }
-.acceso-estadistica__separador   { width: 1px; height: 32px; background: rgba(255,255,255,0.15); }
-.acceso-estadistica__numero    { display: block; font-family: var(--f-cond); font-size: 22px; font-weight: 900; color: var(--naranja); }
-.acceso-estadistica__etiqueta    { display: block; font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+.acceso-estadisticas {
+  /* Antes iban dentro de una caja con fondo y borde, lo que las convertía en
+     un bloque más compitiendo con la tarjeta de login. Ahora se apoyan sobre
+     una línea: siguen agrupadas, pero dejan de gritar. */
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  margin-bottom: 26px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.16);
+}
+.acceso-estadistica { text-align: left; }
+.acceso-estadistica__separador { display: none; }
+.acceso-estadistica__numero {
+  display: block;
+  font-family: var(--f-cond);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--blanco);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.acceso-estadistica__etiqueta {
+  display: block;
+  font-size: 10px;
+  color: rgba(255,255,255,0.48);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
 
 /* Lista de características */
 .acceso-caracteristicas   { display: flex; flex-direction: column; gap: 8px; }
@@ -2602,3 +2647,58 @@ body.sin-sesion .principal { padding-top: 0; }
    sesión. Así cualquier otra regla que dependa de ella se ajusta sola. */
 
 body.sin-sesion { --barra-superior-alto: 0px; }
+
+
+/* ── Panel de acceso compacto (bajo 1100px) ──────────────────
+   Antes este panel entero llevaba display:none por debajo de 1100px. Un
+   estudiante entrando desde el celular —que son la mayoría— nunca veía el
+   nombre del sistema, ni qué hace, ni una sola cifra: la mitad del diseño
+   simplemente no existía para él.
+
+   Ahora colapsa a una franja sobre la tarjeta: escudo, titular y las tres
+   cifras en una línea. Se ocultan solo la descripción larga y la lista de
+   características, que sí necesitan espacio para respirar. */
+
+@media (max-width: 1100px) {
+  .acceso-izquierda {
+    padding: 22px 24px 20px;
+    justify-content: flex-start;
+  }
+
+  .acceso-izquierda__descripcion,
+  .acceso-caracteristicas,
+  .acceso-izquierda__pie,
+  .acceso-izquierda__puntos { display: none; }
+
+  .acceso-izquierda__deco-o {
+    font-size: 190px;
+    bottom: -62px;
+    right: -10px;
+  }
+
+  .acceso-izquierda__titulo {
+    font-size: clamp(1.6rem, 6vw, 2.1rem);
+    margin-bottom: 0;
+  }
+
+  .acceso-izquierda__etiqueta { margin-bottom: 12px; }
+
+  .acceso-estadisticas {
+    gap: 22px;
+    margin-bottom: 0;
+    margin-top: 16px;
+    padding-top: 12px;
+  }
+
+  .acceso-estadistica__numero { font-size: 22px; }
+
+  /* El escudo grande sobra en la franja: ya está en el menú lateral */
+  .acceso-logo { display: none; }
+}
+
+@media (max-width: 480px) {
+  .acceso-izquierda { padding: 18px 18px 16px; }
+  .acceso-estadisticas { gap: 16px; }
+  .acceso-estadistica__numero { font-size: 19px; }
+  .acceso-estadistica__etiqueta { font-size: 9px; letter-spacing: 0.06em; }
+}
