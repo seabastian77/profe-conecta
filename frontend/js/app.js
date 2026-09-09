@@ -1,4 +1,4 @@
-// ── Estado de sesión global ─────────────────────────────
+// Guarda el estado global de la sesión.
 const sesion = {
   activa: false,
   id: null,
@@ -8,7 +8,7 @@ const sesion = {
   rol: "",
 };
 
-// ── Páginas y sus títulos ───────────────────────────────
+// Asocia cada página con su título.
 const tituloPagina = {
   "inicio-sesion": "Inicio de Sesión",
   "crear-cuenta": "Crear Cuenta",
@@ -35,19 +35,11 @@ const paginasPublicas = new Set([
   "recuperar-contrasena",
 ]);
 
-// ── NAVEGACIÓN SPA ──────────────────────────────────────
-// Qué rol puede ver cada panel. El backend YA rechaza con 403 los datos que no
-// corresponden —esa es la barrera real—, pero sin esta comprobación el
-// navegador igual pintaba el panel de administración a un estudiante y lanzaba
-// una ráfaga de peticiones condenadas al 403. Se queda con el armazón vacío y
-// una consola llena de errores. Aquí ni se intenta.
+// Define qué roles pueden ver cada panel.
 const rolesPorPanel = {
   "panel-estudiante": ["estudiante"],
   "panel-docente": ["docente"],
   "panel-admin": ["admin"],
-  // Las secciones de administración son tan restringidas como el panel:
-  // sin esto, un estudiante que llegara a ellas disparaba una ráfaga de
-  // peticiones que el servidor rechazaba una por una con 403.
   "admin-usuarios": ["admin"],
   "admin-asignacion": ["admin"],
   "admin-notificaciones": ["admin"],
@@ -92,7 +84,7 @@ function irAPagina(nombre) {
 
   cerrarMenu();
 
-  // Cargar datos si es un panel
+  // Carga los datos si la página es un panel.
   if (nombre === "panel-estudiante") {
     cargarPanelEstudiante();
     if (typeof iniciarCalendario === "function") iniciarCalendario();
@@ -117,10 +109,9 @@ function irAPagina(nombre) {
     cargarSelectsAsignacion();
     if (typeof cargarTablaAsignaciones === "function") cargarTablaAsignaciones();
     if (typeof cargarClasesProgramadas === "function") cargarClasesProgramadas();
-    // Cargar materias en el select de asesoría
+    // Carga las materias en el select de asesoría.
     if (typeof cargarAsignaturasEnSelect === "function")
       cargarAsignaturasEnSelect("claseAsignatura");
-    // Fecha mínima = hoy
     const fechaEl = document.getElementById("claseFecha");
     if (fechaEl) fechaEl.min = new Date().toISOString().split("T")[0];
   }
@@ -147,7 +138,7 @@ function irAPagina(nombre) {
 
   authStorage.setUltimaActividad();
 
-  // RF030 — scroll al inicio con animación suave
+  // Desplaza la vista al inicio con animación suave.
   try {
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (e) {
@@ -155,7 +146,7 @@ function irAPagina(nombre) {
   }
 }
 
-// RF047 — Cargar métricas globales del panel admin desde el API
+// Carga las métricas globales del panel admin desde el API.
 async function cargarPanelAdmin() {
   try {
     var stats = await llamarAPI("/admin/estadisticas", "GET");
@@ -167,7 +158,7 @@ async function cargarPanelAdmin() {
     if (tarjetas[2]) tarjetas[2].textContent = stats.alertas_activas || 0;
     if (tarjetas[3]) tarjetas[3].textContent = stats.total_asignaciones || 0;
 
-    // Acción destacada (dirección C)
+    // Renderiza la acción destacada.
     renderAccion("accionAdmin", accionAdmin({
       alertas: stats.alertas_activas || 0,
       totalUsuarios: stats.total_usuarios || 0,
@@ -178,7 +169,7 @@ async function cargarPanelAdmin() {
   }
 }
 
-// ── MENÚ LATERAL (móvil) ────────────────────────────────
+// Abre o cierra el menú lateral en móvil.
 function alternarMenu() {
   document.getElementById("barraLateral").classList.toggle("abierta");
   document.getElementById("overlayMenu").classList.toggle("oculto");
@@ -189,7 +180,7 @@ function cerrarMenu() {
   document.getElementById("overlayMenu").classList.add("oculto");
 }
 
-// ── VALIDACIONES DE FORMULARIO ──────────────────────────
+// Marca un campo con un mensaje de error.
 function ponerError(idCampo, mensaje) {
   const errorEl = document.getElementById(
     "error" + idCampo.charAt(0).toUpperCase() + idCampo.slice(1),
@@ -210,7 +201,7 @@ function quitarError(idCampo) {
   if (campo) campo.classList.remove("campo--invalido");
 }
 
-// Indicador de fortaleza de contraseña
+// Calcula y muestra la fortaleza de la contraseña.
 function medirFortaleza(valor) {
   const wrap = document.getElementById("fortalezaWrap");
   const barra = document.getElementById("fortalezaBarra");
@@ -245,7 +236,7 @@ function medirFortaleza(valor) {
   texto.style.color = nivel.color;
 }
 
-// ── MOSTRAR / OCULTAR CONTRASEÑA ────────────────────────
+// Alterna la visibilidad de la contraseña.
 function alternarContrasena(idInput, boton) {
   const input = document.getElementById(idInput);
   if (!input) return;
@@ -255,7 +246,7 @@ function alternarContrasena(idInput, boton) {
     input.type === "password" ? "Mostrar contraseña" : "Ocultar contraseña";
 }
 
-// ── FECHA MÍNIMA EN EL FORMULARIO DE TUTORÍA ────────────
+// Fija la fecha mínima del formulario de tutoría.
 function ponerFechaMinima() {
   const campo = document.getElementById("tutFecha");
   if (!campo) return;
@@ -265,7 +256,7 @@ function ponerFechaMinima() {
   campo.min = manana.toISOString().split("T")[0];
 }
 
-// ── ADMIN: FILTRAR TABLA DE USUARIOS ───────────────────
+// Filtra la tabla de usuarios según los criterios seleccionados.
 function filtrarTablaUsuarios(texto) {
   const filas = document.querySelectorAll("#cuerpoTablaUsuarios tr");
   const filtroRol =
@@ -298,12 +289,12 @@ function confirmarAccionCritica(accion) {
   abrirModalAccionCritica(accion);
 }
 
-// Modal real para acciones críticas (antes era un confirm básico)
+// Abre el modal de confirmación para acciones críticas.
 function abrirModalAccionCritica(accion) {
   const existente = document.getElementById("modalAccionCritica");
   if (existente) existente.remove();
 
-  // Descripción específica según la acción
+  // Define la descripción específica según la acción.
   let icono = "⚠️";
   let descripcion = "Esta acción no se puede deshacer.";
   let botonTexto = "Confirmar";
@@ -315,7 +306,7 @@ function abrirModalAccionCritica(accion) {
       "Al cerrar el período 2026-1, ningún usuario podrá crear nuevas tutorías ni modificar calificaciones. Los datos quedarán archivados en modo solo-lectura.";
     botonTexto = "Sí, cerrar período";
     alCompletar = function () {
-      // Marcar el período actual como cerrado visualmente
+      // Marca el período actual como cerrado visualmente.
       const periodoActivo = document.querySelector(
         "#pagina-admin-configuracion .activo-periodo",
       );
@@ -339,7 +330,7 @@ function abrirModalAccionCritica(accion) {
       "Todos los parámetros de configuración volverán a sus valores por defecto (umbral 3.0, máx. 15 estudiantes por tutor, 24h de cancelación).";
     botonTexto = "Sí, resetear";
     alCompletar = function () {
-      // Resetear inputs de configuración
+      // Restablece los inputs de configuración.
       const cfgUmbral = document.getElementById("cfgUmbral");
       const cfgMaxEst = document.getElementById("cfgMaxEst");
       const cfgCancelacion = document.getElementById("cfgCancelacion");
@@ -376,7 +367,7 @@ function abrirModalAccionCritica(accion) {
     if (e.target === modal) cerrarModalAccionCritica();
   });
 
-  // Guardar callback para ejecutar
+  // Guarda el callback para ejecutarlo después.
   window._accionCriticaCallback = alCompletar;
   window._accionCriticaNombre = accion;
 }
@@ -391,7 +382,7 @@ async function ejecutarAccionCritica() {
     var nombre = window._accionCriticaNombre || "Acción";
     if (nombre.includes("Resetear")) {
       await llamarAPI("/admin/configuracion/reset", "POST", {});
-      // Resetear inputs visualmente
+      // Restablece los inputs visualmente.
       var cfgUmbral = document.getElementById("cfgUmbral");
       var cfgMaxEst = document.getElementById("cfgMaxEst");
       var cfgCancelacion = document.getElementById("cfgCancelacion");
@@ -416,7 +407,7 @@ async function guardarConfig(idInput, nombre) {
     return;
   }
 
-  // Mapear IDs del input a claves de la base de datos
+  // Mapea los IDs del input a claves de la base de datos.
   var claveMap = {
     cfgUmbral: "umbral_alerta",
     cfgMaxEst: "max_estudiantes_tutor",
@@ -439,7 +430,7 @@ async function guardarConfig(idInput, nombre) {
   }
 }
 
-// Exportar PDF — ahora genera un archivo real descargable
+// Genera y descarga el reporte académico como archivo de texto.
 function exportarReportePDF() {
   const contenido = `
 REPORTE ACADÉMICO — ConectaProfe
@@ -476,7 +467,7 @@ Documento generado por ConectaProfe
   mostrarTostada("📥 Reporte descargado", "exito");
 }
 
-// Exportar Excel — genera CSV real descargable
+// Genera y descarga el reporte como archivo CSV.
 function exportarReporteExcel() {
   const csv =
     "Programa,Estudiantes,Alertas,Porcentaje,Tutorias,Recuperacion\n" +
@@ -493,7 +484,7 @@ function exportarReporteExcel() {
   mostrarTostada("📊 Reporte Excel descargado", "exito");
 }
 
-// Exportar Log de auditoría
+// Genera y descarga el log de auditoría.
 function exportarLogAuditoria() {
   const ahora = new Date().toLocaleString("es-CO");
   const log =
@@ -516,7 +507,7 @@ function exportarLogAuditoria() {
   mostrarTostada("📥 Log exportado", "exito");
 }
 
-// Crear nuevo período académico
+// Abre el modal para crear un nuevo período académico.
 function crearNuevoPeriodo() {
   const existente = document.getElementById("modalNuevoPeriodo");
   if (existente) existente.remove();
@@ -570,14 +561,14 @@ async function guardarNuevoPeriodo() {
     await llamarAPI("/admin/periodos", "POST", { nombre: nombre, inicio: inicio, fin: fin });
     cerrarModalNuevoPeriodo();
     mostrarTostada("✓ Período " + nombre + " creado correctamente", "exito");
-    // Recargar la página de configuración si estamos ahí
+    // Recarga la página de configuración.
     irAPagina("admin-configuracion");
   } catch (err) {
     mostrarTostada(err.mensaje || "Error al crear período", "error");
   }
 }
 
-// Utilidad: descargar archivo de texto
+// Descarga un archivo de texto en el navegador.
 function descargarArchivo(nombre, contenido) {
   const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -592,7 +583,7 @@ function descargarArchivo(nombre, contenido) {
   }, 100);
 }
 
-// ── SPLASH SCREEN ───────────────────────────────────────
+// Muestra la pantalla de carga inicial.
 function mostrarSplash(alTerminar) {
   const splash = document.getElementById("splash");
   const barra = document.getElementById("splashProgreso");
@@ -614,10 +605,10 @@ function mostrarSplash(alTerminar) {
   }, 120);
 }
 
-// ── INICIO ──────────────────────────────────────────────
+// Inicializa la aplicación cuando el DOM está listo.
 document.addEventListener("DOMContentLoaded", () => {
   mostrarSplash(async () => {
-    // Detectar si venimos de un callback de Google OAuth
+    // Detecta si la carga viene de un callback de Google OAuth.
     if (
       window.location.search.includes("codigo=") ||
       window.location.search.includes("error=oauth")
@@ -626,7 +617,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Cargar correo recordado en el login
+    // Carga el correo recordado en el login.
     const recordado = authStorage.getCorreoRecordado();
     if (recordado) {
       const campoCorreo = document.getElementById("loginCorreo");
@@ -636,11 +627,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Verificar si hay sesión guardada válida
+    // Verifica si hay una sesión guardada válida.
     await verificarSesionGuardada();
   });
 
-  // ── Conectar formularios ────────────────────────────
+  // Conecta los formularios con sus manejadores.
   document
     .getElementById("formularioLogin")
     ?.addEventListener("submit", alEnviarLogin);
@@ -669,7 +660,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("formularioRecuperacion")
     ?.addEventListener("submit", alEnviarRecuperacion);
 
-  // ── Actualizar actividad al interactuar ─────────────
+  // Actualiza la marca de actividad al interactuar.
   ["click", "keydown", "scroll"].forEach((evento) => {
     document.addEventListener(
       evento,
@@ -680,11 +671,10 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   });
 
-  // RF018 — Validar campos al perder foco (blur), no solo al enviar
   activarValidacionBlur();
 });
 
-// RF018 — Validación en tiempo real al perder foco
+// Activa la validación en tiempo real al perder el foco.
 function activarValidacionBlur() {
   document.querySelectorAll("input, select, textarea").forEach((campo) => {
     campo.addEventListener("blur", () => {
@@ -692,10 +682,9 @@ function activarValidacionBlur() {
       if (!id) return;
       const valor = (campo.value || "").trim();
 
-      // Limpiar error previo
       quitarError(id);
 
-      // Reglas básicas según tipo
+      // Aplica reglas básicas según el tipo de campo.
       if (campo.required && !valor) {
         ponerError(id, "Este campo es obligatorio");
         return;
@@ -741,7 +730,7 @@ function activarValidacionBlur() {
     });
   });
 
-  // RF010 — Indicador de avance del proceso de perfil
+  // Actualiza el indicador de avance del perfil al escribir.
   ["formularioPerfilEstudiante", "formularioPerfilDocente", "formularioPerfilAdmin"].forEach(
     (formId) => {
       const form = document.getElementById(formId);
@@ -751,20 +740,20 @@ function activarValidacionBlur() {
   );
 }
 
-// RF010 — Actualizar visualmente el indicador de pasos del perfil
+// Actualiza visualmente el indicador de pasos del perfil.
 function actualizarPasoPerfil() {
   const paso2 = document.getElementById("perfilPaso2");
   const paso3 = document.getElementById("perfilPaso3");
   if (!paso2 || !paso3) return;
 
-  // Detectar el formulario activo
+  // Detecta el formulario activo.
   const formActivo =
     document.querySelector("#perfilFormEstudiante:not(.oculto) form") ||
     document.querySelector("#perfilFormDocente:not(.oculto) form") ||
     document.querySelector("#perfilFormAdmin:not(.oculto) form");
   if (!formActivo) return;
 
-  // Calcular % de campos completados
+  // Calcula el porcentaje de campos completados.
   const inputs = formActivo.querySelectorAll("input, select");
   const total = inputs.length;
   let llenos = 0;

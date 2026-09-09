@@ -15,7 +15,7 @@ git pull
 git checkout -b tipo/descripcion-corta
 # ... trabajas ...
 
-cd backend && npm test        # debe pasar antes de subir
+npm test                      # debe pasar antes de subir
 
 git push -u origin tipo/descripcion-corta
 ```
@@ -109,7 +109,6 @@ Si vas a tocar autenticación, roles o permisos, dilo explícitamente en la desc
 Toda corrección de un error debería venir con una prueba que **falle sin el arreglo**. Así el error no vuelve en silencio.
 
 ```bash
-cd backend
 npm test                  # toda la suite
 npm run test:cobertura    # con informe de cobertura
 ```

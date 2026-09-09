@@ -7,7 +7,7 @@ var DEMO = {
   ID_COUNTER: "cp_demo.id_counter",
 };
 
-// ── Utilidades internas ─────────────────────────────────
+// Lee un valor de localStorage y lo parsea, o devuelve el valor por defecto
 function _leer(clave, defecto) {
   var raw = localStorage.getItem(clave);
   if (!raw) return defecto;
@@ -28,7 +28,7 @@ function _nuevoId() {
   return actual;
 }
 
-// Token falso — solo para demo, el backend real usa JWT firmado
+// Genera un token falso solo para el modo demo
 function _generarTokenDemo(usuario) {
   var payload = btoa(
     JSON.stringify({
@@ -49,17 +49,16 @@ function _decodificarTokenDemo(token) {
   }
 }
 
-// Simular un pequeño delay de red para que se vea realista
+// Simula un pequeño retraso de red
 function _esperar(ms) {
   return new Promise(function (resolve) {
     setTimeout(resolve, ms || 150);
   });
 }
 
-// ── Datos de ejemplo al iniciar demo por primera vez ────
+// Crea los datos de ejemplo la primera vez que se inicia el demo
 function _inicializarDatosDemo() {
-  // Marcador de versión: si los datos viejos existen pero son de una versión
-  // anterior, los limpiamos para usar la estructura enriquecida nueva.
+  // Limpia los datos guardados si son de una versión anterior
   var VERSION_DATOS = "v3";
   var versionActual = localStorage.getItem("cp_demo.version");
   if (versionActual !== VERSION_DATOS) {
@@ -78,16 +77,13 @@ function _inicializarDatosDemo() {
   var hace1d = new Date(Date.now() - 24 * 3600000).toISOString();
   var hace3d = new Date(Date.now() - 3 * 24 * 3600000).toISOString();
 
-  // IDs principales (para cuentas de login)
   var idDoc = _nuevoId();
   var idEst = _nuevoId();
   var idAdm = _nuevoId();
 
-  // Docentes adicionales
   var idDoc2 = _nuevoId();
   var idDoc3 = _nuevoId();
 
-  // Estudiantes adicionales (algunos en alerta)
   var idEst2 = _nuevoId();
   var idEst3 = _nuevoId();
   var idEst4 = _nuevoId();
@@ -199,7 +195,6 @@ function _inicializarDatosDemo() {
   _guardar(DEMO.USUARIOS, usuariosDemo);
 
   var perfiles = {};
-  // Docentes
   perfiles[idDoc] = {
     tipo: "docente",
     cedula: "10234567",
@@ -225,7 +220,7 @@ function _inicializarDatosDemo() {
     asignaturas: ["Psicología", "Comunicación", "Estadística"],
   };
 
-  // Estudiantes — con variedad de promedios (algunos en alerta)
+  // Define perfiles de estudiantes con distintos promedios, algunos en alerta
   perfiles[idEst] = {
     tipo: "estudiante",
     codigo: "2024001234",
@@ -243,7 +238,7 @@ function _inicializarDatosDemo() {
     programa: "Ingeniería de Software",
     semestre: "5",
     telefono: "3001111111",
-    promedio: 2.8, // EN ALERTA
+    promedio: 2.8,
     en_alerta: true,
   };
   perfiles[idEst3] = {
@@ -253,7 +248,7 @@ function _inicializarDatosDemo() {
     programa: "Administración de Empresas",
     semestre: "3",
     telefono: "3002222222",
-    promedio: 2.6, // EN ALERTA
+    promedio: 2.6,
     en_alerta: true,
   };
   perfiles[idEst4] = {
@@ -263,7 +258,7 @@ function _inicializarDatosDemo() {
     programa: "Psicología",
     semestre: "6",
     telefono: "3003333333",
-    promedio: 2.7, // EN ALERTA
+    promedio: 2.7,
     en_alerta: true,
   };
   perfiles[idEst5] = {
@@ -287,7 +282,6 @@ function _inicializarDatosDemo() {
     en_alerta: false,
   };
 
-  // Admin
   perfiles[idAdm] = {
     tipo: "admin",
     cedula: "71234567",
@@ -426,8 +420,7 @@ function _inicializarDatosDemo() {
   _guardar(DEMO.NOTIFICACIONES, notifs);
 }
 
-// ── Router del modo demo ────────────────────────────────
-// Recibe (ruta, metodo, cuerpo, tokenActual) y retorna la respuesta simulada
+// Enruta las peticiones del modo demo y retorna la respuesta simulada
 async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
   await _esperar(120);
 
@@ -439,9 +432,8 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
   var tutorias = _leer(DEMO.TUTORIAS, []);
   var notifs = _leer(DEMO.NOTIFICACIONES, []);
 
-  // ── AUTH ──────────────────────────────────────────────
+  // Rutas de autenticación
 
-  // POST /auth/registro
   if (ruta === "/auth/registro" && metodo === "POST") {
     var { nombres, apellidos, correo, contrasena, rol } = cuerpo;
     if (
@@ -470,7 +462,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     };
   }
 
-  // POST /auth/login
   if (ruta === "/auth/login" && metodo === "POST") {
     var { correo: c, contrasena: p } = cuerpo;
     var user = usuarios.find(function (u) {
@@ -492,14 +483,12 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     };
   }
 
-  // POST /auth/recuperar
   if (ruta === "/auth/recuperar" && metodo === "POST") {
     return {
       mensaje: "Si el correo existe, recibirás el enlace pronto. (Modo demo)",
     };
   }
 
-  // GET /auth/yo
   if (ruta === "/auth/yo" && metodo === "GET") {
     if (!payload) throw { status: 401, mensaje: "Sin sesión" };
     var yo = usuarios.find(function (u) {
@@ -515,9 +504,8 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     };
   }
 
-  // ── PERFIL ────────────────────────────────────────────
+  // Rutas de perfil
 
-  // GET /perfil
   if (ruta === "/perfil" && metodo === "GET") {
     if (!payload) throw { status: 401, mensaje: "Sin sesión" };
     var u = usuarios.find(function (u) {
@@ -536,7 +524,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     };
   }
 
-  // POST /perfil/estudiante
   if (ruta === "/perfil/estudiante" && metodo === "POST") {
     if (!payload) throw { status: 401, mensaje: "Sin sesión" };
     var { codigo, documento, programa, semestre, telefono, promedio } = cuerpo;
@@ -557,7 +544,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Perfil guardado" };
   }
 
-  // POST /perfil/docente
   if (ruta === "/perfil/docente" && metodo === "POST") {
     if (!payload) throw { status: 401, mensaje: "Sin sesión" };
     var {
@@ -580,7 +566,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Perfil guardado" };
   }
 
-  // POST /perfil/admin
   if (ruta === "/perfil/admin" && metodo === "POST") {
     if (!payload) throw { status: 401, mensaje: "Sin sesión" };
     var { cedula: ced, cargo, dependencia, telefono: telf } = cuerpo;
@@ -596,7 +581,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Perfil guardado" };
   }
 
-  // POST /perfil/foto
   if (ruta === "/perfil/foto" && metodo === "POST") {
     if (!payload) throw { status: 401, mensaje: "Sin sesión" };
     var todasFotos = _leer(DEMO.FOTOS, {});
@@ -607,9 +591,8 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Foto guardada" };
   }
 
-  // ── TUTORÍAS ──────────────────────────────────────────
+  // Rutas de tutorías
 
-  // GET /tutorias
   if (ruta === "/tutorias" && metodo === "GET") {
     if (!payload) throw { status: 401, mensaje: "Sin sesión" };
     var mis = [];
@@ -660,7 +643,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     });
   }
 
-  // POST /tutorias
   if (ruta === "/tutorias" && metodo === "POST") {
     if (!payload) throw { status: 401, mensaje: "Sin sesión" };
     var {
@@ -682,7 +664,7 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     if (!idEst2 || !idDoc2)
       throw { mensaje: "Falta el estudiante o el docente" };
 
-    // Verificar conflicto de horario
+    // Verifica si el docente ya tiene una tutoría a esa hora
     var conflicto = tutorias.find(function (t) {
       return (
         t.docente_id === idDoc2 &&
@@ -713,7 +695,7 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     tutorias.push(nuevaTut);
     _guardar(DEMO.TUTORIAS, tutorias);
 
-    // Notificaciones automáticas
+    // Crea notificaciones automáticas para el estudiante y el docente
     var nsT = _leer(DEMO.NOTIFICACIONES, []);
     nsT.push({
       id: _nuevoId(),
@@ -738,7 +720,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Tutoría programada", id: nuevaTut.id };
   }
 
-  // PATCH /tutorias/:id/cancelar
   var matchCancelar = ruta.match(/^\/tutorias\/(\d+)\/cancelar$/);
   if (matchCancelar && metodo === "PATCH") {
     if (!payload) throw { status: 401, mensaje: "Sin sesión" };
@@ -762,9 +743,8 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Tutoría cancelada" };
   }
 
-  // ── NOTIFICACIONES ────────────────────────────────────
+  // Rutas de notificaciones
 
-  // GET /notificaciones
   if (ruta === "/notificaciones" && metodo === "GET") {
     if (!payload) return [];
     var misNotifs = notifs
@@ -778,7 +758,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return misNotifs;
   }
 
-  // PATCH /notificaciones/:id/leer
   var matchLeer = ruta.match(/^\/notificaciones\/(\d+)\/leer$/);
   if (matchLeer && metodo === "PATCH") {
     var idN = parseInt(matchLeer[1]);
@@ -792,7 +771,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Notificación leída" };
   }
 
-  // PATCH /notificaciones/leer-todas
   if (ruta === "/notificaciones/leer-todas" && metodo === "PATCH") {
     if (!payload) return { mensaje: "ok" };
     notifs.forEach(function (n) {
@@ -802,9 +780,8 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Todas leídas" };
   }
 
-  // ── ADMIN ──────────────────────────────────────────────
+  // Rutas de administración
 
-  // GET /admin/usuarios
   if (ruta === "/admin/usuarios" && metodo === "GET") {
     if (!payload || payload.rol !== "admin") throw { status: 403, mensaje: "Sin permisos" };
     return usuarios.map(function(u) {
@@ -820,7 +797,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     });
   }
 
-  // POST /admin/usuarios (crear usuario)
   if (ruta === "/admin/usuarios" && metodo === "POST") {
     if (!payload || payload.rol !== "admin") throw { status: 403, mensaje: "Sin permisos" };
     var nuCorreo = cuerpo.correo;
@@ -831,7 +807,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Usuario creado", id: nuevoU.id };
   }
 
-  // PATCH /admin/usuarios/:id/estado
   var matchEstado = ruta.match(/^\/admin\/usuarios\/(\d+)\/estado$/);
   if (matchEstado && metodo === "PATCH") {
     if (!payload || payload.rol !== "admin") throw { status: 403, mensaje: "Sin permisos" };
@@ -841,14 +816,12 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Estado cambiado" };
   }
 
-  // GET /admin/estadisticas
   if (ruta === "/admin/estadisticas" && metodo === "GET") {
     var totalU = usuarios.filter(function(u) { return u.activo; }).length;
     var alertasN = Object.values(perfiles).filter(function(p) { return p.tipo === "estudiante" && parseFloat(p.promedio) < 3.0; }).length;
     return { total_usuarios: totalU, alertas_activas: alertasN, total_tutorias: tutorias.length, tutorias_este_mes: tutorias.length, perfiles_completos: Object.keys(perfiles).length, total_asignaciones: 0, tasa_recuperacion: "83%" };
   }
 
-  // POST /admin/notificaciones
   if (ruta === "/admin/notificaciones" && metodo === "POST") {
     if (!payload || payload.rol !== "admin") throw { status: 403, mensaje: "Sin permisos" };
     var cantN = Math.max(1, usuarios.filter(function(u) { return u.activo; }).length);
@@ -858,17 +831,14 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Enviado a " + cantN + " usuarios", cantidad: cantN };
   }
 
-  // GET /admin/notificaciones/historial
   if (ruta === "/admin/notificaciones/historial" && metodo === "GET") {
     return _leer("cp_demo.historial_notif", []);
   }
 
-  // GET /admin/asignaciones
   if (ruta === "/admin/asignaciones" && metodo === "GET") {
     return _leer("cp_demo.asignaciones", []);
   }
 
-  // POST /admin/asignaciones
   if (ruta === "/admin/asignaciones" && metodo === "POST") {
     var asigs = _leer("cp_demo.asignaciones", []);
     var estU = usuarios.find(function(u) { return u.id === cuerpo.estudiante_id; });
@@ -879,7 +849,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Asignación creada" };
   }
 
-  // DELETE /admin/asignaciones/:id
   var matchDelAsig = ruta.match(/^\/admin\/asignaciones\/(\d+)$/);
   if (matchDelAsig && metodo === "DELETE") {
     var asigsDel = _leer("cp_demo.asignaciones", []);
@@ -888,12 +857,10 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Eliminada" };
   }
 
-  // GET /admin/configuracion
   if (ruta === "/admin/configuracion" && metodo === "GET") {
     return _leer("cp_demo.config", { umbral_alerta: "3.0", max_estudiantes_tutor: "15", horas_cancelacion: "24", minutos_sesion: "120" });
   }
 
-  // POST /admin/configuracion
   if (ruta === "/admin/configuracion" && metodo === "POST") {
     var cfg = _leer("cp_demo.config", { umbral_alerta: "3.0", max_estudiantes_tutor: "15", horas_cancelacion: "24", minutos_sesion: "120" });
     cfg[cuerpo.clave] = String(cuerpo.valor);
@@ -901,18 +868,15 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Guardado" };
   }
 
-  // POST /admin/configuracion/reset
   if (ruta === "/admin/configuracion/reset" && metodo === "POST") {
     _guardar("cp_demo.config", { umbral_alerta: "3.0", max_estudiantes_tutor: "15", horas_cancelacion: "24", minutos_sesion: "120" });
     return { mensaje: "Reseteada" };
   }
 
-  // GET /admin/periodos
   if (ruta === "/admin/periodos" && metodo === "GET") {
     return _leer("cp_demo.periodos", [{ id: 1, nombre: "2026-1", inicio: "2026-02-03", fin: "2026-06-15", estado: "activo" }]);
   }
 
-  // POST /admin/periodos
   if (ruta === "/admin/periodos" && metodo === "POST") {
     var pers = _leer("cp_demo.periodos", [{ id: 1, nombre: "2026-1", inicio: "2026-02-03", fin: "2026-06-15", estado: "activo" }]);
     pers.push({ id: _nuevoId(), nombre: cuerpo.nombre, inicio: cuerpo.inicio, fin: cuerpo.fin, estado: "proximo" });
@@ -920,7 +884,6 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
     return { mensaje: "Período creado" };
   }
 
-  // GET /admin/auditoria
   if (ruta === "/admin/auditoria" && metodo === "GET") {
     return [];
   }
@@ -930,8 +893,7 @@ async function llamarAPIDemo(ruta, metodo, cuerpo, tokenActual) {
   return { mensaje: "ok" };
 }
 
-// ── Limpiar datos del modo demo ─────────────────────────
-// Llamar desde consola si quieres empezar de cero: limpiarDemo()
+// Elimina los datos del modo demo
 function limpiarDemo() {
   Object.values(DEMO).forEach(function (clave) {
     localStorage.removeItem(clave);

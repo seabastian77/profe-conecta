@@ -1,5 +1,4 @@
-// Manejo de sesión y autenticación en localStorage
-// Solo guarda lo que necesita el frontend — los datos reales están en el backend
+// Manejo de sesión y autenticación en localStorage.
 
 const authStorage = {
   // Token JWT del usuario autenticado

@@ -30,7 +30,7 @@ Fecha de la revisión: 1 de septiembre de 2026 · Commit base: `a3b04d2`
 | Capa | Archivo | Valor real |
 |---|---|---|
 | Frontend | `frontend/js/config.js:17` | `MINUTOS_INACTIVIDAD: 120` → **2 horas** |
-| Backend (JWT) | `backend/src/config/jwt.js:26` | `JWT_EXPIRES_IN \|\| '8h'` → **8 horas** |
+| Backend (JWT) | `src/config/jwt.js:26` | `JWT_EXPIRES_IN \|\| '8h'` → **8 horas** |
 
 **Severidad: alta.** El requisito pide 15 minutos y el sistema tolera 8 horas. En un equipo compartido de la universidad, la sesión de un estudiante sigue viva toda la jornada. Es el incumplimiento más grave de la lista porque afecta un control de seguridad, no una comodidad.
 
@@ -42,7 +42,7 @@ Fecha de la revisión: 1 de septiembre de 2026 · Commit base: `a3b04d2`
 
 > **RRN06:** "No es posible programar una tutoría para la fecha del mismo día; la fecha mínima de programación es el día siguiente." — Prioridad **Alta**
 
-**Lo que hace el código** (`backend/src/controllers/tutoriasController.js:29`):
+**Lo que hace el código** (`src/controllers/tutoriasController.js:29`):
 
 ```js
 if (new Date(`${fecha}T${hora}`) < new Date()) {
@@ -69,10 +69,10 @@ Dos formularios de la misma aplicación aplican reglas distintas. Este es el hal
 
 > **RF036:** "…cargar una foto de perfil desde el dispositivo con un límite de 2 MB." — Prioridad **Media**
 
-**Lo que hace el código:** no hay ninguna validación de tamaño. Se revisó `frontend/js/perfil.js` (sin comprobación de `size`) y `backend/src/controllers/perfilController.js` (acepta el base64 sin medirlo). El único tope es el del cuerpo de la petición:
+**Lo que hace el código:** no hay ninguna validación de tamaño. Se revisó `frontend/js/perfil.js` (sin comprobación de `size`) y `src/controllers/perfilController.js` (acepta el base64 sin medirlo). El único tope es el del cuerpo de la petición:
 
 ```js
-// backend/src/app.js:81
+// src/app.js:81
 app.use(express.json({ limit: '10mb' }));
 ```
 
@@ -88,7 +88,7 @@ Es decir, **el sistema acepta hasta 10 MB donde el requisito permite 2**. Como l
 
 > **RRN01:** "Un usuario no puede intentar iniciar sesión más de **3** veces de forma incorrecta; al superar este límite, su acceso se bloquea durante 5 minutos." — Prioridad **Alta**
 
-**Lo que hace el código** (`backend/src/controllers/authController.js:6`):
+**Lo que hace el código** (`src/controllers/authController.js:6`):
 
 ```js
 const MAX_INTENTOS = parseInt(process.env.MAX_INTENTOS || '5');

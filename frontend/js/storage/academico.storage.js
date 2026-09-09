@@ -1,5 +1,4 @@
-// Caché de datos académicos (tutorías, historial)
-// Se refresca al cargar cada panel
+// Caché de datos académicos (tutorías, historial), refrescada en cada panel.
 
 const academicoStorage = {
   getTutorias()         {

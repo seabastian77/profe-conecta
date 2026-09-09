@@ -1,0 +1,88 @@
+const { db } = require('../config/db');
+
+// Busca asignaturas por nombre o devuelve las primeras si no hay término.
+async function buscar(req, res) {
+  const { q } = req.query;
+  let asignaturas;
+  if (q && q.trim().length > 0) {
+    asignaturas = await db.prepare(
+      "SELECT id, nombre, area, programa FROM asignaturas WHERE nombre ILIKE ? ORDER BY area, programa, nombre LIMIT 20"
+    ).all('%' + q.trim() + '%');
+  } else {
+    asignaturas = await db.prepare(
+      "SELECT id, nombre, area, programa FROM asignaturas ORDER BY area, programa, nombre LIMIT 60"
+    ).all();
+  }
+  res.json(asignaturas);
+}
+
+// Devuelve todas las asignaturas ordenadas.
+async function listarTodas(req, res) {
+  const asignaturas = await db.prepare(
+    "SELECT id, nombre, area, programa FROM asignaturas ORDER BY area, programa, nombre"
+  ).all();
+  res.json(asignaturas);
+}
+
+// Agrupa las asignaturas por área y programa.
+async function listarPorAreas(req, res) {
+  const todas = await db.prepare(
+    "SELECT id, nombre, area, programa FROM asignaturas ORDER BY area, programa, nombre"
+  ).all();
+  const areasMap = {};
+  for (const a of todas) {
+    const area = a.area || 'General';
+    const prog = a.programa || 'General';
+    if (!areasMap[area]) areasMap[area] = {};
+    if (!areasMap[area][prog]) areasMap[area][prog] = [];
+    areasMap[area][prog].push({ id: a.id, nombre: a.nombre });
+  }
+  const resultado = Object.keys(areasMap).sort().map(area => ({
+    area,
+    programas: Object.keys(areasMap[area]).sort().map(prog => ({
+      programa: prog,
+      materias: areasMap[area][prog]
+    }))
+  }));
+  res.json(resultado);
+}
+
+// Devuelve la asignatura existente o la crea si no está.
+async function crearOBuscar(req, res) {
+  const { nombre, area, programa } = req.body;
+  if (!nombre || !nombre.trim()) {
+    return res.status(400).json({ error: 'El nombre de la materia es requerido' });
+  }
+  const nombreLimpio = nombre.trim();
+  const areaLimpia = (area || 'General').trim();
+  const programaLimpio = (programa || 'General').trim();
+
+  const existente = await db.prepare(
+    "SELECT id, nombre, area, programa FROM asignaturas WHERE lower(nombre) = lower(?)"
+  ).get(nombreLimpio);
+
+  if (existente) {
+    return res.json({ id: existente.id, nombre: existente.nombre, area: existente.area, programa: existente.programa, nueva: false });
+  }
+
+  const result = await db.prepare(
+    "INSERT INTO asignaturas (nombre, area, programa) VALUES (?,?,?) RETURNING id"
+  ).get(nombreLimpio, areaLimpia, programaLimpio);
+
+  res.status(201).json({ id: result.id, nombre: nombreLimpio, area: areaLimpia, programa: programaLimpio, nueva: true });
+}
+
+// Devuelve el id de la asignatura, creándola si no existe.
+async function obtenerOCrearId(nombre, area, programa) {
+  const nombreLimpio = nombre.trim();
+  const existente = await db.prepare(
+    "SELECT id FROM asignaturas WHERE lower(nombre) = lower(?)"
+  ).get(nombreLimpio);
+  if (existente) return existente.id;
+  const result = await db.prepare(
+    "INSERT INTO asignaturas (nombre, area, programa) VALUES (?,?,?) RETURNING id"
+  ).get(nombreLimpio, area || 'General', programa || 'General');
+  return result.id;
+}
+
+module.exports = { buscar, listarTodas, listarPorAreas, crearOBuscar, obtenerOCrearId };

@@ -1,10 +1,8 @@
 "use strict";
 
-// ═══════════════════════════════════════════════════════════
-// js/admin.js — Módulo Admin (100% conectado al backend)
-// ═══════════════════════════════════════════════════════════
+// Módulo de administración conectado al backend.
 
-// ── BUSCAR USUARIO (autocomplete inline) ─────────────────
+// Busca usuarios para el autocompletado inline.
 async function buscarUsuarioAdmin(campo, rol) {
   const input = document.getElementById(campo);
   const resultsEl = document.getElementById(campo + 'Results');
@@ -13,7 +11,7 @@ async function buscarUsuarioAdmin(campo, rol) {
 
   const q = input.value.trim();
 
-  // Si el campo fue limpiado, resetear ID oculto
+  // Resetea el ID oculto si el campo fue limpiado.
   if (q.length === 0) {
     resultsEl.innerHTML = '';
     if (hiddenEl) hiddenEl.value = '';
@@ -49,7 +47,7 @@ function seleccionarUsuario(campo, id, nombreMostrado) {
   if (results) results.innerHTML = '';
 }
 
-// ── CONFIRMAR PROGRAMAR ASESORÍA ─────────────────────────
+// Valida y envía la programación de una asesoría.
 async function confirmarProgramarClase() {
   const docente_id  = parseInt(document.getElementById('claseDocenteId')?.value || '0');
   const estudiante_id = parseInt(document.getElementById('claseEstudianteId')?.value || '0');
@@ -60,14 +58,14 @@ async function confirmarProgramarClase() {
   const modalidad  = document.getElementById('claseModalidad')?.value || 'Virtual';
   const observaciones = document.getElementById('claseObservaciones')?.value?.trim() || '';
 
-  // Validaciones claras
+  // Valida los campos del formulario.
   if (!docente_id)    { mostrarTostada('⚠️ Selecciona un docente de la lista', 'error'); document.getElementById('claseDocente')?.focus(); return; }
   if (!estudiante_id) { mostrarTostada('⚠️ Selecciona un estudiante de la lista', 'error'); document.getElementById('claseEstudiante')?.focus(); return; }
   if (!asignatura)    { mostrarTostada('⚠️ Selecciona la materia', 'error'); asignaturaEl?.focus(); return; }
   if (!fecha)         { mostrarTostada('⚠️ Selecciona la fecha', 'error'); document.getElementById('claseFecha')?.focus(); return; }
   if (!hora)          { mostrarTostada('⚠️ Selecciona la hora', 'error'); document.getElementById('claseHora')?.focus(); return; }
 
-  // Validar que la fecha no sea pasada
+  // Verifica que la fecha no sea pasada.
   if (new Date(fecha + 'T' + hora) < new Date()) {
     mostrarTostada('⚠️ La fecha y hora no pueden ser en el pasado', 'error');
     return;
@@ -91,7 +89,7 @@ async function confirmarProgramarClase() {
   }
 }
 
-// ── LIMPIAR FORMULARIO DE ASESORÍA ───────────────────────
+// Limpia el formulario de asesoría.
 function limpiarFormularioAsesoria() {
   ['claseDocente','claseEstudiante'].forEach(id => {
     const el = document.getElementById(id);
@@ -113,7 +111,7 @@ function limpiarFormularioAsesoria() {
   if (obs) obs.value = '';
 }
 
-// ── CARGAR SESIONES PROGRAMADAS ───────────────────────────
+// Carga las sesiones programadas en la tabla.
 async function cargarClasesProgramadas() {
   const tbody = document.getElementById('cuerpoClasesProgramadas');
   if (!tbody) return;
@@ -138,7 +136,7 @@ async function cargarClasesProgramadas() {
   }
 }
 
-// ── MODAL NUEVO USUARIO ─────────────────────────────────
+// Alterna el estado activo o inactivo de un usuario.
 async function toggleEstadoUsuario(boton) {
   if (!boton) return;
   var fila = boton.closest("tr");
@@ -171,9 +169,7 @@ async function toggleEstadoUsuario(boton) {
   }
 }
 
-// ── RF057 — EDITAR USUARIO ──────────────────────────────
-// ── EDITAR USUARIO ───────────────────────────────────────
-
+// Reinicia y aplica una animación a un botón.
 function animarBtn(btn, clase) {
   btn.classList.remove(clase);
   void btn.offsetWidth; // reflow
@@ -196,7 +192,7 @@ async function animarYEliminar(btn) {
   var nombre = btn.getAttribute('data-nombre');
   animarBtn(btn, 'btn-animar-eliminar');
 
-  // Confirmación visual antes de eliminar
+  // Pide confirmación antes de eliminar.
   setTimeout(async function() {
     if (!confirm('⚠️ ¿Eliminar permanentemente a ' + nombre + '?\n\nEsta acción NO se puede deshacer.')) return;
 
@@ -206,7 +202,7 @@ async function animarYEliminar(btn) {
       var resp = await llamarAPI('/admin/usuarios/' + id, 'DELETE');
       animarBtn(btn, 'btn-animar-ok');
       mostrarTostada('🗑️ ' + (resp.mensaje || 'Usuario eliminado'), 'exito');
-      // Eliminar la fila con animación
+      // Elimina la fila con animación.
       var fila = btn.closest('tr');
       if (fila) {
         fila.style.transition = 'opacity 0.4s, transform 0.4s';
@@ -275,7 +271,7 @@ async function guardarEdicionUsuario(id) {
     var resp = await llamarAPI("/admin/usuarios/" + id, "PUT", datos);
     document.getElementById("modalEditarUsuario").remove();
     mostrarTostada("✅ Guardado correctamente", "exito");
-    // Recarga completa para garantizar datos frescos
+    // Recarga la página para mostrar datos frescos.
     setTimeout(function() { window.location.reload(); }, 1200);
   } catch(err) {
     var msg = err.error || err.mensaje || err.message || JSON.stringify(err);
@@ -284,7 +280,7 @@ async function guardarEdicionUsuario(id) {
   }
 }
 
-// ── MODAL NUEVO USUARIO ─────────────────────────────────
+// Abre el modal para crear un nuevo usuario.
 function abrirModalNuevoUsuario() {
   var existente = document.getElementById("modalNuevoUsuario");
   if (existente) { existente.classList.remove("oculto"); return; }
@@ -312,13 +308,13 @@ async function guardarNuevoUsuario() {
     await llamarAPI("/admin/usuarios", "POST", { nombres: nombres, apellidos: apellidos, correo: correo, rol: rol, contrasena: contrasena });
     cerrarModalNuevoUsuario();
     mostrarTostada("✓ Usuario " + nombres + " creado correctamente", "exito");
-    cargarTablaUsuarios(); // Recargar tabla con datos frescos
+    cargarTablaUsuarios();
   } catch (err) {
     mostrarTostada(err.mensaje || "Error al crear usuario", "error");
   }
 }
 
-// ── RF051 + RF052 — ENVIAR NOTIFICACIÓN ─────────────────
+// Envía una notificación a los destinatarios seleccionados.
 async function enviarNotificacion() {
   var destEl = document.getElementById("notifDestinatario");
   var tipoEl = document.getElementById("notifTipo");
@@ -341,13 +337,13 @@ async function enviarNotificacion() {
     asuntoEl.value = "";
     mensajeEl.value = "";
     mostrarTostada("📤 " + resp.mensaje, "exito");
-    cargarHistorialNotificaciones(); // Recargar historial
+    cargarHistorialNotificaciones();
   } catch (err) {
     mostrarTostada(err.mensaje || "Error al enviar", "error");
   }
 }
 
-// ── Cargar historial de notificaciones desde el API ──────
+// Carga el historial de notificaciones desde el API.
 async function cargarHistorialNotificaciones() {
   try {
     var historial = await llamarAPI("/admin/notificaciones/historial", "GET");
@@ -362,7 +358,7 @@ async function cargarHistorialNotificaciones() {
   } catch (err) { console.warn("Error cargando historial:", err); }
 }
 
-// ── RF053 — CREAR ASIGNACIÓN ────────────────────────────
+// Crea una asignación entre estudiante y tutor.
 async function crearAsignacion() {
   var selEst = document.getElementById("asigEstudiante");
   var selDoc = document.getElementById("asigDocente");
@@ -377,13 +373,13 @@ async function crearAsignacion() {
     selEst.value = "";
     selDoc.value = "";
     mostrarTostada("🔗 Asignación creada", "exito");
-    cargarTablaAsignaciones(); // Recargar
+    cargarTablaAsignaciones();
   } catch (err) {
     mostrarTostada(err.mensaje || "Error al crear asignación", "error");
   }
 }
 
-// ── RF054 — ELIMINAR ASIGNACIÓN ─────────────────────────
+// Elimina una asignación existente.
 async function eliminarAsignacion(boton) {
   if (!boton) return;
   var fila = boton.closest("tr");
@@ -404,7 +400,7 @@ async function eliminarAsignacion(boton) {
   }
 }
 
-// ── CARGAR TABLA USUARIOS DESDE API ─────────────────────
+// Carga la tabla de usuarios desde el API.
 async function cargarTablaUsuarios() {
   try {
     var usuarios = await llamarAPI("/admin/usuarios", "GET");
@@ -447,7 +443,7 @@ async function cargarTablaUsuarios() {
   }
 }
 
-// ── CARGAR USUARIOS RECIENTES (panel admin) ─────────────
+// Carga los usuarios recientes en el panel admin.
 async function cargarUsuariosRecientes() {
   try {
     var usuarios = await llamarAPI("/admin/usuarios", "GET");
@@ -462,7 +458,7 @@ async function cargarUsuariosRecientes() {
   } catch (err) { console.warn("Error:", err); }
 }
 
-// ── CARGAR SELECTS DE ASIGNACIÓN ────────────────────────
+// Carga los selects de estudiantes y tutores.
 async function cargarSelectsAsignacion() {
   try {
     var usuarios = await llamarAPI("/admin/usuarios", "GET");
@@ -479,7 +475,7 @@ async function cargarSelectsAsignacion() {
   } catch (err) { console.warn("Error:", err); }
 }
 
-// ── CARGAR TABLA DE ASIGNACIONES ────────────────────────
+// Carga la tabla de asignaciones.
 async function cargarTablaAsignaciones() {
   try {
     var asignaciones = await llamarAPI("/admin/asignaciones", "GET");
@@ -497,7 +493,7 @@ async function cargarTablaAsignaciones() {
   } catch (err) { console.warn("Error cargando asignaciones:", err); }
 }
 
-// ── FILTRAR AUDITORÍA ───────────────────────────────────
+// Filtra las filas de auditoría por tipo y fecha.
 function filtrarAuditoria() {
   var tipoFiltro = (document.getElementById("filtroAuditTipo") || {}).value || "";
   var fechaFiltro = (document.getElementById("filtroAuditFecha") || {}).value || "";
@@ -516,7 +512,7 @@ function filtrarAuditoria() {
   });
 }
 
-// ── CARGAR AUDITORÍA DESDE EL API ───────────────────────
+// Carga los eventos de auditoría desde el API.
 async function cargarAuditoria() {
   try {
     var eventos = await llamarAPI("/admin/auditoria", "GET");
@@ -526,7 +522,7 @@ async function cargarAuditoria() {
       tbody.innerHTML = '<tr><td colspan="6" class="sin-datos">Sin eventos registrados aún</td></tr>';
       return;
     }
-    // Mapear eventos a iconos
+    // Mapea los eventos a iconos.
     var iconos = { LOGIN_EXITOSO: "🔑", LOGIN_FALLIDO: "❌", LOGOUT: "🚪", CREAR_USUARIO: "👤", ACTIVAR_USUARIO: "🟢", DESACTIVAR_USUARIO: "🔴", NOTIFICACION: "📤", ASIGNACION_CREADA: "🔗", ASIGNACION_ELIMINADA: "🗑️", CONFIG: "⚙️", CONFIG_RESET: "🔄", PERIODO_CREADO: "📅", PERIODO_CERRADO: "🔒" };
     tbody.innerHTML = eventos.map(function(e) {
       var f = new Date(e.creado_en);
@@ -538,7 +534,7 @@ async function cargarAuditoria() {
   } catch (err) { console.warn("Error cargando auditoría:", err); }
 }
 
-// ── CARGAR CONFIGURACIÓN DESDE EL API ───────────────────
+// Carga la configuración desde el API.
 async function cargarConfiguracion() {
   try {
     var cfg = await llamarAPI("/admin/configuracion", "GET");
@@ -553,7 +549,7 @@ async function cargarConfiguracion() {
   } catch (err) { console.warn("Error cargando config:", err); }
 }
 
-// ── CARGAR PERÍODOS DESDE EL API ────────────────────────
+// Carga los períodos académicos desde el API.
 async function cargarPeriodos() {
   try {
     var periodos = await llamarAPI("/admin/periodos", "GET");
@@ -562,7 +558,7 @@ async function cargarPeriodos() {
     );
     if (!contenedor || periodos.length === 0) return;
 
-    // Guardar el botón "Crear Nuevo Período" para no borrarlo
+    // Conserva el botón de crear período para no borrarlo.
     var botonCrear = contenedor.querySelector("button");
     contenedor.innerHTML = "";
 

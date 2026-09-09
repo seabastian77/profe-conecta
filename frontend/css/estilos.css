@@ -193,7 +193,7 @@ textarea  { resize: vertical; }
   .zona-principal { margin-left: 0; width: 100%; }
 }
 
-/* Barra superior fija en la parte de arriba del contenido */
+/* Barra superior */
 .barra-superior {
   position: sticky; top: 0; z-index: 200;
   height: var(--barra-superior-alto);
@@ -242,7 +242,7 @@ textarea  { resize: vertical; }
 }
 .bs-campana__badge.oculto { display: none !important; }
 
-/* ── Panel de notificaciones (dropdown) ── */
+/* Panel de notificaciones (dropdown) */
 .notif-panel {
   position: absolute; top: calc(var(--barra-superior-alto) + 6px); right: 18px;
   width: 340px; max-height: 480px;
@@ -291,7 +291,7 @@ textarea  { resize: vertical; }
 }
 .notif-vacia__icono { font-size: 2.5rem; margin-bottom: 10px; }
 
-/* ── Toggle de modo oscuro en la barra lateral ── */
+/* Calendario del panel */
 
 
 .calendario-cabecera {
@@ -353,7 +353,7 @@ textarea  { resize: vertical; }
 .calendario-evento__meta  { font-size: 11px; color: var(--gris); }
 .calendario-evento__modo  { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--teal-cl); color: var(--teal); }
 
-/* ── Gráfica de rendimiento académico ── */
+/* Gráfica de rendimiento académico */
 .grafica-wrap {
   background: var(--blanco); border: 1px solid var(--borde);
   border-radius: 14px; padding: 20px; margin-bottom: 24px;
@@ -419,12 +419,9 @@ textarea  { resize: vertical; }
 /* 8. LOGIN — LAYOUT DE DOS COLUMNAS */
 .diseno-acceso {
   display: grid;
-  /* Dos columnas: izquierda un poco más ancha que la derecha */
   grid-template-columns: 1.1fr 1fr;
   min-height: calc(100vh - var(--barra-superior-alto));
 }
-/* Con barra lateral de 265px, necesitamos ~1100px totales para dos columnas.
-   Si la ventana es menor, el panel izquierdo se oculta y la grilla pasa a 1 col. */
 @media (max-width: 1100px) {
   .diseno-acceso { grid-template-columns: 1fr; }
 }
@@ -437,9 +434,6 @@ textarea  { resize: vertical; }
   display: flex; flex-direction: column; justify-content: space-between;
   position: relative; overflow: hidden;
 }
-/* En pantallas medianas (sidebar + contenido), este panel se oculta para dar espacio al formulario */
-/* En móvil el panel NO se oculta: se compacta. Ver el bloque
-   "Panel de acceso compacto" más abajo. */
 
 /* Blobs decorativos: círculos borrosos de fondo */
 .acceso-izquierda__blob1 {
@@ -457,8 +451,6 @@ textarea  { resize: vertical; }
 
 /* La "ó" gigante de fondo — elemento gráfico del manual de identidad */
 .acceso-izquierda__deco-o {
-  /* La "ó" de Amigó como marca de agua. En serif —la misma familia del
-     titular— se lee como parte de la identidad y no como un adorno suelto. */
   position: absolute; right: -18px; bottom: -110px;
   font-size: 380px; font-family: var(--f-titulo); font-weight: 400;
   color: rgba(255,255,255,0.055); line-height: 1;
@@ -508,8 +500,6 @@ textarea  { resize: vertical; }
 }
 .acceso-izquierda__titulo {
   font-family: var(--f-titulo);
-  /* Antes 2.5rem fijo. Una escala fluida da contraste real frente al párrafo
-     y evita que en pantallas anchas el titular se vea pequeño. */
   font-size: clamp(2.4rem, 3.4vw, 3.4rem);
   color: var(--blanco);
   line-height: 1.02;
@@ -517,7 +507,6 @@ textarea  { resize: vertical; }
   text-wrap: balance;
   margin-bottom: 14px;
 }
-/* El naranja aparece UNA sola vez en todo el panel, en la palabra que importa */
 .acceso-izquierda__titulo em { font-style: italic; color: var(--naranja); }
 .acceso-izquierda__descripcion {
   font-size: 14px;
@@ -528,9 +517,6 @@ textarea  { resize: vertical; }
 
 /* Tres estadísticas en fila */
 .acceso-estadisticas {
-  /* Antes iban dentro de una caja con fondo y borde, lo que las convertía en
-     un bloque más compitiendo con la tarjeta de login. Ahora se apoyan sobre
-     una línea: siguen agrupadas, pero dejan de gritar. */
   display: flex;
   align-items: flex-end;
   gap: 28px;
@@ -596,7 +582,6 @@ textarea  { resize: vertical; }
   border: 1px solid var(--borde);
   padding: 28px 28px 22px;
   box-shadow: var(--sombra-card);
-  /* Animación de entrada cuando aparece la tarjeta */
   animation: subir 0.4s ease;
 }
 @keyframes subir {
@@ -699,12 +684,10 @@ textarea  { resize: vertical; }
   background: var(--blanco); outline: none;
   transition: border-color 0.18s, box-shadow 0.18s;
 }
-/* Cuando el usuario hace clic en el campo, se resalta con teal */
 .campo__entrada:focus {
   border-color: var(--teal);
   box-shadow: 0 0 0 3px rgba(0,123,153,0.10);
 }
-/* Si la validación falla, se pone rojo */
 .campo__entrada.invalido {
   border-color: #dc2626;
   box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
@@ -750,21 +733,18 @@ textarea  { resize: vertical; }
 .grilla-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 480px) { .grilla-dos { grid-template-columns: 1fr; } }
 
-/* Checkbox "Recordarme" con diseño personalizado (reemplaza el checkbox feo del navegador) */
+/* Checkbox "Recordarme" personalizado */
 .recordar {
   display: flex; align-items: center; gap: 9px;
   font-size: 12.5px; color: var(--texto); cursor: pointer; margin-bottom: 14px;
 }
-/* Ocultamos el checkbox nativo del navegador */
 .recordar__input { position: absolute; opacity: 0; width: 0; height: 0; }
-/* Caja visual del checkbox personalizado */
 .recordar__caja {
   width: 16px; height: 16px; flex-shrink: 0;
   border: 1.5px solid var(--borde); border-radius: 4px;
   background: var(--blanco); display: flex; align-items: center; justify-content: center;
   transition: border-color 0.15s, background 0.15s;
 }
-/* Cuando el checkbox está marcado, la caja se vuelve teal con una marca ✓ */
 .recordar__input:checked + .recordar__caja {
   background: var(--teal); border-color: var(--teal);
 }
@@ -782,7 +762,6 @@ textarea  { resize: vertical; }
   border: 1.5px solid var(--borde); border-radius: 99px;
   font-size: 12px; color: var(--gris); cursor: pointer; transition: all 0.15s;
 }
-/* :has() detecta si el checkbox adentro está marcado */
 .chip:has(input:checked) { background: var(--teal-cl); border-color: var(--teal); color: var(--teal); }
 .chip input[type="checkbox"] { accent-color: var(--teal); }
 
@@ -826,7 +805,7 @@ textarea  { resize: vertical; }
 .texto-naranja { color: var(--naranja); font-weight: 700; text-decoration: none; }
 .texto-naranja:hover { text-decoration: underline; }
 
-/* Botón secundario (menos importante) */
+/* Botón secundario */
 .btn-sec { padding: 6px 12px; border: none; border-radius: 6px; background: var(--teal-cl); color: var(--teal); font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
 .btn-sec:hover { background: #c2e8f2; }
 
@@ -847,7 +826,7 @@ textarea  { resize: vertical; }
 
 /* 14. PANELES (estudiante, docente, admin) */
 
-/* Banner banner: el bloque verde grande de bienvenida */
+/* Banner de bienvenida */
 .banner { background: linear-gradient(135deg, #004d61 0%, var(--teal-osc) 45%, var(--teal) 100%); padding: 40px 30px; position: relative; overflow: hidden; min-height: 210px; display: flex; align-items: center; }
 .banner__circulo-deco { position: absolute; right: -60px; top: -60px; width: 320px; height: 320px; background: var(--naranja); opacity: 0.08; border-radius: 50%; pointer-events: none; }
 .banner__letra-deco  { position: absolute; right: 22px; bottom: -70px; font-size: 280px; font-weight: 900; font-family: var(--f-cond); color: rgba(255,255,255,0.04); pointer-events: none; user-select: none; }
@@ -993,7 +972,6 @@ textarea  { resize: vertical; }
   margin-top: 5px;
 }
 
-/* La barra de fondo gris que se llena de color */
 .fortaleza-barra {
   height: 5px;
   background: #e0e0e0;
@@ -1002,7 +980,6 @@ textarea  { resize: vertical; }
   margin-bottom: 4px;
 }
 
-/* El relleno de color que crece según la fortaleza */
 .fortaleza-relleno {
   height: 100%;
   border-radius: 99px;
@@ -1010,13 +987,11 @@ textarea  { resize: vertical; }
   transition: width 0.3s ease, background 0.3s ease;
 }
 
-/* Texto que dice "Débil", "Media" o "Fuerte" */
 .fortaleza-texto {
   font-size: 11px;
   font-weight: 600;
 }
 
-/* Los 3 estados de color */
 .fortaleza-relleno.debil   { width: 33%;  background: #e53935; }
 .fortaleza-relleno.media   { width: 66%;  background: var(--naranja); }
 .fortaleza-relleno.fuerte  { width: 100%; background: #1e8a5e; }
@@ -1080,16 +1055,15 @@ textarea  { resize: vertical; }
 /* 22. PANTALLA SPLASH (pantalla de bienvenida al cargar la app) */
 .splash {
   position: fixed;
-  inset: 0;                          /* ocupa toda la pantalla */
+  inset: 0;
   background: linear-gradient(145deg, #005e76 0%, #007b99 55%, #009bbf 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;                     /* encima de todo */
+  z-index: 9999;
   transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
-/* Cuando el JS agrega "oculto", se desvanece suavemente */
 .splash.oculto {
   opacity: 0;
   visibility: hidden;
@@ -1240,7 +1214,6 @@ textarea  { resize: vertical; }
 
 /* Celulares (hasta 768px) */
 @media (max-width: 768px) {
-  /* La barra lateral se convierte en drawer deslizante */
   .barra-lateral {
     position: fixed;
     left: -100%;
@@ -1248,14 +1221,12 @@ textarea  { resize: vertical; }
     height: 100%;
     z-index: 400;
     transition: left 0.28s ease;
-    width: min(280px, 85vw);          /* nunca más ancho que el 85% de la pantalla */
+    width: min(280px, 85vw);
   }
   .barra-lateral.abierta { left: 0; }
 
-  /* Mostrar botón hamburguesa */
   .barra-superior__menu-btn { display: flex; }
 
-  /* La zona principal ocupa todo el ancho */
   .zona-principal {
     margin-left: 0 !important;
     width: 100%;
@@ -1329,7 +1300,6 @@ textarea  { resize: vertical; }
   .franja-estadisticas { grid-template-columns: 1fr; }
   .grilla-admin        { grid-template-columns: 1fr; }
   .tarjeta-acceso      { margin: 4px; padding: 14px 12px; }
-  /* En pantallas muy pequeñas: mantener en fila pero más compacto */
   .selector-rol,
   .tarjeta-selector-rol { grid-template-columns: repeat(3, 1fr); gap: 5px; }
   .tarjeta-rol          { padding: 8px 4px; }
@@ -1449,10 +1419,6 @@ textarea  { resize: vertical; }
   background: #fff;
   border: 1px solid var(--borde);
   border-radius: 12px;
-  /* overflow-x: auto y no hidden. .tabla-datos declara min-width: 480px, así
-     que en un teléfono de 360px la tabla no cabe. Con hidden las columnas de
-     la derecha quedaban recortadas y no había forma de verlas: los datos
-     existían pero eran inalcanzables. Ahora la tabla se desplaza. */
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -1461,7 +1427,7 @@ textarea  { resize: vertical; }
 
 .tabla-desplazable { overflow-x: auto; }
 
-/* Botón primario — AÑADIDO (faltaba en el CSS original) */
+/* Botón primario */
 .btn-primario {
   background: linear-gradient(135deg, var(--teal), var(--teal-oscuro, #005f77));
   color: #fff;
@@ -1644,10 +1610,10 @@ textarea  { resize: vertical; }
 
 /* 25. PÁGINA MI PERFIL — DISEÑO COMPLETO POR ROL */
 
-/* ── Tarjeta principal del perfil ── */
+/* Tarjeta principal del perfil */
 .perfil-pagina          { max-width: 900px; margin: 0 auto; padding: 0 0 40px; }
 
-/* ── Foto de portada ── */
+/* Foto de portada */
 .perfil-portada {
   position: relative;
   width: 100%;
@@ -1679,7 +1645,7 @@ textarea  { resize: vertical; }
 }
 .perfil-portada__boton:hover { background: rgba(0,0,0,0.65); }
 
-/* Hero queda pegado debajo de la portada */
+/* Hero del perfil */
 .perfil-hero {
   background: linear-gradient(135deg, #004d61, var(--teal));
   border-radius: 0 0 16px 16px;
@@ -1692,7 +1658,7 @@ textarea  { resize: vertical; }
   position: relative;
 }
 
-/* ── Foto de perfil ── */
+/* Foto de perfil */
 .perfil-foto-wrap       { position: relative; flex-shrink: 0; }
 .perfil-foto {
   width: 100px; height: 100px;
@@ -1722,7 +1688,7 @@ textarea  { resize: vertical; }
 .perfil-foto-boton:hover { transform: scale(1.15); }
 .perfil-foto-input       { display: none; }
 
-/* ── Info del hero ── */
+/* Info del hero */
 .perfil-hero__info      { flex: 1; min-width: 0; }
 .perfil-hero__nombre    { font-family: var(--f-cond); font-size: 1.6rem; font-weight: 900; color: var(--blanco); margin-bottom: 4px; }
 .perfil-hero__correo    { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px; }
@@ -1734,7 +1700,7 @@ textarea  { resize: vertical; }
 }
 .perfil-badge--naranja  { background: rgba(243,146,0,0.35); border-color: var(--naranja); }
 
-/* ── Secciones de datos ── */
+/* Secciones de datos */
 .perfil-secciones       { display: flex; flex-direction: column; gap: 20px; }
 
 .perfil-seccion {
@@ -1753,7 +1719,7 @@ textarea  { resize: vertical; }
 .perfil-seccion__titulo { font-weight: 700; font-size: 13.5px; color: var(--texto); }
 .perfil-seccion__cuerpo { padding: 18px 20px; }
 
-/* ── Grid de campos del perfil ── */
+/* Grid de campos del perfil */
 .perfil-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1768,7 +1734,7 @@ textarea  { resize: vertical; }
 .perfil-campo__valor    { font-size: 14px; color: var(--texto); font-weight: 500; }
 .perfil-campo__valor--vacio { color: var(--gris); font-style: italic; }
 
-/* ── Chips de asignaturas ── */
+/* Chips de asignaturas */
 .perfil-chips           { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .perfil-chip {
   background: var(--teal-cl); color: var(--teal);
@@ -1776,13 +1742,13 @@ textarea  { resize: vertical; }
   font-size: 11.5px; font-weight: 600;
 }
 
-/* ── Barra de progreso ── */
+/* Barra de progreso */
 .perfil-progreso-wrap   { margin-top: 6px; }
 .perfil-progreso-barra  { height: 8px; background: var(--borde); border-radius: 4px; overflow: hidden; }
 .perfil-progreso-relleno{ height: 100%; border-radius: 4px; background: var(--teal); transition: width 0.4s; }
 .perfil-progreso-texto  { font-size: 11px; color: var(--gris); margin-top: 4px; }
 
-/* ── Botón editar perfil ── */
+/* Botón editar perfil */
 .perfil-btn-editar {
   display: flex; align-items: center; gap: 6px;
   background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.4);
@@ -1792,7 +1758,7 @@ textarea  { resize: vertical; }
 }
 .perfil-btn-editar:hover { background: rgba(255,255,255,0.25); }
 
-/* ── Alerta de promedio bajo en perfil ── */
+/* Alerta de promedio bajo en perfil */
 .perfil-alerta-bajo {
   background: #fff8f0; border: 1.5px solid var(--naranja);
   border-radius: 10px; padding: 12px 16px;
@@ -1800,7 +1766,7 @@ textarea  { resize: vertical; }
   font-size: 12.5px; color: #8a4a00;
 }
 
-/* ── Sin perfil completado ── */
+/* Sin perfil completado */
 .perfil-vacio {
   text-align: center; padding: 60px 24px; color: var(--gris);
 }
@@ -1816,7 +1782,7 @@ textarea  { resize: vertical; }
 }
 
 
-/* ── Tarjeta de tutoría ──────────────────────────────── */
+/* Tarjeta de tutoría */
 .tarjeta-tutoria {
   background: var(--blanco);
   border-radius: var(--radio);
@@ -1850,7 +1816,7 @@ textarea  { resize: vertical; }
 }
 .tarjeta-tutoria__btn:hover { background: #fef2f2; }
 
-/* ── Perfil datos ────────────────────────────────────── */
+/* Perfil datos */
 .perfil-datos-grilla {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 14px; margin-top: 12px;
@@ -1861,18 +1827,16 @@ textarea  { resize: vertical; }
   letter-spacing: 0.5px; color: var(--gris);
 }
 
-/* ── Sin datos ───────────────────────────────────────── */
+/* Sin datos */
 .sin-datos {
   text-align: center; color: var(--gris); font-size: 14px;
   padding: 32px; grid-column: 1 / -1;
 }
 
-/* ── Campo inválido ──────────────────────────────────── */
+/* Campo inválido */
 .campo--invalido { border-color: #ef4444 !important; }
 
-/* ═══════════════════════════════════════════════════════════
-   MODAL "NUEVO USUARIO" (admin.js)
-   ═══════════════════════════════════════════════════════════ */
+/* Modal "Nuevo usuario" */
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(0, 30, 50, 0.55);
@@ -1921,11 +1885,9 @@ textarea  { resize: vertical; }
   border-radius: 0 0 14px 14px;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   MEJORAS DE BOTONES E INPUTS (fix de estilos rotos)
-   ═══════════════════════════════════════════════════════════ */
+/* Botones e inputs */
 
-/* Inputs de tipo date/time — se veían como cuadros vacíos */
+/* Inputs de fecha y hora */
 input[type="date"].campo__entrada,
 input[type="time"].campo__entrada {
   font-family: inherit;
@@ -1966,9 +1928,7 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
 .btn-accion--toggle:hover { background: #fee2e2; }
 .btn-accion--eliminar:hover { background: #fee2e2; }
 
-/* ═══════════════════════════════════════════════════════════
-   MODAL GENÉRICO (para Crear Período, Exportar, etc.)
-   ═══════════════════════════════════════════════════════════ */
+/* Modal genérico (Crear Período, Exportar, etc.) */
 .modal-info-overlay {
   position: fixed; inset: 0;
   background: rgba(0, 30, 50, 0.55);
@@ -2000,9 +1960,7 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
   border-radius: 0 0 14px 14px;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   FIXES DE CLASES HUÉRFANAS
-   ═══════════════════════════════════════════════════════════ */
+/* Clases huérfanas */
 
 /* Contenedor del calendario visual */
 .calendario-wrap {
@@ -2023,11 +1981,9 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
 /* Icono naranja en tarjetas de estadísticas */
 .tarjeta-estadistica__icono.naranja { background: var(--naranja-cl); }
 
-/* ═══════════════════════════════════════════════════════════
-   FIXES DE CLASES HUÉRFANAS DETECTADAS EN AUDITORÍA
-   ═══════════════════════════════════════════════════════════ */
+/* Clases huérfanas (auditoría) */
 
-/* .calendario-wrap — contenedor de calendario */
+/* Contenedor de calendario */
 .calendario-wrap {
   background: #fff;
   border: 1px solid var(--borde);
@@ -2144,22 +2100,20 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
 .calendario-evento__meta { color: var(--gris); font-size: 11px; margin-top: 2px; }
 .calendario-evento__modo { color: var(--teal); }
 
-/* .config-item__info — info column in config items */
+/* Info del ítem de configuración */
 .config-item__info { flex: 1; }
 
-/* .tarjeta-estadistica__icono.naranja — variante naranja del ícono */
+/* Variante naranja del ícono */
 .tarjeta-estadistica__icono.naranja {
   background: var(--naranja-claro, #fff4e5) !important;
   color: var(--naranja, #f39200) !important;
 }
 
-/* .btn-accion--activar — variante verde */
+/* Botón activar (verde) */
 .btn-accion--activar { background: #d1fae5 !important; }
 .btn-accion--activar:hover { background: #a7f3d0 !important; }
 
-/* ═══════════════════════════════════════════════════════════
-   MEJORAS VISUALES FINALES
-   ═══════════════════════════════════════════════════════════ */
+/* Mejoras visuales finales */
 
 /* Fondo sutil con gradiente cuando el panel izquierdo se oculta */
 @media (max-width: 1100px) {
@@ -2168,7 +2122,7 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
   }
 }
 
-/* Mejorar la tarjeta de acceso con más sombra y suavidad */
+/* Tarjeta de acceso: sombra */
 .tarjeta-acceso {
   box-shadow: 0 4px 24px rgba(0, 30, 50, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
 }
@@ -2176,7 +2130,7 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
   box-shadow: 0 8px 32px rgba(0, 30, 50, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-/* Mejorar selector de rol en login */
+/* Selector de rol */
 .selector-rol {
   transition: all 0.2s;
 }
@@ -2191,7 +2145,7 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
   box-shadow: 0 4px 16px rgba(0, 123, 153, 0.2);
 }
 
-/* Submit button — efecto hover suave */
+/* Botón submit: hover */
 .btn-submit {
   transition: all 0.2s ease;
 }
@@ -2204,7 +2158,7 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
   transform: translateY(0);
 }
 
-/* Tablas — mejorar filas con hover */
+/* Tablas: hover de filas */
 .tabla-datos tbody tr {
   transition: background 0.15s;
 }
@@ -2212,13 +2166,13 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
   background: #f0f9fb;
 }
 
-/* Insignias — mejorar apariencia */
+/* Insignias */
 .insignia {
   font-weight: 700;
   letter-spacing: 0.2px;
 }
 
-/* Tarjetas de tutoría — sombra y hover */
+/* Tarjetas de tutoría */
 .tarjeta-tutoria {
   transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -2227,7 +2181,7 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Tarjetas de admin — hover mejorado */
+/* Tarjetas de admin */
 .tarjeta-admin {
   transition: all 0.2s ease;
 }
@@ -2236,7 +2190,7 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
 }
 
-/* Perfil hero — mejorar foto */
+/* Foto del perfil hero */
 .perfil-foto-wrap {
   transition: transform 0.2s;
 }
@@ -2244,7 +2198,7 @@ input[type="time"].campo__entrada::-webkit-calendar-picker-indicator {
   transform: scale(1.05);
 }
 
-/* Splash screen — transición más suave al desaparecer */
+/* Splash: transición de salida */
 .splash.oculto {
   opacity: 0;
   pointer-events: none;
@@ -2279,7 +2233,7 @@ html { scroll-behavior: smooth; }
 .busqueda-item__nombre { font-weight: 600; color: #1f2937; }
 .busqueda-item__detalle { font-size: 11px; color: #007b99; }
 
-/* ── Select con búsqueda integrada (facultad docente) ── */
+/* Select con búsqueda integrada */
 .select-buscable { position: relative; }
 .select-buscable__caja {
   display: flex;
@@ -2348,7 +2302,7 @@ html { scroll-behavior: smooth; }
   text-align: center;
 }
 
-/* ── Animaciones de botones de acción ────────────────── */
+/* Animaciones de botones de acción */
 @keyframes btnSpin  { 0%{transform:rotate(0deg) scale(1)} 50%{transform:rotate(180deg) scale(1.2)} 100%{transform:rotate(360deg) scale(1)} }
 @keyframes btnPulse { 0%{transform:scale(1)} 40%{transform:scale(1.35)} 70%{transform:scale(0.9)} 100%{transform:scale(1)} }
 @keyframes btnShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
@@ -2365,9 +2319,7 @@ html { scroll-behavior: smooth; }
 }
 .btn-accion--eliminar:hover { background: #fee2e2 !important; }
 
-/* ══════════════════════════════════════════════════════
-   RESPONSIVE MÓVIL — FIXES COMPLETOS
-   ══════════════════════════════════════════════════════ */
+/* Responsive móvil */
 
 /* Calendarios y formularios de 2 columnas → 1 columna en móvil */
 @media (max-width: 768px) {
@@ -2385,7 +2337,7 @@ html { scroll-behavior: smooth; }
   .banner { padding: 22px 16px; }
   .banner__titulo { font-size: 1.6rem; }
 
-  /* Botones de acción en tabla — más grandes para dedo */
+  /* Botones de acción en tabla */
   .btn-accion { width: 36px; height: 36px; font-size: 16px; }
   .acciones-celda { gap: 6px !important; }
 
@@ -2438,32 +2390,19 @@ html { scroll-behavior: smooth; }
 }
 
 
-/* ── Pantalla de inicio de sesión: interfaz despejada ────
-   Mientras no hay sesión, el body lleva la clase .sin-sesion
-   (la pone aplicarEstadoInvitado y la quita aplicarSesion).
-
-   En esa pantalla sobran la barra superior —no hay usuario que
-   mostrar— y los escudos repetidos del menú lateral. Quedan solo
-   dos: el de la pantalla de carga y el de la tarjeta de bienvenida.
-
-   Los paneles NO se ven afectados: con sesión activa la barra
-   superior vuelve, con el nombre y el breadcrumb (RF017 y RF013). */
+/* Pantalla de inicio de sesión: interfaz despejada */
 
 body.sin-sesion .barra-superior { display: none; }
 
 body.sin-sesion .lateral-logo__fila { display: none; }
 
-/* !important porque ese contenedor trae un style="display:inline-flex"
-   en el HTML, y un estilo en línea le gana a la hoja de estilos. */
 body.sin-sesion .lateral-pie > div:first-child { display: none !important; }
 body.sin-sesion .lateral-pie__escudo { display: none !important; }
 
-/* Sin la barra superior el contenido subía y quedaba pegado arriba */
 body.sin-sesion .contenido,
 body.sin-sesion .principal { padding-top: 0; }
 
-/* Nota para tutorías que ya pasaron y siguen pendientes de registrar.
-   Ocupa el lugar donde antes iba un botón "Cancelar" que siempre fallaba. */
+/* Nota de tutoría pendiente de registrar */
 .tarjeta-tutoria__nota {
   padding: 10px 14px;
   font-size: 12px;
@@ -2474,20 +2413,10 @@ body.sin-sesion .principal { padding-top: 0; }
 }
 
 
-/* ═══════════════════════════════════════════════════════════
-   SISTEMA DE DISEÑO — escalas y componentes
-   ═══════════════════════════════════════════════════════════
-
-   Los colores institucionales ya estaban definidos arriba, pero el HTML los
-   ignoraba: había 181 atributos style= con hexadecimales escritos a mano
-   (#007b99 doce veces, #aaa dieciséis, #555 quince). Cambiar un color del
-   manual de identidad obligaba a buscar y reemplazar por todo el marcado.
-
-   Aquí se completan las escalas que faltaban —espaciado, radios, tipografía—
-   y se definen las clases que sustituyen a esos estilos sueltos. */
+/* Sistema de diseño: escalas y componentes */
 
 :root {
-  /* Espaciado en múltiplos de 4px: evita los 6px, 7px y 14px arbitrarios */
+  /* Espaciado */
   --esp-1: 4px;
   --esp-2: 8px;
   --esp-3: 12px;
@@ -2518,7 +2447,7 @@ body.sin-sesion .principal { padding-top: 0; }
   --neutro:  #555555;
 }
 
-/* ── Calendario ──────────────────────────────────────────── */
+/* Calendario */
 
 .cal-grilla {
   display: grid;
@@ -2554,7 +2483,7 @@ body.sin-sesion .principal { padding-top: 0; }
   min-width: 180px;
 }
 
-/* ── Línea de metadatos (icono + texto pequeño) ──────────── */
+/* Línea de metadatos */
 
 .meta-linea {
   font-size: var(--txt-sm);
@@ -2566,7 +2495,7 @@ body.sin-sesion .principal { padding-top: 0; }
 
 .meta-linea--holgada { gap: 5px; }
 
-/* ── Escudo institucional sobre fondo oscuro ─────────────── */
+/* Escudo institucional sobre fondo oscuro */
 
 .escudo-chip {
   background: rgba(255, 255, 255, 0.95);
@@ -2589,7 +2518,7 @@ body.sin-sesion .principal { padding-top: 0; }
   mix-blend-mode: multiply;
 }
 
-/* ── Utilidades mínimas ──────────────────────────────────── */
+/* Utilidades mínimas */
 
 .u-oculto      { display: none; }
 .u-mb-3        { margin-bottom: var(--esp-3); }
@@ -2598,10 +2527,7 @@ body.sin-sesion .principal { padding-top: 0; }
 .btn--compacto { padding: var(--esp-2) var(--esp-4); font-size: var(--txt-base); }
 
 
-/* ── Calendario en pantallas estrechas (RNF03: desde 360px) ──
-   La cabecera del calendario ponía el título con min-width de 200px entre dos
-   botones, lo que exigía unos 400px de ancho. En un teléfono de 360px el
-   domingo y el botón "Siguiente" quedaban fuera de la pantalla. */
+/* Calendario en pantallas estrechas */
 
 .cal-cabecera { flex-wrap: wrap; }
 
@@ -2615,15 +2541,10 @@ body.sin-sesion .principal { padding-top: 0; }
 
   .cal-dia-nombre { font-size: 9px; }
 
-  /* Los filtros del calendario tenían min-width fijo y se salían */
   .cal-filtros > * { min-width: 0 !important; flex: 1 1 auto; }
 }
 
-/* ── Chip de usuario del menú lateral ────────────────────────
-   La insignia del rol tiene flex-shrink: 0, pero el bloque del nombre no se
-   encogía: con un nombre largo ("Camilo Ríos Zapata") empujaba la insignia
-   fuera del panel y se veía cortada. Un nombre debe truncarse con puntos
-   suspensivos; una etiqueta de rol de tres palabras no puede quedar a medias. */
+/* Chip de usuario del menú lateral */
 
 .lateral-usuario__info {
   min-width: 0;
@@ -2637,27 +2558,12 @@ body.sin-sesion .principal { padding-top: 0; }
   white-space: nowrap;
 }
 
-/* ── Sin barra superior, no hay que descontar su alto ────────
-   .diseno-acceso calcula min-height: calc(100vh - var(--barra-superior-alto)).
-   Al ocultar la barra en la pantalla de acceso, el layout seguía reservando
-   ese espacio y los paneles terminaban ~58px antes que el menú lateral: se
-   veía un escalón blanco en el borde inferior.
-
-   En vez de duplicar el cálculo, se pone la variable en cero mientras no hay
-   sesión. Así cualquier otra regla que dependa de ella se ajusta sola. */
+/* Sin barra superior: no descontar su alto */
 
 body.sin-sesion { --barra-superior-alto: 0px; }
 
 
-/* ── Panel de acceso compacto (bajo 1100px) ──────────────────
-   Antes este panel entero llevaba display:none por debajo de 1100px. Un
-   estudiante entrando desde el celular —que son la mayoría— nunca veía el
-   nombre del sistema, ni qué hace, ni una sola cifra: la mitad del diseño
-   simplemente no existía para él.
-
-   Ahora colapsa a una franja sobre la tarjeta: escudo, titular y las tres
-   cifras en una línea. Se ocultan solo la descripción larga y la lista de
-   características, que sí necesitan espacio para respirar. */
+/* Panel de acceso compacto (bajo 1100px) */
 
 @media (max-width: 1100px) {
   .acceso-izquierda {
@@ -2692,7 +2598,6 @@ body.sin-sesion { --barra-superior-alto: 0px; }
 
   .acceso-estadistica__numero { font-size: 22px; }
 
-  /* El escudo grande sobra en la franja: ya está en el menú lateral */
   .acceso-logo { display: none; }
 }
 
@@ -2703,13 +2608,7 @@ body.sin-sesion { --barra-superior-alto: 0px; }
   .acceso-estadistica__etiqueta { font-size: 9px; letter-spacing: 0.06em; }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   ACCIÓN DESTACADA — panel orientado a la acción (dirección C)
-   ═══════════════════════════════════════════════════════════
-   Una tarjeta que abre cada panel diciéndole al usuario qué hacer
-   ahora, calculada según su estado real. Tres variantes de tono:
-   alerta (algo requiere atención), info (hay algo próximo) y
-   ok (todo al día). Se rellena desde JS con renderAccion(). */
+/* Acción destacada */
 
 .accion-destacada {
   margin: 18px 0 4px;
@@ -2774,7 +2673,7 @@ body.sin-sesion { --barra-superior-alto: 0px; }
   background: linear-gradient(135deg, var(--naranja) 0%, var(--naranja-osc) 100%);
 }
 
-/* Chips de estado — hacen visible de un vistazo lo pendiente/hecho */
+/* Chips de estado */
 .accion-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .accion-chip {
   font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px;
@@ -2785,7 +2684,7 @@ body.sin-sesion { --barra-superior-alto: 0px; }
 .accion-chip--aler { background: rgba(239,68,68,.12);  color: var(--alerta); }
 .accion-chip--info { background: var(--teal-cl); color: var(--teal-osc); }
 
-/* En móvil la tarjeta se apila: el botón pasa abajo, ancho completo */
+/* En móvil la tarjeta se apila */
 @media (max-width: 620px) {
   .accion-destacada { flex-wrap: wrap; }
   .accion-destacada__boton { width: 100%; justify-content: center; }

@@ -1,4 +1,4 @@
-// ── PROGRAMAR TUTORÍA ───────────────────────────────────
+// Procesa el envío del formulario de tutoría.
 async function alEnviarTutoria(e) {
   e.preventDefault();
 
@@ -35,7 +35,7 @@ async function alEnviarTutoria(e) {
     hayError = true;
   }
 
-  // RN06 — Validar que la fecha sea posterior a hoy
+  // Valida que la fecha sea posterior a hoy (RN06).
   if (fecha) {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -52,7 +52,7 @@ async function alEnviarTutoria(e) {
   let docente_id = null;
   let estudiante_id = null;
 
-  // Leer datos del demo para buscar IDs reales
+  // Lee los datos del demo para buscar los IDs reales.
   let usuarios = [];
   let perfiles = {};
   try {
@@ -61,7 +61,6 @@ async function alEnviarTutoria(e) {
   } catch (e) {}
 
   if (sesion.rol === "estudiante") {
-    // El select ahora tiene el ID del docente como value
     const tutorSelect = document.getElementById("tutTutor");
     const idSel = parseInt(tutorSelect.value);
     if (!idSel) {
@@ -78,7 +77,7 @@ async function alEnviarTutoria(e) {
       ponerError("tutEstudiante", "Escribe el número de documento del estudiante");
       hayError = true;
     } else if (!CONFIG.MODO_DEMO) {
-      // Modo real: buscar en el backend por documento
+      // Modo real: busca en el backend por documento.
       try {
         const resultados = await llamarAPI("/tutorias/buscar-estudiante?q=" + encodeURIComponent(documento), "GET");
         if (!resultados || resultados.length === 0) {
@@ -92,7 +91,7 @@ async function alEnviarTutoria(e) {
         hayError = true;
       }
     } else {
-      // Modo demo: buscar por documento en perfiles locales
+      // Modo demo: busca por documento en los perfiles locales.
       let perfiles = {};
       let usuarios = [];
       try {
@@ -168,12 +167,12 @@ async function alEnviarTutoria(e) {
   }
 }
 
-// ── PREPARAR FORMULARIO DE TUTORÍA ──────────────────────
+// Prepara el formulario de tutoría según el rol del usuario.
 async function prepararFormTutoria() {
   const selectTutor = document.getElementById("tutTutor");
   const campoEstudiante = document.getElementById("tutEstudiante");
 
-  // En modo real, cargar docentes del backend
+  // En modo real, carga los docentes del backend.
   if (!CONFIG.MODO_DEMO && selectTutor) {
     try {
       const docentes = await llamarAPI("/tutorias/docentes-disponibles", "GET");
@@ -184,7 +183,7 @@ async function prepararFormTutoria() {
       selectTutor.innerHTML = '<option value="">Sin tutores disponibles</option>';
     }
   } else {
-    // Modo demo: usar datos locales
+    // Modo demo: usa los datos locales.
     let usuarios = [];
     try { usuarios = JSON.parse(localStorage.getItem("cp_demo.usuarios") || "[]"); } catch (e) {}
     const docentes = usuarios.filter(u => u.rol === "docente" && u.activo);
@@ -213,7 +212,7 @@ async function prepararFormTutoria() {
   }
 }
 
-// ── CARGAR TUTORÍAS DEL PANEL ───────────────────────────
+// Carga las tutorías del panel desde la API.
 async function cargarTutorias() {
   try {
     const tutorias = await llamarAPI("/tutorias", "GET");
@@ -221,11 +220,11 @@ async function cargarTutorias() {
     return tutorias;
   } catch (err) {
     console.error("Error cargando tutorías:", err);
-    return academicoStorage.getTutorias(); // retornar caché si falla el servidor
+    return academicoStorage.getTutorias(); // Retorna la caché si falla el servidor.
   }
 }
 
-// ── RENDERIZAR TARJETAS DE TUTORÍA ──────────────────────
+// Construye el HTML de una tarjeta de tutoría.
 function tarjetaTutoriaHTML(t, vistaRol) {
   const esEstudiante = vistaRol === "estudiante";
   const nombre = esEstudiante
@@ -256,17 +255,14 @@ function tarjetaTutoriaHTML(t, vistaRol) {
   `;
 }
 
-// ¿La tutoría ya ocurrió?
+// Indica si la tutoría ya ocurrió.
 function tutoriaYaPaso(t) {
   if (!t.fecha) return false;
   const cuando = new Date(`${t.fecha}T${(t.hora || "00:00").slice(0, 5)}`);
   return !isNaN(cuando) && cuando < new Date();
 }
 
-// Antes el botón "Cancelar" aparecía en TODA tutoría pendiente, incluidas las
-// que ya habían pasado. Al pulsarlo el servidor devolvía 400 y el usuario veía
-// un error sin entender por qué. Ofrecer una acción que no puede funcionar es
-// un defecto de interfaz, no del servidor: aquí ya no se ofrece.
+// Genera el botón o la nota de acción de la tutoría según su estado.
 function botonAccionTutoria(t) {
   if (t.estado !== "pendiente") return "";
 
@@ -287,7 +283,7 @@ async function cancelarTutoria(id) {
     await llamarAPI(`/tutorias/${id}/cancelar`, "PATCH");
     mostrarTostada("Tutoría cancelada", "exito");
 
-    // Recargar el panel
+    // Recarga el panel.
     if (sesion.rol === "estudiante") cargarPanelEstudiante();
     else cargarPanelDocente();
   } catch (err) {

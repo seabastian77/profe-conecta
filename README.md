@@ -39,21 +39,23 @@ Reglas de negocio destacadas: alerta automática con promedio inferior a 3,0; ca
 
 ```
 profe-conecta/
-├── backend/                  API REST en Node.js + Express
+├── src/                      Código fuente principal (API en Node.js + Express)
 │   ├── server.js             Arranque: espera la base, migra y escucha
-│   ├── src/
-│   │   ├── app.js            Express: seguridad, CORS, rutas, errores
-│   │   ├── config/           Base de datos, JWT, OAuth, migraciones
-│   │   ├── controllers/      Lógica de cada recurso
-│   │   ├── middlewares/      Autenticación, roles, límites, captura de errores
-│   │   └── routes/           Definición de endpoints
-│   └── tests/                Pruebas con Jest y Supertest
+│   ├── app.js                Express: seguridad, CORS, rutas, errores
+│   ├── config/               Base de datos, JWT, OAuth, migraciones
+│   ├── controllers/          Lógica de cada recurso
+│   ├── middlewares/          Autenticación, roles, límites, captura de errores
+│   └── routes/               Definición de endpoints
+├── tests/                    Pruebas con Jest y Supertest
 ├── frontend/                 SPA en JavaScript sin framework
 │   ├── index.html            Todas las vistas como secciones
 │   ├── css/estilos.css
 │   └── js/                   Un archivo por dominio funcional
 ├── docs/                     Requisitos y hallazgos de auditoría
-└── .github/workflows/        Integración continua
+├── .github/                  Integración continua y plantillas de issues
+├── LICENSE
+├── README.md
+└── package.json
 ```
 
 **Decisiones de diseño**
@@ -66,7 +68,7 @@ profe-conecta/
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Node.js 18+, Express 4 |
+| Backend | Node.js 18+, Express 5 |
 | Base de datos | PostgreSQL 16 |
 | Autenticación | JWT (HS256) + Google OAuth 2.0 |
 | Seguridad | helmet, express-rate-limit, bcrypt (12 rondas) |
@@ -83,8 +85,8 @@ profe-conecta/
 git clone https://github.com/seabastian77/profe-conecta.git
 cd profe-conecta
 
-cp .env.example backend/.env     # y llena los valores
-cd backend && npm install
+cp .env.example .env             # y llena los valores
+npm install
 
 npm run db:init                  # crea las tablas y los datos de ejemplo
 npm run dev                      # http://localhost:3000
@@ -152,7 +154,6 @@ Se usan **una sola vez**: si ya existe un administrador, se ignoran. Cambia la c
 ## Pruebas
 
 ```bash
-cd backend
 npm test
 ```
 
@@ -207,7 +208,7 @@ Si encuentras un problema de seguridad, abre un issue **sin incluir datos sensib
 ```bash
 git checkout -b tipo/descripcion-corta
 # ... cambios ...
-cd backend && npm test
+npm test
 git push -u origin tipo/descripcion-corta
 ```
 

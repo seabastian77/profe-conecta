@@ -1,9 +1,6 @@
-// ── CARGAR PANEL ESTUDIANTE ─────────────────────────────
+// Carga y renderiza el panel del estudiante.
 async function cargarPanelEstudiante() {
-  // Antes solo leía el perfil del localStorage; en un login nuevo está vacío y
-  // el promedio salía en 0, así que la alerta académica nunca se disparaba.
-  // Ahora, si el caché falta o es de otro usuario, se pide al servidor: la
-  // acción destacada refleja el promedio real desde el primer momento.
+  // Usa el perfil en caché o lo pide al servidor si falta o es de otro usuario.
   let perfil = perfilStorage.getPerfil();
   const idSesion = sesion?.id || authStorage.getSesion()?.id;
   if (!perfil || String(perfil.id) !== String(idSesion) || !perfil.perfil) {
@@ -11,7 +8,7 @@ async function cargarPanelEstudiante() {
       perfil = await llamarAPI("/perfil", "GET");
       perfilStorage.setPerfil(perfil);
     } catch (e) {
-      // Sin perfil el panel sigue cargando; solo faltará el promedio.
+      // Ignora el error: el panel puede cargar sin perfil.
     }
   }
   const nombre = perfil ? `${perfil.nombres}` : sesion.nombre.split(" ")[0];
@@ -19,7 +16,7 @@ async function cargarPanelEstudiante() {
 
   document.getElementById("estudianteSaludo").textContent = nombre;
 
-  // Estadísticas rápidas (RF038)
+  // Muestra las estadísticas rápidas.
   const promedio = parseFloat(datosPerfil.promedio) || 0;
   document.getElementById("panelEstPromedio").textContent =
     promedio > 0 ? promedio.toFixed(1) : "—";
@@ -27,10 +24,10 @@ async function cargarPanelEstudiante() {
     ? `${datosPerfil.semestre}°`
     : "—";
 
-  // Cargar tutorías del servidor
+  // Carga las tutorías desde el servidor.
   const tutorias = await cargarTutorias();
 
-  // RF040 — contar tutorías del mes en curso
+  // Cuenta las tutorías del mes en curso.
   const hoy = new Date();
   const tutoriasMes = tutorias.filter((t) => {
     if (!t.fecha) return false;
@@ -41,7 +38,7 @@ async function cargarPanelEstudiante() {
   }).length;
   document.getElementById("estTutoriasCount").textContent = tutoriasMes;
 
-  // RF039 — alerta por promedio bajo: la tarjeta de resumen conserva su estado
+  // Actualiza la tarjeta de alerta por promedio bajo.
   const tarjetaAlerta = document.getElementById("estAlertaTarjeta");
   const iconoAlerta = document.getElementById("estAlertaIcono");
   const valorAlerta = document.getElementById("estAlertaValor");
@@ -59,10 +56,10 @@ async function cargarPanelEstudiante() {
     tarjetaAlerta.style.borderLeft = "";
   }
 
-  // Acción destacada (dirección C): reemplaza el viejo banner suelto de alerta
+  // Renderiza la acción destacada.
   renderAccion("accionEstudiante", accionEstudiante({ promedio, tutorias, tutoriasMes }));
 
-  // Mostrar tarjetas
+  // Muestra las tarjetas de tutorías.
   const lista = document.getElementById("estListaTutorias");
   if (tutorias.length === 0) {
     lista.innerHTML =
@@ -82,7 +79,7 @@ async function cargarPanelEstudiante() {
 }
 
 
-// ── CARGAR PANEL DOCENTE ────────────────────────────────
+// Carga y renderiza el panel del docente.
 async function cargarPanelDocente() {
   const perfil = perfilStorage.getPerfil();
   const nombre = perfil ? `${perfil.nombres}` : sesion.nombre.split(" ")[0];
@@ -91,8 +88,7 @@ async function cargarPanelDocente() {
 
   const tutorias = await cargarTutorias();
 
-  // RF043 — métricas dinámicas del docente
-  // Tutorías del mes actual
+  // Cuenta las tutorías del mes actual.
   const hoy = new Date();
   const tutoriasMes = tutorias.filter((t) => {
     if (!t.fecha) return false;
@@ -103,12 +99,12 @@ async function cargarPanelDocente() {
   });
   document.getElementById("docTutoriasMes").textContent = tutoriasMes.length;
 
-  // Estudiantes únicos atendidos
+  // Cuenta los estudiantes únicos atendidos.
   const estudiantesUnicos = [...new Set(tutorias.map((t) => t.estudiante_id))];
   document.getElementById("docEstudiantesCount").textContent =
     estudiantesUnicos.length;
 
-  // RF024 — tasa de recuperación académica + RF044 — lista alertas
+  // Calcula la tasa de recuperación y la lista de alertas.
   const estudiantesEnAlerta = obtenerEstudiantesEnAlerta(tutorias);
   document.getElementById("docAlertasCount").textContent =
     estudiantesEnAlerta.length;
@@ -119,7 +115,7 @@ async function cargarPanelDocente() {
   document.getElementById("docRecuperacion").textContent =
     estudiantesUnicos.length > 0 ? tasaRecuperacion + "%" : "—";
 
-  // Mostrar tarjetas
+  // Muestra las tarjetas de tutorías.
   const lista = document.getElementById("docListaTutorias");
   if (tutorias.length === 0) {
     lista.innerHTML =
@@ -134,22 +130,22 @@ async function cargarPanelDocente() {
       `${tutorias.length} tutoría(s) — ${tutoriasMes.length} este mes`;
   }
 
-  // Acción destacada (dirección C)
+  // Renderiza la acción destacada.
   renderAccion("accionDocente", accionDocente({
     enAlerta: estudiantesEnAlerta.length,
     tutorias,
     tutoriasMes: tutoriasMes.length,
   }));
 
-  // RF044 — renderizar lista de alertas
+  // Renderiza la lista de alertas.
   renderizarAlertasDocente(estudiantesEnAlerta);
 
   renderizarCalendario("doc", tutorias);
 }
 
-// RF044 — Construir lista de estudiantes en alerta a partir de tutorías
+// Construye la lista de estudiantes en alerta a partir de las tutorías.
 function obtenerEstudiantesEnAlerta(tutorias) {
-  // Agrupar por estudiante
+  // Agrupa las tutorías por estudiante.
   const porEstudiante = {};
   tutorias.forEach((t) => {
     if (!t.estudiante_id) return;
@@ -160,7 +156,7 @@ function obtenerEstudiantesEnAlerta(tutorias) {
         sesiones: 0,
         ultima: null,
         asignaturas: new Set(),
-        // Promedio simulado: a partir del id (estable entre cargas)
+        // Simula el promedio a partir del id.
         promedio: 2.0 + ((t.estudiante_id * 7) % 15) / 10,
       };
     }
@@ -179,7 +175,7 @@ function obtenerEstudiantesEnAlerta(tutorias) {
     .sort((a, b) => a.promedio - b.promedio);
 }
 
-// RF044 — Renderizar lista visual de estudiantes en alerta
+// Renderiza la lista visual de estudiantes en alerta.
 function renderizarAlertasDocente(estudiantes) {
   const lista = document.getElementById("docListaAlertas");
   if (!lista) return;
@@ -192,7 +188,7 @@ function renderizarAlertasDocente(estudiantes) {
 
   lista.innerHTML = estudiantes
     .map((e) => {
-      // Color por nivel de riesgo
+      // Asigna color y etiqueta según el nivel de riesgo.
       let nivel, color, etiqueta;
       if (e.promedio < 2.5) {
         nivel = "critico";
@@ -229,10 +225,7 @@ function renderizarAlertasDocente(estudiantes) {
     .join("");
 }
 
-// ── MEDIDOR DE RENDIMIENTO (SVG) ────────────────────────
-// Muestra el promedio actual del estudiante en un medidor tipo gauge,
-// con el umbral de 3.0 marcado. Debajo muestra estadísticas REALES
-// calculadas a partir de las tutorías del estudiante.
+// Dibuja el medidor de rendimiento del estudiante en SVG.
 function renderizarGrafica(perfil, tutorias) {
   const wrap = document.getElementById("estGraficaWrap");
   const pie = document.getElementById("estGraficaPie");
@@ -242,7 +235,7 @@ function renderizarGrafica(perfil, tutorias) {
   const minimo = CONFIG.PROMEDIO_MINIMO;
   const maximo = 5.0;
 
-  // Color y etiqueta según el nivel
+  // Define color y etiqueta según el nivel.
   let color, etiqueta, icono;
   if (promedio === 0) {
     color = "#9ca3af";
@@ -266,14 +259,14 @@ function renderizarGrafica(perfil, tutorias) {
     icono = "🏆";
   }
 
-  // Geometría del medidor (semicírculo)
+  // Calcula la geometría del medidor.
   const W = 560,
     H = 240;
   const cx = W / 2,
     cy = 180,
     r = 130;
-  const angIni = Math.PI; //  180° — izquierda
-  const angFin = 2 * Math.PI; // 360° — derecha
+  const angIni = Math.PI;
+  const angFin = 2 * Math.PI;
 
   function pol(ang) {
     return { x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) };
@@ -332,14 +325,14 @@ function renderizarGrafica(perfil, tutorias) {
 
   wrap.innerHTML = svg;
 
-  // ── Estadísticas REALES desde las tutorías ──
+  // Calcula las estadísticas reales desde las tutorías.
   const completadas = tutorias.filter(
     (t) => t.estado === "completada" || t.estado === "realizada",
   ).length;
   const pendientes = tutorias.filter((t) => t.estado === "pendiente").length;
   const canceladas = tutorias.filter((t) => t.estado === "cancelada").length;
 
-  // Contar asignaturas distintas
+  // Cuenta las asignaturas distintas.
   const asignaturasUnicas = new Set(
     tutorias.filter((t) => t.estado !== "cancelada").map((t) => t.asignatura),
   );
@@ -360,9 +353,9 @@ function renderizarGrafica(perfil, tutorias) {
   `;
 }
 
-// ── CALENDARIO VISUAL ───────────────────────────────────
 const _calEstado = {}; // estado por prefijo ('est' | 'doc')
 
+// Inicializa el estado del calendario y renderiza el mes actual.
 function renderizarCalendario(prefijo, tutorias) {
   if (!_calEstado[prefijo]) {
     const hoy = new Date();
@@ -412,7 +405,7 @@ function _renderizarMes(prefijo, tutorias) {
     "Diciembre",
   ];
 
-  // Marcar días con tutorías
+  // Marca los días que tienen tutorías.
   const diasConTutoria = new Set(
     tutorias
       .filter((t) => {
@@ -426,7 +419,7 @@ function _renderizarMes(prefijo, tutorias) {
       .map((t) => new Date(t.fecha + "T00:00").getDate()),
   );
 
-  // Título del calendario
+  // Actualiza el título del calendario.
   const titulo = document
     .getElementById(`${prefijo}CalendarioGrilla`)
     ?.closest(".calendario-wrap")
@@ -435,7 +428,7 @@ function _renderizarMes(prefijo, tutorias) {
 
   let html = "";
 
-  // Celdas vacías antes del primer día
+  // Agrega celdas vacías antes del primer día.
   for (let i = 0; i < diaSemana; i++) {
     html += '<div class="calendario-celda otro-mes"></div>';
   }
@@ -470,12 +463,12 @@ function seleccionarDia(prefijo, dia) {
   const tutorias = academicoStorage.getTutorias();
   const { anio, mes } = estado;
 
-  // Marcar la celda seleccionada
+  // Marca la celda seleccionada.
   document
     .querySelectorAll(`#${prefijo}CalendarioGrilla .calendario-celda`)
     .forEach((c) => c.classList.remove("seleccionada"));
 
-  // Buscar tutorías de ese día
+  // Busca las tutorías de ese día.
   const fechaStr = `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
   const del_dia = tutorias.filter(
     (t) => t.fecha === fechaStr && t.estado !== "cancelada",
@@ -527,7 +520,7 @@ function seleccionarDia(prefijo, dia) {
     .join("");
 }
 
-// ── NOTIFICACIONES ──────────────────────────────────────
+// Carga las notificaciones del usuario y actualiza el contador.
 async function cargarNotificaciones() {
   if (!sesion.activa) return;
 
@@ -543,7 +536,7 @@ async function cargarNotificaciones() {
       badge.classList.add("oculto");
     }
 
-    // Renderizar en el panel de notificaciones
+    // Renderiza las notificaciones en el panel.
     const lista = document.getElementById("notifLista");
     if (!lista) return;
 
@@ -570,7 +563,7 @@ async function cargarNotificaciones() {
       )
       .join("");
   } catch (err) {
-    // Si no hay backend, no romper la app
+    // Evita romper la app si no hay backend.
     console.warn("No se pudieron cargar notificaciones:", err);
   }
 }
@@ -609,7 +602,7 @@ async function marcarTodasLeidas() {
   }
 }
 
-// ── TOSTADA (TOAST) ─────────────────────────────────────
+// Muestra un mensaje emergente temporal.
 function mostrarTostada(mensaje, tipo) {
   const tostada = document.getElementById("tostada");
   tostada.textContent = mensaje;
@@ -625,7 +618,7 @@ function mostrarTostada(mensaje, tipo) {
   );
 }
 
-// ── UTILIDADES ──────────────────────────────────────────
+// Formatea una fecha ISO al formato dd/mm/aaaa.
 function formatearFecha(isoFecha) {
   if (!isoFecha) return "—";
   const [y, m, d] = isoFecha.split("T")[0].split("-");

@@ -35,16 +35,14 @@ jobs:
           node-version: '20'
 
       - name: Instalar dependencias
-        working-directory: backend
         run: npm install
 
       - name: Análisis estático (ESLint)
-        working-directory: backend
         run: npm run lint
 
       - name: Verificar sintaxis de todos los archivos
         run: |
-          for f in $(find backend/src frontend/js -name "*.js"); do
+          for f in $(find src frontend/js -name "*.js"); do
             node --check "$f" || exit 1
           done
           echo "Sintaxis OK"
@@ -58,14 +56,12 @@ jobs:
           echo "Sin archivos .env versionados"
 
       - name: Preparar la base de datos de pruebas
-        working-directory: backend
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/conectaprofe_test
         run: node src/config/migrate.js
 
       - name: Correr pruebas
-        working-directory: backend
         env:
           NODE_ENV: test
           JWT_SECRET: secreto-de-integracion-continua-no-productivo
@@ -74,6 +70,5 @@ jobs:
         run: npm test
 
       - name: Auditoría de dependencias
-        working-directory: backend
         run: npm audit --audit-level=high
         continue-on-error: true

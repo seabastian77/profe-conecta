@@ -3,12 +3,12 @@
 async function llamarAPI(ruta, metodo, cuerpo) {
   var token = authStorage.getToken();
 
-  // ── MODO DEMO: sin backend ──────────────────────────
+  // En modo demo responde sin conectarse al backend
   if (CONFIG.MODO_DEMO) {
     return await llamarAPIDemo(ruta, metodo || "GET", cuerpo || null, token);
   }
 
-  // ── MODO REAL: fetch al backend ─────────────────────
+  // En modo real hace fetch al backend
   var opciones = {
     method: metodo || "GET",
     headers: { "Content-Type": "application/json" },
@@ -33,12 +33,12 @@ async function llamarAPI(ruta, metodo, cuerpo) {
   return data;
 }
 
-// ── Validaciones básicas ────────────────────────────────
+// Valida que el correo tenga arroba y el dominio permitido
 function esCorreoValido(correo) {
   return correo.includes("@") && correo.endsWith(CONFIG.DOMINIO_CORREO);
 }
 
-// ── LOGIN ───────────────────────────────────────────────
+// Valida y envía el formulario de inicio de sesión
 async function alEnviarLogin(e) {
   e.preventDefault();
 
@@ -106,7 +106,7 @@ async function alEnviarLogin(e) {
   }
 }
 
-// ── REGISTRO ────────────────────────────────────────────
+// Valida y envía el formulario de registro
 async function alEnviarRegistro(e) {
   e.preventDefault();
 
@@ -147,10 +147,7 @@ async function alEnviarRegistro(e) {
     ponerError("regRol", "Selecciona un rol");
     hayError = true;
   }
-  // Estas reglas deben ser LAS MISMAS que las del backend (authController).
-  // Antes el navegador solo comprobaba la longitud, así que una clave de 8
-  // letras pasaba el formulario y el servidor la rechazaba con un 400 y una
-  // notificación fugaz. El usuario no entendía qué había hecho mal.
+  // Valida la contraseña con las mismas reglas que aplica el backend
   var reglasContrasena = [
     [contrasena.length >= 8, "Mínimo 8 caracteres"],
     [/[A-Za-z]/.test(contrasena), "Debe incluir al menos una letra"],
@@ -188,8 +185,7 @@ async function alEnviarRegistro(e) {
     aplicarSesion(data.usuario);
     irAPagina("completar-perfil");
   } catch (err) {
-    // El error del servidor se muestra en el campo que lo causó, no como una
-    // notificación que se desvanece antes de que alcances a leerla.
+    // Muestra el error del servidor en el campo que lo causó
     var m = (err.mensaje || "").toLowerCase();
     if (m.includes("correo")) {
       ponerError("regCorreo", err.mensaje);
@@ -203,7 +199,7 @@ async function alEnviarRegistro(e) {
   }
 }
 
-// ── RECUPERAR CONTRASEÑA ────────────────────────────────
+// Valida y envía el formulario de recuperación de contraseña
 async function alEnviarRecuperacion(e) {
   e.preventDefault();
 
@@ -235,10 +231,9 @@ async function alEnviarRecuperacion(e) {
   }
 }
 
-// ── GOOGLE OAuth ────────────────────────────────────────
-// Redirige al backend que redirige a Google
+// Redirige al backend para iniciar sesión con un proveedor social
 function loginSocial(proveedor) {
-  // En modo demo no hay backend, así que mostramos un mensaje amigable
+  // En modo demo muestra un mensaje en lugar de llamar al backend
   if (typeof CONFIG !== "undefined" && CONFIG.MODO_DEMO) {
     mostrarTostada(
       "🔐 El login con " +
@@ -249,19 +244,13 @@ function loginSocial(proveedor) {
     return;
   }
   if (proveedor === "Google") {
-    // El backend maneja todo el flujo OAuth y regresa con ?token=... en la URL
     window.location.href = API_URL.replace("/api", "") + "/api/auth/google";
   } else {
     mostrarTostada("Solo Google OAuth está disponible por ahora", "alerta");
   }
 }
 
-// Detectar si Google nos redirigió con un código de un solo uso.
-//
-// Antes el backend mandaba el JWT completo en la URL (?token=eyJ...). Eso lo
-// dejaba en el historial del navegador, en los logs del servidor y en la
-// cabecera Referer. Ahora llega un código corto que caduca en 60 segundos y
-// que se canjea por POST: el token nunca viaja en la barra de direcciones.
+// Canjea el código de un solo uso que Google devuelve por el token de sesión
 async function manejarCallbackGoogle() {
   var params = new URLSearchParams(window.location.search);
   var codigo = params.get("codigo");
@@ -279,7 +268,7 @@ async function manejarCallbackGoogle() {
 
   if (!codigo) return;
 
-  // Limpiar la URL antes de cualquier otra cosa.
+  // Limpia la URL antes de continuar
   window.history.replaceState({}, document.title, window.location.pathname);
 
   try {
@@ -315,14 +304,8 @@ async function manejarCallbackGoogle() {
   }
 }
 
-// ── ESTADO INVITADO (sin sesión activa) ─────────────────
-// Centraliza la UI de "sin sesión" para evitar inconsistencias:
-// oculta el chip de usuario y el botón Cerrar Sesión, y muestra
-// únicamente el menú de acceso. Se llama al arrancar la app y al
-// cerrar sesión.
+// Restablece la interfaz al estado sin sesión activa
 function aplicarEstadoInvitado() {
-  // Marca el body como "sin sesión": el CSS usa esta clase para ocultar la
-  // barra superior y los escudos repetidos del menú lateral en el login.
   document.body.classList.add("sin-sesion");
 
   sesion.activa = false;
@@ -332,7 +315,6 @@ function aplicarEstadoInvitado() {
   sesion.correo = "";
   sesion.rol = "";
 
-  // Resetear textos del chip lateral (por si quedaron con datos)
   var barraAvatar = document.getElementById("barraAvatar");
   var barraNombre = document.getElementById("barraNombre");
   var barraRol = document.getElementById("barraRol");
@@ -342,11 +324,9 @@ function aplicarEstadoInvitado() {
   if (barraRol) barraRol.textContent = "Sin sesión";
   if (barraEtiqueta) barraEtiqueta.textContent = "—";
 
-  // Ocultar chip lateral de usuario (no debe verse si no hay sesión)
   var lateralUsuario = document.getElementById("lateralUsuario");
   if (lateralUsuario) lateralUsuario.classList.add("oculto");
 
-  // Resetear y ocultar chip de la barra superior
   var chipAvatar = document.getElementById("chipAvatar");
   var chipNombre = document.getElementById("chipNombre");
   if (chipAvatar) chipAvatar.textContent = "?";
@@ -354,11 +334,9 @@ function aplicarEstadoInvitado() {
   var bsChip = document.getElementById("bsChip");
   if (bsChip) bsChip.classList.add("oculto");
 
-  // Ocultar botón "Cerrar Sesión" (no debe verse si no hay sesión)
   var lateralCerrar = document.getElementById("lateralCerrar");
   if (lateralCerrar) lateralCerrar.classList.add("oculto");
 
-  // Mostrar solo el menú de acceso
   var menuAcceso = document.getElementById("menuAcceso");
   if (menuAcceso) menuAcceso.classList.remove("oculto");
   ["menuEstudiante", "menuDocente", "menuAdmin"].forEach(function (id) {
@@ -367,7 +345,7 @@ function aplicarEstadoInvitado() {
   });
 }
 
-// ── CIERRE DE SESIÓN ────────────────────────────────────
+// Cierra la sesión y limpia el almacenamiento local
 function cerrarSesion() {
   authStorage.limpiarTodo();
   perfilStorage.limpiarTodo();
@@ -379,9 +357,8 @@ function cerrarSesion() {
   mostrarTostada("Sesión cerrada", "exito");
 }
 
-// ── APLICAR SESIÓN A LA UI ──────────────────────────────
+// Aplica los datos de la sesión activa a la interfaz
 function aplicarSesion(usuario) {
-  // Con sesión activa vuelve la barra superior (nombre + breadcrumb, RF017/RF013)
   document.body.classList.remove("sin-sesion");
 
   sesion.activa = true;
@@ -414,7 +391,6 @@ function aplicarSesion(usuario) {
     document.getElementById(id).classList.add("oculto");
   });
 
-  // Mostrar chip de usuario y botón cerrar sesión ahora que hay sesión activa
   document.getElementById("lateralUsuario").classList.remove("oculto");
   document.getElementById("lateralCerrar").classList.remove("oculto");
   var bsChip = document.getElementById("bsChip");
@@ -432,7 +408,7 @@ function aplicarSesion(usuario) {
   cargarNotificaciones();
 }
 
-// ── VERIFICAR SESIÓN AL CARGAR ──────────────────────────
+// Verifica si hay una sesión válida guardada al cargar la app
 async function verificarSesionGuardada() {
   var token = authStorage.getToken();
   var sesionGuardada = authStorage.getSesion();

@@ -1,16 +1,11 @@
-// Busca elemento solo en la página activa del calendario
-// El calendario se repite en los tres paneles (estudiante, docente y admin).
-// Antes cada copia llevaba los mismos id, lo que produce HTML inválido y hace
-// que getElementById devuelva siempre la primera copia — la de otro panel.
-// Ahora se identifican con data-cal y se busca SOLO dentro de la página activa.
+// Busca un elemento solo dentro de la página activa del calendario.
 function calEl(nombre) {
   var pagina = document.querySelector('.pagina.activa');
   if (!pagina) return null;
   return pagina.querySelector('[data-cal="' + nombre + '"]');
 }
 
-// Cierra el detalle del día. Antes esto era un getElementById en línea dentro
-// del HTML, que cerraba el panel equivocado cuando había varias copias.
+// Cierra el detalle del día.
 function cerrarDetalleCalendario() {
   var det = calEl('calDetalleDia');
   if (det) det.style.display = 'none';
@@ -60,7 +55,7 @@ async function iniciarCalendario() {
     _cal.tutorias = (typeof academicoStorage !== 'undefined' ? academicoStorage.getTutorias() : []) || [];
   }
 
-  // Llenar filtro de materias
+  // Llena el filtro de materias.
   var selMat = calEl('calFiltroMateria');
   if (selMat) {
     var mats = [...new Set(_cal.tutorias.map(t => t.asignatura).filter(Boolean))].sort();
@@ -88,7 +83,7 @@ function renderCalendario() {
     return true;
   });
 
-  // Agrupar por día del mes actual
+  // Agrupa las tutorías por día del mes actual.
   var porDia = {};
   tutFilt.forEach(function(t) {
     if (!t.fecha) return;

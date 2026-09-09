@@ -1,8 +1,4 @@
-// ── Acción destacada (dirección C) ───────────────────────────
-// Calcula, según el estado real del usuario, la única cosa más importante que
-// debería hacer ahora, y la pinta como una tarjeta al inicio de su panel.
-// Un panel que dice "programa una tutoría, tu promedio está bajo" guía mejor
-// que uno que solo muestra cifras.
+// Calcula la acción más importante para el usuario y la pinta en su panel.
 
 // Devuelve la próxima tutoría pendiente (fecha futura), o null.
 function proximaTutoria(tutorias) {
@@ -52,7 +48,7 @@ function renderAccion(idContenedor, datos) {
   `;
 }
 
-// ── Estudiante ───────────────────────────────────────────────
+// Calcula la acción destacada del estudiante.
 function accionEstudiante({ promedio, tutorias, tutoriasMes }) {
   const enAlerta = promedio > 0 && promedio < CONFIG.PROMEDIO_MINIMO;
   const prox = proximaTutoria(tutorias);
@@ -88,7 +84,7 @@ function accionEstudiante({ promedio, tutorias, tutoriasMes }) {
   };
 }
 
-// ── Docente ──────────────────────────────────────────────────
+// Calcula la acción destacada del docente.
 function accionDocente({ enAlerta, tutorias, tutoriasMes }) {
   const prox = proximaTutoria(tutorias);
   const nAlerta = enAlerta || 0;
@@ -121,7 +117,7 @@ function accionDocente({ enAlerta, tutorias, tutoriasMes }) {
   };
 }
 
-// ── Administrador ────────────────────────────────────────────
+// Calcula la acción destacada del administrador.
 function accionAdmin({ alertas, totalUsuarios, totalAsignaciones }) {
   const chips = [];
   if (totalUsuarios != null) chips.push({ tipo: "info", texto: `${totalUsuarios} usuarios` });

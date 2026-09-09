@@ -1,9 +1,6 @@
-// ═══════════════════════════════════════════════════════
-// facultad.js — Select de facultad con búsqueda + programas dinámicos
-// ═══════════════════════════════════════════════════════
+// Select de facultad con búsqueda y programas dinámicos.
 
-// Estructura completa de facultades y programas de FUNLAM
-// Cada facultad mapea al 'area' en la tabla asignaturas
+// Facultades y programas de FUNLAM; cada facultad mapea a un área.
 const FACULTADES_FUNLAM = [
   {
     nombre: 'Facultad de Ingenierías',
@@ -58,7 +55,7 @@ const FACULTADES_FUNLAM = [
 let _facultadSeleccionada = null;
 let _opcionesFiltradas = [...FACULTADES_FUNLAM];
 
-// ── Inicializar el select de facultad ─────────────────────
+// Inicializa el select de facultad.
 function inicializarSelectFacultad() {
   _facultadSeleccionada = null;
   _opcionesFiltradas = [...FACULTADES_FUNLAM];
@@ -76,7 +73,7 @@ function inicializarSelectFacultad() {
   if (dropdown) dropdown.style.display = 'none';
   if (programasCont) programasCont.style.display = 'none';
 
-  // Cerrar al hacer clic fuera
+  // Cierra el dropdown al hacer clic fuera.
   document.addEventListener('click', function cerrarFacultad(e) {
     const wrap = document.getElementById('docFacultadWrap');
     if (wrap && !wrap.contains(e.target)) {
@@ -88,7 +85,7 @@ function inicializarSelectFacultad() {
   renderizarOpcionesFacultad(FACULTADES_FUNLAM);
 }
 
-// ── Mostrar dropdown de facultades ────────────────────────
+// Muestra el dropdown de facultades.
 function mostrarDropdownFacultad() {
   const input = document.getElementById('docFacultadInput');
   if (input) input.readOnly = false;
@@ -97,7 +94,7 @@ function mostrarDropdownFacultad() {
   if (dropdown) dropdown.style.display = 'block';
 }
 
-// ── Filtrar opciones mientras escribe ────────────────────
+// Filtra las opciones mientras el usuario escribe.
 function filtrarFacultades(q) {
   const dropdown = document.getElementById('docFacultadDropdown');
   if (!dropdown) return;
@@ -114,7 +111,7 @@ function filtrarFacultades(q) {
   dropdown.style.display = 'block';
 }
 
-// ── Renderizar las opciones en el dropdown ────────────────
+// Renderiza las opciones en el dropdown.
 function renderizarOpcionesFacultad(opciones) {
   const dropdown = document.getElementById('docFacultadDropdown');
   if (!dropdown) return;
@@ -136,7 +133,7 @@ function renderizarOpcionesFacultad(opciones) {
     </div>`).join('');
 }
 
-// ── Seleccionar una facultad ──────────────────────────────
+// Selecciona una facultad y carga sus programas.
 function seleccionarFacultad(area, nombre) {
   _facultadSeleccionada = area;
 
@@ -145,36 +142,31 @@ function seleccionarFacultad(area, nombre) {
   const dropdown = document.getElementById('docFacultadDropdown');
 
   if (input) { input.value = nombre; input.readOnly = true; }
-  if (hidden) hidden.value = nombre; // guardamos el nombre de la facultad
+  if (hidden) hidden.value = nombre;
   if (dropdown) dropdown.style.display = 'none';
 
-  // Limpiar error si existía
   quitarError('docFacultad');
 
-  // Cargar los programas correspondientes
   cargarProgramasPorFacultad(area);
 }
 
-// ── Cargar programas del área seleccionada ────────────────
+// Carga los programas del área seleccionada.
 function cargarProgramasPorFacultad(area) {
   const contenedor = document.getElementById('docProgramasContenedor');
   const chipsDiv = document.getElementById('docProgramas');
   if (!contenedor || !chipsDiv) return;
 
-  // Buscar la facultad en la lista
   const facultad = FACULTADES_FUNLAM.find(f => f.area === area);
   if (!facultad || !facultad.programas.length) {
     contenedor.style.display = 'none';
     return;
   }
 
-  // Renderizar chips de programas
   chipsDiv.innerHTML = facultad.programas.map(p => `
     <label class="chip">
       <input type="checkbox" value="${p}"/> ${p}
     </label>`).join('');
 
-  // Animar aparición
   contenedor.style.display = 'block';
   contenedor.style.opacity = '0';
   contenedor.style.transform = 'translateY(-8px)';
@@ -185,7 +177,7 @@ function cargarProgramasPorFacultad(area) {
   });
 }
 
-// ── Leer programas seleccionados (para guardar el perfil) ─
+// Lee los programas seleccionados para guardar el perfil.
 function getProgramasSeleccionados() {
   return [...document.querySelectorAll('#docProgramas input:checked')]
     .map(cb => cb.value);

@@ -1,11 +1,8 @@
-// Caché de perfil en localStorage
-// Evita pedir el perfil al backend en cada navegación
-// IMPORTANTE: las claves de fotos incluyen el ID del usuario para evitar
-// que las fotos de un usuario aparezcan en otro (bug corregido).
+// Caché de perfil en localStorage; las claves incluyen el ID del usuario.
 
 const perfilStorage = {
 
-  // ── Obtener el ID del usuario actual ──────────────────
+  // Obtiene el ID del usuario actual.
   _uid() {
     try {
       const s = localStorage.getItem('cp.sesion');
@@ -14,7 +11,7 @@ const perfilStorage = {
     return 'anon';
   },
 
-  // ── Perfil completo ───────────────────────────────────
+  // Perfil completo del usuario.
   getPerfil() {
     const uid = this._uid();
     const p = localStorage.getItem('cp.perfil.' + uid);
@@ -29,7 +26,7 @@ const perfilStorage = {
     localStorage.removeItem('cp.perfil.' + uid);
   },
 
-  // ── Fotos (claves con UID para aislar por usuario) ────
+  // Fotos de perfil y portada, con clave por usuario.
   getFotoPerfil() {
     const uid = this._uid();
     return localStorage.getItem('cp.foto.perfil.' + uid) || '';
@@ -48,11 +45,10 @@ const perfilStorage = {
     localStorage.setItem('cp.foto.portada.' + uid, b);
   },
 
-  // ── Limpiar todo lo de este usuario ──────────────────
+  // Limpia todo lo de este usuario.
   limpiarTodo() {
     const uid = this._uid();
     ['cp.perfil.' + uid, 'cp.foto.perfil.' + uid, 'cp.foto.portada.' + uid].forEach(k => localStorage.removeItem(k));
-    // Compatibilidad: limpiar claves viejas sin UID
     ['cp.perfil', 'cp.foto.perfil', 'cp.foto.portada'].forEach(k => localStorage.removeItem(k));
   }
 };

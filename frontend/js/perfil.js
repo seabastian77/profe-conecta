@@ -1,4 +1,4 @@
-// ── HORARIOS DOCENTE — filas dinámicas ─────────────────
+// Agrega una fila dinámica para capturar un horario del docente
 function agregarFilaHorario() {
   const container = document.getElementById("docHorariosContainer");
   if (!container) return;
@@ -19,8 +19,7 @@ function agregarFilaHorario() {
   container.appendChild(fila);
 }
 
-// ── COMPLETAR PERFIL ────────────────────────────────────
-// Muestra el formulario correcto según el rol activo
+// Muestra el formulario de perfil correcto según el rol activo
 function mostrarFormPerfil() {
   const rol = sesion.rol;
   document.getElementById("perfilFormEstudiante").classList.add("oculto");
@@ -31,10 +30,8 @@ function mostrarFormPerfil() {
     document.getElementById("perfilFormEstudiante").classList.remove("oculto");
   if (rol === "docente") {
     document.getElementById("perfilFormDocente").classList.remove("oculto");
-    // Inicializar el autocomplete de asignaturas
     if (typeof inicializarAutocompleteAsignaturas === "function")
       inicializarAutocompleteAsignaturas();
-    // Inicializar el select de facultad con búsqueda
     if (typeof inicializarSelectFacultad === "function")
       inicializarSelectFacultad();
   }
@@ -50,7 +47,7 @@ function mostrarFormPerfil() {
     etiquetas[rol] || "";
 }
 
-// ── GUARDAR PERFIL ESTUDIANTE ───────────────────────────
+// Valida y guarda el perfil del estudiante
 async function alEnviarPerfilEstudiante(e) {
   e.preventDefault();
 
@@ -79,7 +76,7 @@ async function alEnviarPerfilEstudiante(e) {
 
   try {
     const resp = await llamarAPI("/perfil/estudiante", "POST", datos);
-    perfilStorage.clearPerfil(); // invalidar caché
+    perfilStorage.clearPerfil(); // invalida la caché
 
     mostrarTostada("Perfil guardado correctamente", "exito");
 
@@ -89,23 +86,23 @@ async function alEnviarPerfilEstudiante(e) {
   }
 }
 
-// ── GUARDAR PERFIL DOCENTE ──────────────────────────────
+// Valida y guarda el perfil del docente
 async function alEnviarPerfilDocente(e) {
   e.preventDefault();
 
-  // Leer asignaturas del autocomplete (campo JSON oculto)
+  // Lee las asignaturas del campo JSON oculto
   let asignaturas = [];
   try {
     const jsonField = document.getElementById("docAsignaturasJSON");
     asignaturas = jsonField ? JSON.parse(jsonField.value || "[]") : [];
   } catch(err) { asignaturas = []; }
 
-  // Programas seleccionados (usando la función del módulo facultad.js)
+  // Obtiene los programas seleccionados
   const programas = typeof getProgramasSeleccionados === 'function'
     ? getProgramasSeleccionados()
     : [...document.querySelectorAll("#docProgramas input:checked")].map(cb => cb.value || cb.closest("label").textContent.trim());
 
-  // Horarios capturados desde filas dinámicas
+  // Captura los horarios desde las filas dinámicas
   const horarios = [];
   document.querySelectorAll(".docHorarioFila").forEach(fila => {
     const dia = fila.querySelector(".horDia").value;
@@ -149,7 +146,7 @@ async function alEnviarPerfilDocente(e) {
   }
 }
 
-// ── GUARDAR PERFIL ADMIN ────────────────────────────────
+// Valida y guarda el perfil del administrador
 async function alEnviarPerfilAdmin(e) {
   e.preventDefault();
 
@@ -181,14 +178,12 @@ async function alEnviarPerfilAdmin(e) {
   }
 }
 
-// ── CARGAR PÁGINA MI PERFIL ─────────────────────────────
+// Carga y renderiza la página de perfil del usuario
 async function cargarMiPerfil() {
-  // Siempre buscar del servidor para garantizar datos correctos del usuario activo
-  // Solo usar caché si el ID coincide con la sesión actual
   let perfil = perfilStorage.getPerfil();
   const idSesion = sesion?.id || authStorage.getSesion()?.id;
 
-  // Si el caché es de otro usuario, no existe, o no tiene fotos → buscar del API
+  // Consulta el API si la caché no corresponde al usuario actual o no tiene fotos
   if (!perfil || String(perfil.id) !== String(idSesion) || !perfil.fotos) {
     perfilStorage.clearPerfil();
     try {
@@ -200,19 +195,18 @@ async function cargarMiPerfil() {
     }
   }
 
-  // Datos básicos del hero
+  // Rellena los datos básicos del encabezado
   document.getElementById("perfilHeroNombre").textContent =
     `${perfil.nombres} ${perfil.apellidos}`;
   document.getElementById("perfilHeroCorreo").textContent = perfil.correo;
   document.getElementById("perfilHeroRol").textContent = perfil.rol;
 
-  // Foto de perfil — prioridad: servidor > localStorage
-  // (el servidor es fuente de verdad, localStorage es caché de velocidad)
+  // Resuelve la foto de perfil dando prioridad al servidor sobre la caché local
   const fotoPerfilServidor = perfil.fotos?.foto_perfil || "";
   const fotoPerfilLocal    = perfilStorage.getFotoPerfil();
   const fotoPerfil = fotoPerfilServidor || fotoPerfilLocal || "";
 
-  // Si el servidor tiene foto, actualizar el localStorage para que coincida
+  // Sincroniza la caché local con la foto del servidor
   if (fotoPerfilServidor) {
     perfilStorage.setFotoPerfil(fotoPerfilServidor);
   }
@@ -229,7 +223,7 @@ async function cargarMiPerfil() {
     iniciales.textContent = sesion?.inicial || idSesion?.toString().slice(0,2).toUpperCase() || "?";
   }
 
-  // Foto de portada — misma lógica
+  // Resuelve la foto de portada con la misma lógica
   const fotoPortadaServidor = perfil.fotos?.foto_portada || "";
   const fotoPortadaLocal    = perfilStorage.getFotoPortada();
   const fotoPortada = fotoPortadaServidor || fotoPortadaLocal || "";
@@ -248,7 +242,7 @@ async function cargarMiPerfil() {
     }
   }
 
-  // RF027 — Aviso de perfil incompleto
+  // RF027 — Muestra un aviso si el perfil está incompleto
   const contenedor = document.getElementById("perfilContenido");
   const datos = perfil.perfil || {};
   const incompleto = perfilEstaIncompleto(perfil.rol, datos);
@@ -268,7 +262,7 @@ async function cargarMiPerfil() {
       </div>`;
   }
 
-  // Contenido según el rol
+  // Renderiza el contenido según el rol
   if (perfil.rol === "estudiante")
     contenedor.innerHTML = avisoHTML + perfilEstudianteHTML(perfil);
   else if (perfil.rol === "docente")
@@ -276,7 +270,7 @@ async function cargarMiPerfil() {
   else contenedor.innerHTML = avisoHTML + perfilAdminHTML(perfil);
 }
 
-// RF027 — Detectar si el perfil está incompleto según el rol
+// RF027 — Detecta si el perfil está incompleto según el rol
 function perfilEstaIncompleto(rol, datos) {
   if (!datos) return true;
   if (rol === "estudiante") {
@@ -297,7 +291,7 @@ function perfilEstudianteHTML(p) {
   const promedio = parseFloat(d.promedio) || 0;
   const enAlerta = promedio > 0 && promedio < 3.0;
 
-  // RF031 — barra de progreso de créditos
+  // RF031 — Calcula la barra de progreso de créditos
   const semestre = parseInt(d.semestre) || 0;
   const totalCreditos = 160;
   const creditosAprobados = Math.min(semestre * 16, totalCreditos);
@@ -356,7 +350,7 @@ function perfilDocenteHTML(p) {
         </div>`).join("")
     : '<p style="color:#999;font-size:13px;padding:8px 0">Sin horarios registrados aún.</p>';
 
-  // Últimas 4 tutorías
+  // Obtiene las últimas 4 tutorías
   const tutorias = (academicoStorage.getTutorias() || [])
     .slice()
     .sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""))
@@ -408,7 +402,7 @@ function perfilDocenteHTML(p) {
 function perfilAdminHTML(p) {
   const d = p.perfil || {};
 
-  // RF034 — Log de actividad reciente (datos de ejemplo)
+  // RF034 — Define el registro de actividad reciente (datos de ejemplo)
   const actividades = [
     { icono: "🔑", accion: "Inicio de sesión", tiempo: "Hace 5 min", color: "#22c55e" },
     { icono: "✏️", accion: "Editó configuración: umbral de alerta", tiempo: "Hace 1h", color: "#007b99" },
@@ -449,8 +443,7 @@ function perfilAdminHTML(p) {
   `;
 }
 
-// ── SUBIR FOTO DE PERFIL ────────────────────────────────
-// Comprime una imagen a máximo maxKB kilobytes
+// Comprime una imagen hasta un máximo de maxKB kilobytes
 function comprimirImagen(archivo, maxAncho, maxKB) {
   return new Promise(function(resolve) {
     var lector = new FileReader();
@@ -464,7 +457,7 @@ function comprimirImagen(archivo, maxAncho, maxKB) {
         canvas.height = alto;
         canvas.getContext('2d').drawImage(img, 0, 0, ancho, alto);
 
-        // Reducir calidad hasta que quepa en maxKB
+        // Reduce la calidad hasta que la imagen quepa en maxKB
         var calidad = 0.85;
         var resultado = canvas.toDataURL('image/jpeg', calidad);
         while (resultado.length > maxKB * 1024 && calidad > 0.2) {
@@ -479,6 +472,7 @@ function comprimirImagen(archivo, maxAncho, maxKB) {
   });
 }
 
+// Comprime la foto elegida, la previsualiza y la sube al servidor
 function subirFotoPerfil(input) {
   const archivo = input.files[0];
   if (!archivo) return;
@@ -486,30 +480,27 @@ function subirFotoPerfil(input) {
   mostrarTostada("⏳ Procesando foto...", "info");
 
   comprimirImagen(archivo, 400, 300).then(async function(base64) {
-    // Mostrar inmediatamente en el DOM
     var img = document.getElementById("perfilFotoImg");
     var iniciales = document.getElementById("perfilFotoIniciales");
     if (img) { img.src = base64; img.style.display = "block"; }
     if (iniciales) iniciales.style.display = "none";
 
-    // Actualizar chip barra superior
     var chipAv = document.getElementById("chipAvatar");
     if (chipAv) { chipAv.style.backgroundImage = "url(" + base64 + ")"; chipAv.textContent = ""; }
 
-    // Guardar en localStorage (con manejo de cuota)
     try { perfilStorage.setFotoPerfil(base64); } catch(e) { console.warn("localStorage lleno"); }
 
-    // Subir al servidor (fuente de verdad)
     try {
       await llamarAPI("/perfil/foto", "POST", { foto_base64: base64, tipo: "perfil" });
       mostrarTostada("✅ Foto de perfil actualizada", "exito");
-      perfilStorage.clearPerfil(); // invalidar caché para recargar con foto nueva
+      perfilStorage.clearPerfil();
     } catch (err) {
       mostrarTostada("⚠️ Foto guardada localmente. Sin conexión con servidor.", "advertencia");
     }
   });
 }
 
+// Comprime la portada elegida y la sube al servidor
 function subirPortada(input) {
   const archivo = input.files[0];
   if (!archivo) return;

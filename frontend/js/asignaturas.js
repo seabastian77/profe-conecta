@@ -1,6 +1,4 @@
-// ═══════════════════════════════════════════════════════
-// asignaturas.js — Autocomplete con área/programa + creación dinámica
-// ═══════════════════════════════════════════════════════
+// Autocomplete de asignaturas con área y programa, y creación dinámica.
 
 let _asignaturasSeleccionadas = [];
 let _busquedaTimeout = null;
@@ -43,7 +41,7 @@ async function buscarAsignatura(q) {
       const resultados = await llamarAPI('/asignaturas?q=' + encodeURIComponent(q.trim()), 'GET');
       const disponibles = resultados.filter(r => !_asignaturasSeleccionadas.some(s => s.id === r.id));
 
-      // Agrupar por área y programa
+      // Agrupa los resultados por área y programa.
       const grupos = {};
       for (const r of disponibles) {
         const key = (r.area || 'General') + ' › ' + (r.programa || 'General');
@@ -103,7 +101,7 @@ function seleccionarAsignatura(id, nombre, area, programa) {
   if (dropdown) dropdown.style.display = 'none';
 }
 
-// Modal para crear materia nueva con área y programa
+// Abre el modal para crear una materia nueva con área y programa.
 function abrirModalCrearAsignatura(nombreSugerido) {
   const dropdown = document.getElementById('docAsignaturaDropdown');
   if (dropdown) dropdown.style.display = 'none';
@@ -239,7 +237,7 @@ async function cargarAsignaturasEnSelect(selectId) {
   if (!select) return;
   try {
     const asignaturas = await llamarAPI('/asignaturas/todas', 'GET');
-    // Agrupar por área
+    // Agrupa las asignaturas por área.
     const grupos = {};
     for (const a of asignaturas) {
       const area = a.area || 'General';
