@@ -1,8 +1,3 @@
-// Configuración de ESLint.
-//
-// La regla que importa aquí es no-undef: HORAS_CANCELACION se usaba sin estar
-// definida y tumbó el servidor en producción. ESLint lo habría marcado en el
-// editor, antes del commit. El CI también lo ejecuta.
 
 const globalesNode = {
   require: 'readonly', module: 'writable', exports: 'writable',
