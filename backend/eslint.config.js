@@ -1,4 +1,3 @@
-
 const globalesNode = {
   require: 'readonly', module: 'writable', exports: 'writable',
   process: 'readonly', console: 'readonly', __dirname: 'readonly',
