@@ -4,17 +4,6 @@ const { migrar } = require("./src/config/migrate");
 const { db } = require("./src/config/db");
 
 const PORT = process.env.PORT || 3000;
-
-// ── Espera a que la base de datos responda ──────────────
-//
-// Por qué existe esto: la red privada de Railway tarda un momento en quedar
-// lista cuando arranca el contenedor. La versión anterior intentaba migrar de
-// inmediato y, si la base todavía no respondía, hacía process.exit(1). El
-// contenedor moría, Railway lo reintentaba, y otra vez lo mismo — un retraso
-// de dos segundos se convertía en un despliegue fallido.
-//
-// Ahora se reintenta con espera creciente antes de rendirse.
-
 const INTENTOS_MAX = 10;
 
 const esperar = (ms) => new Promise(r => setTimeout(r, ms));
