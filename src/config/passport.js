@@ -20,9 +20,9 @@ if (oauthActivo) {
       try {
         const correo = (profile.emails?.[0]?.value || '').toLowerCase().trim();
 
-        // Rechaza el correo de Google que no esté verificado.
+        // Acepta solo el correo de Google verificado explícitamente.
         const verificado = profile.emails?.[0]?.verified;
-        if (verificado === false) {
+        if (verificado !== true && verificado !== 'true') {
           return done(null, false, { message: 'Correo de Google no verificado' });
         }
 

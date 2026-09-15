@@ -391,6 +391,15 @@ async function ejecutarAccionCritica() {
       if (cfgMaxEst) cfgMaxEst.value = "15";
       if (cfgCancelacion) cfgCancelacion.value = "24";
       if (cfgSesion) cfgSesion.value = "120";
+    } else if (nombre.includes("Cerrar")) {
+      // Cierra el período activo en el backend.
+      if (!window._periodoActivoId) {
+        mostrarTostada("No hay un período activo para cerrar", "error");
+        cerrarModalAccionCritica();
+        return;
+      }
+      await llamarAPI("/admin/periodos/" + window._periodoActivoId + "/cerrar", "PATCH");
+      if (typeof cargarPeriodos === "function") cargarPeriodos();
     }
     if (window._accionCriticaCallback) window._accionCriticaCallback();
     mostrarTostada("✓ " + nombre + " completada", "exito");

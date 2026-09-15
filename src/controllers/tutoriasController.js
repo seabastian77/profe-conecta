@@ -18,6 +18,12 @@ async function programar(req, res) {
     return res.status(400).json({ error: 'Falta el estudiante o el docente' });
   }
 
+  // Verifica que el docente y el estudiante existan, estén activos y con su rol.
+  const docente = await db.prepare("SELECT id FROM usuarios WHERE id=? AND rol='docente' AND activo=1").get(idDocente);
+  if (!docente) return res.status(404).json({ error: 'Docente no encontrado o inactivo' });
+  const estudiante = await db.prepare("SELECT id FROM usuarios WHERE id=? AND rol='estudiante' AND activo=1").get(idEstudiante);
+  if (!estudiante) return res.status(404).json({ error: 'Estudiante no encontrado o inactivo' });
+
   const conflicto = await db.prepare(
     "SELECT id FROM tutorias WHERE docente_id=? AND fecha=? AND hora=? AND estado!='cancelada'"
   ).get(idDocente, fecha, hora);
@@ -31,8 +37,8 @@ async function programar(req, res) {
   }
 
   const resultado = await db.prepare(
-    'INSERT INTO tutorias (estudiante_id, docente_id, asignatura, modalidad, fecha, hora, observaciones) VALUES (?,?,?,?,?,?,?)'
-  ).run(idEstudiante, idDocente, asignatura, modalidad, fecha, hora, observaciones || '');
+    'INSERT INTO tutorias (estudiante_id, docente_id, asignatura, modalidad, fecha, hora, observaciones) VALUES (?,?,?,?,?,?,?) RETURNING id'
+  ).get(idEstudiante, idDocente, asignatura, modalidad, fecha, hora, observaciones || '');
 
   await db.prepare('INSERT INTO notificaciones (usuario_id, icono, titulo, descripcion) VALUES (?,?,?,?)')
     .run(idEstudiante, '📅', 'Tutoría programada', `${asignatura} el ${fecha} a las ${hora}`);

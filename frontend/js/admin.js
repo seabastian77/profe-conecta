@@ -452,7 +452,8 @@ async function cargarUsuariosRecientes() {
     var rolLabels = { estudiante: "Estudiante", docente: "Docente", admin: "Admin" };
     tbody.innerHTML = usuarios.slice(0, 5).map(function(u) {
       var programa = u.programa || u.facultad || u.dependencia || "—";
-      var estadoHTML = !u.activo ? '<span class="insignia insignia--inactivo">○ Inactivo</span>' : u.en_alerta ? '<span class="insignia insignia--alerta">⚠ Alerta</span>' : '<span class="insignia insignia--activo">● Activo</span>';
+      var enAlerta = u.rol === 'estudiante' && u.promedio != null && parseFloat(u.promedio) < 3.0;
+      var estadoHTML = !u.activo ? '<span class="insignia insignia--inactivo">○ Inactivo</span>' : enAlerta ? '<span class="insignia insignia--alerta">⚠ Alerta</span>' : '<span class="insignia insignia--activo">● Activo</span>';
       return '<tr><td><strong>' + u.nombres + ' ' + u.apellidos + '</strong></td><td>' + (rolLabels[u.rol] || u.rol) + '</td><td>' + programa + '</td><td>' + estadoHTML + '</td><td>' + (u.creado_en ? new Date(u.creado_en).toLocaleDateString("es-CO") : "—") + '</td></tr>';
     }).join("");
   } catch (err) { console.warn("Error:", err); }
@@ -523,13 +524,13 @@ async function cargarAuditoria() {
       return;
     }
     // Mapea los eventos a iconos.
-    var iconos = { LOGIN_EXITOSO: "🔑", LOGIN_FALLIDO: "❌", LOGOUT: "🚪", CREAR_USUARIO: "👤", ACTIVAR_USUARIO: "🟢", DESACTIVAR_USUARIO: "🔴", NOTIFICACION: "📤", ASIGNACION_CREADA: "🔗", ASIGNACION_ELIMINADA: "🗑️", CONFIG: "⚙️", CONFIG_RESET: "🔄", PERIODO_CREADO: "📅", PERIODO_CERRADO: "🔒" };
+    var iconos = { LOGIN: "🔑", LOGIN_BLOQUEADO: "⛔", REGISTRO: "🆕", CREAR_USUARIO: "👤", EDITAR_USUARIO: "✏️", ELIMINAR_USUARIO: "🗑️", ACTIVAR_USUARIO: "🟢", DESACTIVAR_USUARIO: "🔴", NOTIFICACION: "📤", ASIGNACION_CREADA: "🔗", ASIGNACION_ELIMINADA: "🗑️", ASESORIA_PROGRAMADA: "📅", CONFIG: "⚙️", CONFIG_RESET: "🔄", PERIODO_CREADO: "📅", PERIODO_CERRADO: "🔒" };
     tbody.innerHTML = eventos.map(function(e) {
-      var f = new Date(e.creado_en);
-      var fecha = String(f.getDate()).padStart(2,"0") + "/" + String(f.getMonth()+1).padStart(2,"0") + "/" + f.getFullYear() + " " + String(f.getHours()).padStart(2,"0") + ":" + String(f.getMinutes()).padStart(2,"0");
+      var f = new Date(e.creada_en);
+      var fecha = isNaN(f) ? "—" : String(f.getDate()).padStart(2,"0") + "/" + String(f.getMonth()+1).padStart(2,"0") + "/" + f.getFullYear() + " " + String(f.getHours()).padStart(2,"0") + ":" + String(f.getMinutes()).padStart(2,"0");
       var icono = iconos[e.evento] || "📝";
       var eventoLimpio = e.evento.replace(/_/g, " ").toLowerCase().replace(/^./, function(s) { return s.toUpperCase(); });
-      return '<tr><td>' + fecha + '</td><td>' + (e.correo_usuario || "—") + '</td><td>' + icono + ' ' + eventoLimpio + '</td><td>' + (e.detalle || "—") + '</td><td>' + (e.ip || "local") + '</td><td><span class="insignia insignia--activo">✓ Registrado</span></td></tr>';
+      return '<tr><td>' + fecha + '</td><td>' + (e.correo_usuario || "—") + '</td><td>' + icono + ' ' + eventoLimpio + '</td><td>' + (e.detalle || "—") + '</td><td>' + (e.ip || "—") + '</td><td><span class="insignia insignia--activo">✓ Registrado</span></td></tr>';
     }).join("");
   } catch (err) { console.warn("Error cargando auditoría:", err); }
 }
@@ -562,7 +563,9 @@ async function cargarPeriodos() {
     var botonCrear = contenedor.querySelector("button");
     contenedor.innerHTML = "";
 
+    window._periodoActivoId = null;
     periodos.forEach(function(p) {
+      if (p.estado === "activo") window._periodoActivoId = p.id;
       var div = document.createElement("div");
       div.className = "config-periodo" + (p.estado === "activo" ? " activo-periodo" : "");
       var estadoTxt = p.estado === "activo" ? "● Activo" : p.estado === "proximo" ? "○ Próximo" : "○ Cerrado";

@@ -198,7 +198,7 @@ function calClickDia(dia) {
         '<span>' + iconMod + ' ' + hora + ' · 🖥️ ' + (s.modalidad||'Virtual') + '</span>' +
         (s.observaciones ? '<span>📝 ' + s.observaciones + '</span>' : '') +
         '</div>' +
-        (s.estado === 'pendiente' ? '<button class="btn-secundario" onclick="cancelarTutoria(' + s.id + ')" type="button" style="margin-top:10px;font-size:11px;padding:5px 12px;color:#ef4444;border-color:#fca5a5">Cancelar asesoría</button>' : '') +
+        ((s.estado === 'pendiente' || s.estado === 'confirmada') ? '<button class="btn-secundario" onclick="cancelarTutoria(' + s.id + ')" type="button" style="margin-top:10px;font-size:11px;padding:5px 12px;color:#ef4444;border-color:#fca5a5">Cancelar asesoría</button>' : '') +
         '</div>';
     });
   }

@@ -105,6 +105,7 @@ async function registro(req, res) {
       usuario: { id: nuevoId, nombres, apellidos, correo, rol }
     });
   } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'Ya existe una cuenta con ese correo' });
     console.error('Error en registro:', err.message);
     res.status(500).json({ error: 'Error del servidor' });
   }

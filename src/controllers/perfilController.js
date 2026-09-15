@@ -3,22 +3,21 @@ const { obtenerOCrearId } = require('./asignaturasController');
 
 // Crea o actualiza el perfil del estudiante.
 async function guardarPerfilEstudiante(req, res) {
-  const { documento, programa, semestre, telefono, promedio } = req.body;
+  const { documento, programa, semestre, telefono } = req.body;
   const usuario_id = req.usuario.id;
 
   if (!documento || !programa || !semestre) {
     return res.status(400).json({ error: 'Faltan datos obligatorios: documento, programa y semestre' });
   }
 
-  const promedioNum = parseFloat(promedio) || 0;
-
+  // El promedio no lo fija el estudiante: lo administra la institución.
   await db.prepare(`
-    INSERT INTO perfiles_estudiante (usuario_id, codigo, documento, programa, semestre, telefono, promedio)
-    VALUES (?,?,?,?,?,?,?)
+    INSERT INTO perfiles_estudiante (usuario_id, codigo, documento, programa, semestre, telefono)
+    VALUES (?,?,?,?,?,?)
     ON CONFLICT(usuario_id) DO UPDATE SET
       codigo=excluded.codigo, documento=excluded.documento, programa=excluded.programa,
-      semestre=excluded.semestre, telefono=excluded.telefono, promedio=excluded.promedio
-  `).run(usuario_id, documento, documento, programa, semestre, telefono || '', promedioNum);
+      semestre=excluded.semestre, telefono=excluded.telefono
+  `).run(usuario_id, documento, documento, programa, semestre, telefono || '');
   res.json({ mensaje: 'Perfil guardado' });
 }
 
@@ -50,7 +49,7 @@ async function guardarPerfilDocente(req, res) {
     for (const nombre of asignaturas) {
       if (!nombre || !nombre.trim()) continue;
       const asignaturaId = await obtenerOCrearId(nombre.trim());
-      insertar.run(perfil.id, asignaturaId);
+      await insertar.run(perfil.id, asignaturaId);
     }
   }
 
@@ -58,14 +57,14 @@ async function guardarPerfilDocente(req, res) {
   await db.prepare('DELETE FROM docente_programas WHERE docente_id = ?').run(perfil.id);
   if (Array.isArray(programas) && programas.length > 0) {
     const insP = await db.prepare('INSERT INTO docente_programas (docente_id, programa) VALUES (?,?) ON CONFLICT DO NOTHING');
-    programas.forEach(p => insP.run(perfil.id, p));
+    for (const p of programas) await insP.run(perfil.id, p);
   }
 
   // Revincula los horarios disponibles.
   await db.prepare('DELETE FROM docente_horarios WHERE docente_id = ?').run(perfil.id);
   if (Array.isArray(horarios) && horarios.length > 0) {
     const insH = await db.prepare('INSERT INTO docente_horarios (docente_id, dia, hora_inicio, hora_fin, lugar) VALUES (?,?,?,?,?)');
-    horarios.forEach(h => insH.run(perfil.id, h.dia, h.hora_inicio, h.hora_fin, h.lugar || 'Por definir'));
+    for (const h of horarios) await insH.run(perfil.id, h.dia, h.hora_inicio, h.hora_fin, h.lugar || 'Por definir');
   }
 
   res.json({ mensaje: 'Perfil guardado' });

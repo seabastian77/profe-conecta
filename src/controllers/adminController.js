@@ -297,6 +297,9 @@ async function actualizarUsuario(req, res) {
     const existe = await db.prepare('SELECT id FROM usuarios WHERE id=?').get(id);
     if (!existe) return res.status(404).json({ error: 'Usuario no encontrado' });
 
+    const correoOcupado = await db.prepare('SELECT id FROM usuarios WHERE correo=? AND id<>?').get(correo, id);
+    if (correoOcupado) return res.status(409).json({ error: 'Ya existe otro usuario con ese correo' });
+
     if (contrasena) {
       const errorClave = validarContrasena(contrasena);
       if (errorClave) return res.status(400).json({ error: errorClave });

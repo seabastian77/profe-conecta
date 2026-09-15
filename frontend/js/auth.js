@@ -347,9 +347,9 @@ function aplicarEstadoInvitado() {
 
 // Cierra la sesión y limpia el almacenamiento local
 function cerrarSesion() {
-  authStorage.limpiarTodo();
   perfilStorage.limpiarTodo();
   academicoStorage.limpiarTodo();
+  authStorage.limpiarTodo();
 
   aplicarEstadoInvitado();
 

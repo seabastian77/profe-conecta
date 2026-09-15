@@ -234,6 +234,8 @@ function tarjetaTutoriaHTML(t, vistaRol) {
 
   const colores = {
     pendiente: "#007b99",
+    confirmada: "#0ea5e9",
+    completada: "#22c55e",
     realizada: "#22c55e",
     cancelada: "#ef4444",
   };
@@ -250,7 +252,7 @@ function tarjetaTutoriaHTML(t, vistaRol) {
         <div class="tarjeta-tutoria__fecha">📅 ${formatearFecha(t.fecha)} · ⏰ ${t.hora?.slice(0, 5)}</div>
         <div class="tarjeta-tutoria__modo">${iconoModalidad(t.modalidad)} ${t.modalidad}</div>
       </div>
-      ${botonAccionTutoria(t)}
+      ${botonAccionTutoria(t, vistaRol)}
     </div>
   `;
 }
@@ -262,11 +264,18 @@ function tutoriaYaPaso(t) {
   return !isNaN(cuando) && cuando < new Date();
 }
 
-// Genera el botón o la nota de acción de la tutoría según su estado.
-function botonAccionTutoria(t) {
-  if (t.estado !== "pendiente") return "";
+// Genera el botón o la nota de acción de la tutoría según su estado y rol.
+function botonAccionTutoria(t, vistaRol) {
+  const activa = t.estado === "pendiente" || t.estado === "confirmada";
+  if (!activa) return "";
 
   if (tutoriaYaPaso(t)) {
+    if (vistaRol === "docente" || vistaRol === "admin") {
+      return `
+    <button class="tarjeta-tutoria__btn" onclick="marcarTutoriaRealizada(${t.id})" type="button">
+      Marcar realizada
+    </button>`;
+    }
     return `<div class="tarjeta-tutoria__nota">Sesión vencida · pendiente de registrar</div>`;
   }
 
@@ -288,6 +297,21 @@ async function cancelarTutoria(id) {
     else cargarPanelDocente();
   } catch (err) {
     mostrarTostada(err.mensaje || "No se pudo cancelar", "error");
+  }
+}
+
+// Marca una tutoría como realizada (docente o admin) y recarga el panel.
+async function marcarTutoriaRealizada(id) {
+  if (!confirm("¿Marcar esta tutoría como realizada?")) return;
+
+  try {
+    await llamarAPI(`/tutorias/${id}/realizada`, "PATCH");
+    mostrarTostada("Tutoría marcada como realizada", "exito");
+
+    if (sesion.rol === "estudiante") cargarPanelEstudiante();
+    else cargarPanelDocente();
+  } catch (err) {
+    mostrarTostada(err.mensaje || "No se pudo marcar", "error");
   }
 }
 
