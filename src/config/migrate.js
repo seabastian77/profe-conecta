@@ -342,25 +342,13 @@ async function sembrarUsuarios(c) {
   console.log('🌱 Seed: 10 docentes y 10 estudiantes creados (contraseña: 123456)');
 }
 
-// Crea el primer administrador desde variables de entorno si no existe ninguno.
+// Crea o asegura el administrador definido en las variables de entorno.
 async function sembrarAdminInicial(c) {
-  const { rows } = await c.query(`SELECT COUNT(*)::int AS n FROM usuarios WHERE rol = 'admin'`);
-  if (rows[0].n > 0) return;
-
   const correo = (process.env.ADMIN_INICIAL_CORREO || '').trim().toLowerCase();
   const clave  = process.env.ADMIN_INICIAL_CONTRASENA || '';
 
-  if (!correo || !clave) {
-    console.warn(
-      '\n⚠️  No hay ningún usuario administrador y no se puede crear uno.\n' +
-      '   El registro público solo permite estudiante y docente (a propósito).\n' +
-      '   Define estas dos variables de entorno y reinicia:\n' +
-      '     ADMIN_INICIAL_CORREO=tu.correo@amigo.edu.co\n' +
-      '     ADMIN_INICIAL_CONTRASENA=<una contraseña larga>\n' +
-      '   Se usan una sola vez; después puedes borrarlas.\n'
-    );
-    return;
-  }
+  // Sin variables no hay nada que crear (ya se usaron o aún no se definen).
+  if (!correo || !clave) return;
 
   if (clave.length < 8) {
     console.warn('⚠️  ADMIN_INICIAL_CONTRASENA es demasiado corta (mínimo 8). No se creó el administrador.');
