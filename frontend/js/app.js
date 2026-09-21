@@ -601,7 +601,7 @@ function mostrarSplash(alTerminar) {
 
   let progreso = 0;
   const intervalo = setInterval(() => {
-    progreso += Math.random() * 25;
+    progreso += Math.random() * 45;
     barra.style.width = Math.min(progreso, 95) + "%";
     if (progreso >= 95) {
       clearInterval(intervalo);
@@ -609,9 +609,9 @@ function mostrarSplash(alTerminar) {
       setTimeout(() => {
         splash.classList.add("oculto");
         alTerminar?.();
-      }, 400);
+      }, 120);
     }
-  }, 120);
+  }, 30);
 }
 
 // Inicializa la aplicación cuando el DOM está listo.
