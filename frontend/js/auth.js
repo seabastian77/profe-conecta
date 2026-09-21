@@ -21,15 +21,34 @@ async function llamarAPI(ruta, metodo, cuerpo) {
   try {
     resp = await fetch(API_URL + ruta, opciones);
   } catch (e) {
+    var esLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     throw {
-      mensaje:
-        "No se pudo conectar al servidor. ¿Está corriendo el backend en localhost:3000?",
+      mensaje: esLocal
+        ? "No se pudo conectar al servidor. ¿Está corriendo el backend en localhost:3000?"
+        : "No se pudo conectar al servidor. Revisa tu conexión e intenta de nuevo.",
     };
   }
 
-  var data = await resp.json();
-  if (!resp.ok)
-    throw { status: resp.status, mensaje: data.error || "Error del servidor" };
+  // El servidor puede responder algo que no es JSON (p. ej. mientras "despierta").
+  var data = null;
+  try {
+    data = await resp.json();
+  } catch (e) {
+    data = null;
+  }
+
+  if (!resp.ok) {
+    var msg = (data && data.error)
+      || (resp.status >= 500
+            ? "El servidor no está disponible en este momento. Espera unos segundos e intenta de nuevo."
+            : "Error del servidor");
+    throw { status: resp.status, mensaje: msg };
+  }
+
+  if (data === null) {
+    throw { status: resp.status, mensaje: "Respuesta inesperada del servidor. Intenta de nuevo." };
+  }
+
   return data;
 }
 
