@@ -2,6 +2,9 @@ const { db } = require('../config/db');
 const bcrypt = require('bcrypt');
 const { RONDAS_BCRYPT, validarContrasena } = require('../config/seguridad');
 
+// Acepta solo letras, espacios y signos simples en nombres y apellidos.
+const NOMBRE_VALIDO = /^[\p{L}\p{M}\s'.-]{1,80}$/u;
+
 // Lista los usuarios con filtros opcionales de rol, estado y búsqueda.
 async function listarUsuarios(req, res) {
   try {
@@ -53,6 +56,10 @@ async function crearUsuario(req, res) {
 
   if (!['estudiante', 'docente', 'admin'].includes(rol)) {
     return res.status(400).json({ error: 'Rol inválido' });
+  }
+
+  if (!NOMBRE_VALIDO.test(nombres) || !NOMBRE_VALIDO.test(apellidos)) {
+    return res.status(400).json({ error: 'Nombres y apellidos solo admiten letras' });
   }
 
   const errorClave = validarContrasena(contrasena);
@@ -292,6 +299,10 @@ async function actualizarUsuario(req, res) {
 
     if (!nombres || !apellidos || !correo || !rol) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+
+    if (!NOMBRE_VALIDO.test(nombres) || !NOMBRE_VALIDO.test(apellidos)) {
+      return res.status(400).json({ error: 'Nombres y apellidos solo admiten letras' });
     }
 
     const existe = await db.prepare('SELECT id FROM usuarios WHERE id=?').get(id);

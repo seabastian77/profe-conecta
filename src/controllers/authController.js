@@ -54,9 +54,11 @@ async function limpiarIntentos(correo) {
 // Reglas de validación del registro.
 const reglasRegistro = [
   body('nombres').trim().notEmpty().withMessage('El nombre es requerido')
-    .isLength({ max: 80 }).withMessage('Nombre demasiado largo').escape(),
+    .isLength({ max: 80 }).withMessage('Nombre demasiado largo')
+    .matches(/^[\p{L}\p{M}\s'.-]+$/u).withMessage('El nombre solo admite letras'),
   body('apellidos').trim().notEmpty().withMessage('Los apellidos son requeridos')
-    .isLength({ max: 80 }).withMessage('Apellidos demasiado largos').escape(),
+    .isLength({ max: 80 }).withMessage('Apellidos demasiado largos')
+    .matches(/^[\p{L}\p{M}\s'.-]+$/u).withMessage('Los apellidos solo admiten letras'),
   body('correo').isEmail().withMessage('Correo inválido')
     .normalizeEmail({ gmail_remove_dots: false })
     .custom(v => {

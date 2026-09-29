@@ -136,6 +136,12 @@ async function subirFoto(req, res) {
 
   if (!foto_base64) return res.status(400).json({ error: 'No se recibió foto' });
 
+  // Rechaza imágenes de más de 2 MB para no llenar la base ni degradar el servicio.
+  const datos = String(foto_base64).split(',').pop() || '';
+  if (Math.floor(datos.length * 3 / 4) > 2 * 1024 * 1024) {
+    return res.status(400).json({ error: 'El tamaño máximo permitido es 2 MB' });
+  }
+
   const campo = tipo === 'portada' ? 'foto_portada' : 'foto_perfil';
 
   await db.prepare(`
