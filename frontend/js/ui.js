@@ -11,7 +11,7 @@ async function cargarPanelEstudiante() {
       // Ignora el error: el panel puede cargar sin perfil.
     }
   }
-  const nombre = perfil ? `${perfil.nombres}` : sesion.nombre.split(" ")[0];
+  const nombre = perfil ? `${escaparHtml(perfil.nombres)}` : sesion.nombre.split(" ")[0];
   const datosPerfil = perfil?.perfil || {};
 
   document.getElementById("estudianteSaludo").textContent = nombre;
@@ -82,7 +82,7 @@ async function cargarPanelEstudiante() {
 // Carga y renderiza el panel del docente.
 async function cargarPanelDocente() {
   const perfil = perfilStorage.getPerfil();
-  const nombre = perfil ? `${perfil.nombres}` : sesion.nombre.split(" ")[0];
+  const nombre = perfil ? `${escaparHtml(perfil.nombres)}` : sesion.nombre.split(" ")[0];
 
   document.getElementById("docenteSaludo").textContent = nombre;
 
@@ -213,7 +213,7 @@ function renderizarAlertasDocente(estudiantes) {
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
               <div style="width:36px;height:36px;border-radius:50%;background:${color};color:white;display:flex;align-items:center;justify-content:center;font-weight:700">${inicial}</div>
               <div>
-                <div class="tarjeta-tutoria__asig">${e.nombre}</div>
+                <div class="tarjeta-tutoria__asig">${escaparHtml(e.nombre)}</div>
                 <div class="tarjeta-tutoria__meta" style="color:${color};font-weight:600">${etiqueta}</div>
               </div>
             </div>
@@ -508,10 +508,10 @@ function seleccionarDia(prefijo, dia) {
     <div class="calendario-evento">
       <span class="calendario-evento__hora">${t.hora?.slice(0, 5)}</span>
       <div class="calendario-evento__info">
-        <div class="calendario-evento__asig">${t.asignatura}</div>
+        <div class="calendario-evento__asig">${escaparHtml(t.asignatura)}</div>
         <div class="calendario-evento__meta">
           ${t.nombre_docente || t.nombre_estudiante || ""} · 
-          <span class="calendario-evento__modo">${iconoModalidad(t.modalidad)} ${t.modalidad}</span>
+          <span class="calendario-evento__modo">${iconoModalidad(t.modalidad)} ${escaparHtml(t.modalidad)}</span>
         </div>
       </div>
     </div>
@@ -553,8 +553,8 @@ async function cargarNotificaciones() {
       <div class="notif-item ${n.leida ? "" : "no-leida"}" onclick="leerNotif(${n.id})">
         <div class="notif-item__icono">${n.icono || "🔔"}</div>
         <div class="notif-item__cuerpo">
-          <div class="notif-item__titulo">${n.titulo}</div>
-          <div class="notif-item__desc">${n.descripcion || ""}</div>
+          <div class="notif-item__titulo">${escaparHtml(n.titulo)}</div>
+          <div class="notif-item__desc">${escaparHtml(n.descripcion || "")}</div>
           <div class="notif-item__tiempo">${formatearTiempo(n.creada_en)}</div>
         </div>
         ${!n.leida ? '<span class="notif-item__punto"></span>' : ""}

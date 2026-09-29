@@ -22,15 +22,15 @@ async function buscarUsuarioAdmin(campo, rol) {
   try {
     const lista = await llamarAPI('/admin/buscar-usuario?q=' + encodeURIComponent(q) + '&rol=' + rol, 'GET');
     if (!lista || lista.length === 0) {
-      resultsEl.innerHTML = '<div class="busqueda-item"><span class="busqueda-item__nombre" style="color:#999">Sin resultados para "' + q + '"</span></div>';
+      resultsEl.innerHTML = '<div class="busqueda-item"><span class="busqueda-item__nombre" style="color:#999">Sin resultados para "' + escaparHtml(q) + '"</span></div>';
       return;
     }
     resultsEl.innerHTML = lista.map(u => {
       const idSafe = u.id;
-      const nomSafe = (u.nombre + ' · CC ' + u.cedula).replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+      const nomSafe = escaparHtml(u.nombre + ' · CC ' + u.cedula).replace(/'/g, '&apos;');
       return `<div class="busqueda-item" onclick="seleccionarUsuario('${campo}',${idSafe},'${nomSafe}')">
-        <span class="busqueda-item__nombre">${u.nombre}</span>
-        <span class="busqueda-item__detalle">Cédula: ${u.cedula} · ${u.info || ''}</span>
+        <span class="busqueda-item__nombre">${escaparHtml(u.nombre)}</span>
+        <span class="busqueda-item__detalle">Cédula: ${escaparHtml(u.cedula)} · ${escaparHtml(u.info || '')}</span>
       </div>`;
     }).join('');
   } catch(err) {
@@ -125,8 +125,8 @@ async function cargarClasesProgramadas() {
       const f = c.fecha ? new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-CO', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
       return `<tr>
         <td><strong>${c.asignatura || '—'}</strong></td>
-        <td>${c.nombre_docente || '—'}</td>
-        <td>${c.nombre_estudiante || '—'}</td>
+        <td>${escaparHtml(c.nombre_docente || '—')}</td>
+        <td>${escaparHtml(c.nombre_estudiante || '—')}</td>
         <td>${f}</td>
         <td>${(c.hora || '—').slice(0,5)}</td>
       </tr>`;
@@ -408,7 +408,7 @@ async function cargarTablaUsuarios() {
     if (!tbody) return;
     var rolLabels = { estudiante: "Estudiante", docente: "Docente", admin: "Admin" };
     tbody.innerHTML = usuarios.map(function(u) {
-      var programa = u.programa || u.facultad || u.dependencia || "—";
+      var programa = escaparHtml(u.programa || u.facultad || u.dependencia || "—");
       var estadoHTML;
       if (!u.activo || u.activo == 0) estadoHTML = '<span class="insignia insignia--inactivo">○ Inactivo</span>';
       else if (parseFloat(u.promedio) < 3.0 && u.promedio) estadoHTML = '<span class="insignia insignia--alerta">⚠ Alerta</span>';
@@ -416,20 +416,20 @@ async function cargarTablaUsuarios() {
       var btnToggle = (u.activo && u.activo != 0)
         ? '<button class="btn-accion btn-accion--toggle" title="Desactivar" data-id="' + u.id + '" data-activo="1" onclick="animarYToggle(this)">🔴</button>'
         : '<button class="btn-accion btn-accion--toggle btn-accion--activar" title="Activar" data-id="' + u.id + '" data-activo="0" onclick="animarYToggle(this)">🟢</button>';
-      var btnEliminar = '<button class="btn-accion btn-accion--eliminar" title="Eliminar permanente" data-id="' + u.id + '" data-nombre="' + (u.nombres + ' ' + u.apellidos).replace(/"/g,"&quot;") + '" onclick="animarYEliminar(this)">🗑️</button>';
+      var btnEliminar = '<button class="btn-accion btn-accion--eliminar" title="Eliminar permanente" data-id="' + u.id + '" data-nombre="' + escaparHtml(u.nombres + ' ' + u.apellidos) + '" onclick="animarYEliminar(this)">🗑️</button>';
       return '<tr data-user-id="' + u.id + '">' +
-        '<td><strong>' + u.nombres + ' ' + u.apellidos + '</strong></td>' +
-        '<td>' + u.correo + '</td>' +
-        '<td>' + (rolLabels[u.rol] || u.rol) + '</td>' +
+        '<td><strong>' + escaparHtml(u.nombres) + ' ' + escaparHtml(u.apellidos) + '</strong></td>' +
+        '<td>' + escaparHtml(u.correo) + '</td>' +
+        '<td>' + (rolLabels[u.rol] || escaparHtml(u.rol)) + '</td>' +
         '<td>' + programa + '</td>' +
         '<td>' + estadoHTML + '</td>' +
         '<td>' + (u.creado_en ? new Date(u.creado_en).toLocaleDateString("es-CO") : "—") + '</td>' +
         '<td class="acciones-celda">' +
           '<button class="btn-accion btn-accion--editar" title="Editar" ' +
             'data-id="' + u.id + '" ' +
-            'data-nombres="' + (u.nombres||'').replace(/"/g,'&quot;') + '" ' +
-            'data-apellidos="' + (u.apellidos||'').replace(/"/g,'&quot;') + '" ' +
-            'data-correo="' + (u.correo||'').replace(/"/g,'&quot;') + '" ' +
+            'data-nombres="' + escaparHtml(u.nombres) + '" ' +
+            'data-apellidos="' + escaparHtml(u.apellidos) + '" ' +
+            'data-correo="' + escaparHtml(u.correo) + '" ' +
             'data-rol="' + (u.rol||'') + '" ' +
             'onclick="animarYEditar(this)">✏️</button>' +
           btnToggle + btnEliminar +
@@ -451,10 +451,10 @@ async function cargarUsuariosRecientes() {
     if (!tbody || usuarios.length === 0) return;
     var rolLabels = { estudiante: "Estudiante", docente: "Docente", admin: "Admin" };
     tbody.innerHTML = usuarios.slice(0, 5).map(function(u) {
-      var programa = u.programa || u.facultad || u.dependencia || "—";
+      var programa = escaparHtml(u.programa || u.facultad || u.dependencia || "—");
       var enAlerta = u.rol === 'estudiante' && u.promedio != null && parseFloat(u.promedio) < 3.0;
       var estadoHTML = !u.activo ? '<span class="insignia insignia--inactivo">○ Inactivo</span>' : enAlerta ? '<span class="insignia insignia--alerta">⚠ Alerta</span>' : '<span class="insignia insignia--activo">● Activo</span>';
-      return '<tr><td><strong>' + u.nombres + ' ' + u.apellidos + '</strong></td><td>' + (rolLabels[u.rol] || u.rol) + '</td><td>' + programa + '</td><td>' + estadoHTML + '</td><td>' + (u.creado_en ? new Date(u.creado_en).toLocaleDateString("es-CO") : "—") + '</td></tr>';
+      return '<tr><td><strong>' + escaparHtml(u.nombres) + ' ' + escaparHtml(u.apellidos) + '</strong></td><td>' + (rolLabels[u.rol] || escaparHtml(u.rol)) + '</td><td>' + programa + '</td><td>' + estadoHTML + '</td><td>' + (u.creado_en ? new Date(u.creado_en).toLocaleDateString("es-CO") : "—") + '</td></tr>';
     }).join("");
   } catch (err) { console.warn("Error:", err); }
 }
@@ -467,7 +467,7 @@ async function cargarSelectsAsignacion() {
     var selDoc = document.getElementById("asigDocente");
     if (selEst) {
       var ests = usuarios.filter(function(u) { return u.rol === "estudiante" && u.activo; });
-      selEst.innerHTML = '<option value="">— Selecciona estudiante —</option>' + ests.map(function(e) { return '<option value="' + e.id + '">' + e.nombres + ' ' + e.apellidos + ' — ' + (e.programa || 'Sin programa') + '</option>'; }).join("");
+      selEst.innerHTML = '<option value="">— Selecciona estudiante —</option>' + ests.map(function(e) { return '<option value="' + e.id + '">' + escaparHtml(e.nombres) + ' ' + escaparHtml(e.apellidos) + ' — ' + escaparHtml(e.programa || 'Sin programa') + '</option>'; }).join("");
     }
     if (selDoc) {
       var docs = usuarios.filter(function(u) { return u.rol === "docente" && u.activo; });
@@ -489,7 +489,7 @@ async function cargarTablaAsignaciones() {
       return;
     }
     tbody.innerHTML = asignaciones.map(function(a) {
-      return '<tr data-asig-id="' + a.id + '"><td><strong>' + a.nombre_estudiante + '</strong><br><span style="font-size:11px;color:#999">' + (a.programa || '') + '</span></td><td>' + a.nombre_docente + '</td><td><span class="insignia insignia--alerta">Activa</span></td><td><button class="btn-accion btn-accion--eliminar" onclick="eliminarAsignacion(this)" title="Remover">🗑️</button></td></tr>';
+      return '<tr data-asig-id="' + a.id + '"><td><strong>' + escaparHtml(a.nombre_estudiante) + '</strong><br><span style="font-size:11px;color:#999">' + escaparHtml(a.programa || '') + '</span></td><td>' + escaparHtml(a.nombre_docente) + '</td><td><span class="insignia insignia--alerta">Activa</span></td><td><button class="btn-accion btn-accion--eliminar" onclick="eliminarAsignacion(this)" title="Remover">🗑️</button></td></tr>';
     }).join("");
   } catch (err) { console.warn("Error cargando asignaciones:", err); }
 }
@@ -530,7 +530,7 @@ async function cargarAuditoria() {
       var fecha = isNaN(f) ? "—" : String(f.getDate()).padStart(2,"0") + "/" + String(f.getMonth()+1).padStart(2,"0") + "/" + f.getFullYear() + " " + String(f.getHours()).padStart(2,"0") + ":" + String(f.getMinutes()).padStart(2,"0");
       var icono = iconos[e.evento] || "📝";
       var eventoLimpio = e.evento.replace(/_/g, " ").toLowerCase().replace(/^./, function(s) { return s.toUpperCase(); });
-      return '<tr><td>' + fecha + '</td><td>' + (e.correo_usuario || "—") + '</td><td>' + icono + ' ' + eventoLimpio + '</td><td>' + (e.detalle || "—") + '</td><td>' + (e.ip || "—") + '</td><td><span class="insignia insignia--activo">✓ Registrado</span></td></tr>';
+      return '<tr><td>' + fecha + '</td><td>' + escaparHtml(e.correo_usuario || "—") + '</td><td>' + icono + ' ' + escaparHtml(eventoLimpio) + '</td><td>' + escaparHtml(e.detalle || "—") + '</td><td>' + escaparHtml(e.ip || "—") + '</td><td><span class="insignia insignia--activo">✓ Registrado</span></td></tr>';
     }).join("");
   } catch (err) { console.warn("Error cargando auditoría:", err); }
 }

@@ -178,7 +178,7 @@ async function prepararFormTutoria() {
       const docentes = await llamarAPI("/tutorias/docentes-disponibles", "GET");
       selectTutor.innerHTML =
         '<option value="">— Selecciona tutor —</option>' +
-        docentes.map(d => `<option value="${d.id}">${d.nombre} · ${d.facultad}</option>`).join("");
+        docentes.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)} · ${escaparHtml(d.facultad)}</option>`).join("");
     } catch(e) {
       selectTutor.innerHTML = '<option value="">Sin tutores disponibles</option>';
     }
@@ -190,7 +190,7 @@ async function prepararFormTutoria() {
     if (selectTutor) {
       selectTutor.innerHTML =
         '<option value="">— Selecciona tutor —</option>' +
-        docentes.map(d => `<option value="${d.id}">${d.nombres} ${d.apellidos}</option>`).join("");
+        docentes.map(d => `<option value="${d.id}">${escaparHtml(d.nombres)} ${escaparHtml(d.apellidos)}</option>`).join("");
     }
   }
 
@@ -247,10 +247,10 @@ function tarjetaTutoriaHTML(t, vistaRol) {
         ${t.estado.charAt(0).toUpperCase() + t.estado.slice(1)}
       </div>
       <div class="tarjeta-tutoria__cuerpo">
-        <div class="tarjeta-tutoria__asig">${t.asignatura}</div>
+        <div class="tarjeta-tutoria__asig">${escaparHtml(t.asignatura)}</div>
         <div class="tarjeta-tutoria__meta">${etiqueta}: <strong>${nombre}</strong></div>
         <div class="tarjeta-tutoria__fecha">📅 ${formatearFecha(t.fecha)} · ⏰ ${t.hora?.slice(0, 5)}</div>
-        <div class="tarjeta-tutoria__modo">${iconoModalidad(t.modalidad)} ${t.modalidad}</div>
+        <div class="tarjeta-tutoria__modo">${iconoModalidad(t.modalidad)} ${escaparHtml(t.modalidad)}</div>
       </div>
       ${botonAccionTutoria(t, vistaRol)}
     </div>

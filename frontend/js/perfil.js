@@ -197,7 +197,7 @@ async function cargarMiPerfil() {
 
   // Rellena los datos básicos del encabezado
   document.getElementById("perfilHeroNombre").textContent =
-    `${perfil.nombres} ${perfil.apellidos}`;
+    `${escaparHtml(perfil.nombres)} ${escaparHtml(perfil.apellidos)}`;
   document.getElementById("perfilHeroCorreo").textContent = perfil.correo;
   document.getElementById("perfilHeroRol").textContent = perfil.rol;
 
@@ -304,13 +304,13 @@ function perfilEstudianteHTML(p) {
     <div class="perfil-seccion">
       <h3 class="perfil-seccion__titulo">Datos Académicos</h3>
       <div class="perfil-datos-grilla">
-        <div class="perfil-dato"><span class="perfil-dato__label">N° Documento</span><span>${d.documento || "—"}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Programa</span><span>${d.programa || "—"}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">N° Documento</span><span>${escaparHtml(d.documento || "—")}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Programa</span><span>${escaparHtml(d.programa || "—")}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Semestre</span><span>${d.semestre || "—"}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Promedio</span>
           <span class="${enAlerta ? "texto-naranja" : ""}">${d.promedio || "—"}${enAlerta ? " ⚠️" : ""}</span>
         </div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${d.telefono || "—"}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
       </div>
     </div>
 
@@ -346,7 +346,7 @@ function perfilDocenteHTML(p) {
         <div style="background:#f0f9fb;border-left:3px solid #007b99;padding:10px;border-radius:6px">
           <div style="font-weight:700;color:#007b99;font-size:13px">${h.dia}</div>
           <div style="font-size:12px;color:#333;margin-top:4px">${h.hora_inicio} – ${h.hora_fin}</div>
-          <div style="font-size:11px;color:#777">${h.lugar || 'Por definir'}</div>
+          <div style="font-size:11px;color:#777">${escaparHtml(h.lugar || 'Por definir')}</div>
         </div>`).join("")
     : '<p style="color:#999;font-size:13px;padding:8px 0">Sin horarios registrados aún.</p>';
 
@@ -364,7 +364,7 @@ function perfilDocenteHTML(p) {
             (t) => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #eee">
           <div>
-            <div style="font-weight:600;font-size:13px">${t.asignatura || "—"}</div>
+            <div style="font-weight:600;font-size:13px">${escaparHtml(t.asignatura || "—")}</div>
             <div style="font-size:11px;color:#777">${t.nombre_estudiante || "Estudiante"} · ${formatearFecha(t.fecha)}</div>
           </div>
           <span class="insignia ${t.estado === "pendiente" ? "insignia--alerta" : "insignia--activo"}">${t.estado || "pendiente"}</span>
@@ -376,9 +376,9 @@ function perfilDocenteHTML(p) {
     <div class="perfil-seccion">
       <h3 class="perfil-seccion__titulo">Datos del Docente</h3>
       <div class="perfil-datos-grilla">
-        <div class="perfil-dato"><span class="perfil-dato__label">Cédula</span><span>${d.cedula || "—"}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Facultad</span><span>${d.facultad || "—"}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${d.telefono || "—"}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Cédula</span><span>${escaparHtml(d.cedula || "—")}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Facultad</span><span>${escaparHtml(d.facultad || "—")}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
         <div class="perfil-dato" style="grid-column:1/-1"><span class="perfil-dato__label">Programas que atiende</span><span>${progs}</span></div>
         <div class="perfil-dato" style="grid-column:1/-1"><span class="perfil-dato__label">Materias</span><span>${asig}</span></div>
       </div>
@@ -416,10 +416,10 @@ function perfilAdminHTML(p) {
     <div class="perfil-seccion">
       <h3 class="perfil-seccion__titulo">Datos del Administrador</h3>
       <div class="perfil-datos-grilla">
-        <div class="perfil-dato"><span class="perfil-dato__label">Cédula</span><span>${d.cedula || "—"}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Cédula</span><span>${escaparHtml(d.cedula || "—")}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Cargo</span><span>${d.cargo || "—"}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Dependencia</span><span>${d.dependencia || "—"}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${d.telefono || "—"}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Dependencia</span><span>${escaparHtml(d.dependencia || "—")}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
       </div>
     </div>
 

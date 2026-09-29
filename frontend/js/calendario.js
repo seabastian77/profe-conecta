@@ -196,7 +196,7 @@ function calClickDia(dia) {
         '<div style="font-size:12px;color:#555;display:flex;flex-direction:column;gap:4px">' +
         '<span>' + rolLabel + ': <strong>' + persona + '</strong></span>' +
         '<span>' + iconMod + ' ' + hora + ' · 🖥️ ' + (s.modalidad||'Virtual') + '</span>' +
-        (s.observaciones ? '<span>📝 ' + s.observaciones + '</span>' : '') +
+        (s.observaciones ? '<span>📝 ' + escaparHtml(s.observaciones) + '</span>' : '') +
         '</div>' +
         ((s.estado === 'pendiente' || s.estado === 'confirmada') ? '<button class="btn-secundario" onclick="cancelarTutoria(' + s.id + ')" type="button" style="margin-top:10px;font-size:11px;padding:5px 12px;color:#ef4444;border-color:#fca5a5">Cancelar asesoría</button>' : '') +
         '</div>';

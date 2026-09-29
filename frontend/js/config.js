@@ -24,3 +24,12 @@ const CONFIG = {
 if (CONFIG.MODO_DEMO) {
   document.write('<script src="js/demo.js"><\/script>');
 }
+
+
+// Escapa texto para insertarlo sin riesgo dentro de HTML.
+function escaparHtml(valor) {
+  return String(valor === null || valor === undefined ? '' : valor)
+    .replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}

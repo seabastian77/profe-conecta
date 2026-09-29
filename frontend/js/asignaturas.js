@@ -56,7 +56,7 @@ async function buscarAsignatura(q) {
           <div onclick="seleccionarAsignatura(${r.id},'${r.nombre.replace(/'/g,"\\'")}','${(r.area||'').replace(/'/g,"\\'")}','${(r.programa||'').replace(/'/g,"\\'")}' )"
             style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:0.5px solid #f5f5f5;display:flex;align-items:center;gap:8px"
             onmouseover="this.style.background='#f0f9fb'" onmouseout="this.style.background=''">
-            <span style="color:#007b99">📚</span> ${r.nombre}
+            <span style="color:#007b99">📚</span> ${escaparHtml(r.nombre)}
           </div>`).join('');
       }
 
@@ -182,9 +182,9 @@ async function confirmarCrearAsignatura() {
     document.getElementById('modalCrearAsignatura').remove();
     seleccionarAsignatura(resultado.id, resultado.nombre, resultado.area, resultado.programa);
     if (resultado.nueva) {
-      mostrarTostada(`✨ Materia "${resultado.nombre}" creada y disponible globalmente`, 'exito');
+      mostrarTostada(`✨ Materia "${escaparHtml(resultado.nombre)}" creada y disponible globalmente`, 'exito');
     } else {
-      mostrarTostada(`Materia "${resultado.nombre}" ya existía — agregada`, 'exito');
+      mostrarTostada(`Materia "${escaparHtml(resultado.nombre)}" ya existía — agregada`, 'exito');
     }
   } catch(err) {
     const tempId = -Date.now();
@@ -208,10 +208,10 @@ function renderizarTags() {
     return;
   }
   contenedor.innerHTML = _asignaturasSeleccionadas.map(a => `
-    <span title="${a.area || ''} › ${a.programa || ''}"
+    <span title="${a.area || ''} › ${escaparHtml(a.programa || '')}"
       style="display:inline-flex;align-items:center;gap:5px;background:#e0f4f8;color:#007b99;
              border-radius:20px;padding:4px 12px;font-size:13px;font-weight:500;cursor:default">
-      📚 ${a.nombre}
+      📚 ${escaparHtml(a.nombre)}
       <button type="button" onclick="quitarAsignatura(${a.id})"
         style="background:none;border:none;cursor:pointer;color:#007b99;font-size:15px;padding:0;opacity:0.7;line-height:1">×</button>
     </span>`).join('');
@@ -248,7 +248,7 @@ async function cargarAsignaturasEnSelect(selectId) {
     for (const area of Object.keys(grupos).sort()) {
       html += `<optgroup label="${area}">`;
       for (const a of grupos[area]) {
-        html += `<option value="${a.nombre}">${a.nombre}</option>`;
+        html += `<option value="${escaparHtml(a.nombre)}">${escaparHtml(a.nombre)}</option>`;
       }
       html += '</optgroup>';
     }

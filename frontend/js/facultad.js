@@ -126,7 +126,7 @@ function renderizarOpcionesFacultad(opciones) {
       onclick="seleccionarFacultad('${f.area.replace(/'/g, "\\'")}','${f.nombre.replace(/'/g, "\\'")}')">
       <span style="font-size:18px">${f.icono}</span>
       <div>
-        <div style="font-weight:${_facultadSeleccionada === f.area ? '600' : '400'}">${f.nombre}</div>
+        <div style="font-weight:${_facultadSeleccionada === f.area ? '600' : '400'}">${escaparHtml(f.nombre)}</div>
         <div style="font-size:11px;color:#aaa">${f.programas.join(' · ')}</div>
       </div>
       ${_facultadSeleccionada === f.area ? '<span style="margin-left:auto;color:#007b99">✓</span>' : ''}
