@@ -83,9 +83,29 @@ Todo lo demás ya está hecho con datos reales. Esto no lo puede poner un script
 
 - [ ] **Firmar** la tabla de reparto interno en los dos documentos (hay línea para cada uno).
 - [ ] Pegar en la portada los **enlaces reales**: carpeta compartida de evidencias (si la suben a Drive) y el proyecto de Qase, si lo van a mantener.
-- [ ] **Contraste en Firefox** del ciclo 2: correr a mano los 16 casos del ciclo 2 en Firefox sobre Railway y confirmar que da igual (lo normal es que sí). Anotar la versión de Firefox.
-- [ ] **CP-014 y CP-015 (Google)** en Railway, con una cuenta institucional y una de Gmail, y guardar las dos capturas.
+- [ ] **CP-014 y CP-015 (Google)** en Railway, con una cuenta institucional y una de Gmail.
+- [ ] **Contraste en Firefox** del ciclo 2: correr a mano en Firefox, sobre Railway, los 16 casos del ciclo 2. Anotar la versión de Firefox.
 - [ ] Revisar que el nombre del archivo final de la Tarea 4 sea el que pide el Campus (`IS071_T4_EquipoF.pdf`) y, si piden el E2 con otro nombre, renombrarlo.
+
+### Dónde van esas capturas
+
+Todo está en el **Anexo F** del Entregable 2 (`E2_F_Equipo.docx`, desde la página 76): una página por caso, con
+su ficha y un recuadro punteado que dice «Pegue aquí la captura de…». Quién ejecuta cada caso y qué datos usar
+está en la misma ficha.
+
+Hay dos formas de llenarlo:
+
+1. **La más fácil:** mándenle a Claude las capturas por el chat, cada una con el nombre que dice su recuadro
+   (`EV-CP014-RAILWAY.png`, `EV-CP007-FIREFOX.png`, …) o diciendo de qué caso es, junto con lo que pasó
+   (aprobado o fallido, y la versión de Firefox). Se guardan en `pruebas/e2/resultados/manual/`, se llena
+   `manual.json` y se regeneran el informe, el registro xlsx y las métricas, para que todo cuadre.
+2. **A mano en Word:** abrir `E2_F_Equipo.docx`, hacer clic dentro del recuadro, borrar el texto gris, pegar la
+   captura con Ctrl+V y llenar «Estado obtenido», «Resultado real» y «Fecha y navegador». Al final borrar la nota
+   gris del comienzo del Anexo F y guardar como PDF. Ojo: por este camino hay que cambiar también a mano el estado
+   de CP-014 y CP-015 en la sección 3, en las métricas y en la hoja «Registro de ejecución» del xlsx.
+
+En cada captura tiene que verse la barra de direcciones con la URL de Railway y, si se puede, la hora del computador.
+
 
 ## Notas de honestidad
 

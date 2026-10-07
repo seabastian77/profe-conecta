@@ -5,7 +5,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.chart import BarChart, Reference
 import os
-from datos import EQUIPO, DEFECTOS, M, filas_registro
+from datos import EQUIPO, DEFECTOS, M, filas_registro, manual
 
 TEAL = '0F766E'; TEALCL = 'D7EDEA'; GRIS = 'F3F4F6'
 blanco_negrita = Font(bold=True, color='FFFFFF')
@@ -43,6 +43,24 @@ for (cid, ciclo, entorno, fecha, ejecutor, estado, real, evid, defecto) in filas
             c.alignment = Alignment(horizontal='center', vertical='top')
     r += 1
 ws.auto_filter.ref = f'A1:H{r-1}'
+
+# ---- Hoja: Ejecución manual en Railway (Google y Firefox) --------------------
+if manual:
+    wmn = wb.create_sheet('Manual en Railway')
+    encabezar(wmn, ['Caso', 'Ciclo', 'Lo ejecuta', 'Entorno', 'Qué se hace', 'Estado esperado',
+                    'Estado obtenido', 'Resultado real', 'Fecha', 'Navegador y versión', 'Captura'],
+              [9, 6, 24, 22, 60, 12, 12, 50, 12, 20, 24])
+    r = 2
+    for m in manual:
+        fila = [m['id'], m['ciclo'], m['ejecuta'], m['entorno'], m['que'], m['estado_esperado'],
+                m.get('estado') or '', m.get('real') or '', m.get('fecha') or '', m.get('navegador') or '',
+                m['archivo']]
+        for j, v in enumerate(fila, 1):
+            c = wmn.cell(r, j, v); c.border = borde; c.alignment = wrap
+            if j == 1: c.font = negrita
+            if j == 7:
+                c.fill = PatternFill('solid', fgColor=ESTADO_COLOR.get(m.get('estado'), 'FFFBEB'))
+        r += 1
 
 # ---- Hoja 2: Defectos -------------------------------------------------------
 wd = wb.create_sheet('Defectos')

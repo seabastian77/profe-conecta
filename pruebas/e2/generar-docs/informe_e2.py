@@ -2,8 +2,9 @@
 """Genera el informe del Entregable 2 (E2_F_Equipo.docx)."""
 import os
 from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, numerada,
-                      codigo, figura, proxima_figura, salto, titulo_portada, pie_de_pagina, TEAL)
-from datos import (EQUIPO, DEFECTOS, M, ciclo1, ciclo2, consola,
+                      codigo, figura, proxima_figura, recuadro_captura, salto, titulo_portada,
+                      pie_de_pagina, TEAL)
+from datos import (EQUIPO, DEFECTOS, M, ciclo1, ciclo2, consola, manual,
                    ruta_evidencia, desc_evidencia, ENTORNO_DEF)
 from textos import PASOS, PRECOND, ESPERADO, SEV_JUST, PRIO_JUST
 
@@ -194,7 +195,8 @@ parrafo(doc, 'Extracto del registro de ejecución', bold=True, space=2)
 parrafo(doc, 'El registro completo, con una fila por ejecución, está en la hoja de cálculo enlazada en la '
              'portada. Aquí van las filas que mejor muestran cómo se llevó. Todas las capturas de los dos '
              'ciclos, una por una y con su pie, están en el Anexo E; las de los casos fallidos aparecen '
-             'también debajo del reporte de su defecto, en el Anexo C.', size=10.5)
+             'también debajo del reporte de su defecto, en el Anexo C. Lo que se ejecuta a mano en Railway '
+             '(CP-014 y CP-015 con Google, y el contraste del ciclo 2 en Firefox) va en el Anexo F.', size=10.5)
 # Extracto: elegimos casos representativos reales del ciclo 1.
 repr_ids = ['CP-001', 'CP-013', 'CP-016', 'CP-017', 'CP-022', 'CP-025', 'CP-029', 'CP-032', 'CP-034']
 por_id = {c['id']: c for c in ciclo1['casos']}
@@ -410,7 +412,7 @@ chk = [
     ['1', 'Tabla de reparto firmada después de la portada.', 'Sí', 'Página de reparto'],
     ['2', 'El resumen ejecutivo cabe en una página e incluye la recomendación.', 'Sí', 'Sección 1'],
     ['3', 'Los cambios a la suite del Entregable 1 están listados con su razón.', 'Sí', 'Sección 2, ocho filas'],
-    ['4', 'El ciclo 1 cubre toda la suite; el ciclo 2, lo fallido y el riesgo alto (ver nota de Firefox).', 'Sí', 'Sección 3'],
+    ['4', 'El ciclo 1 cubre toda la suite; el ciclo 2, lo fallido y el riesgo alto (ver nota de Firefox).', 'Sí', 'Sección 3 y Anexo F (Firefox)'],
     ['5', 'Cada ejecución tiene estado, entorno, versión, fecha, ejecutor y evidencia.', 'Sí', 'Hoja de registro (xlsx) y Anexo E'],
     ['6', 'Ningún caso bloqueado está registrado como fallido.', 'Sí', 'CP-014 y CP-015 como «Bloqueado»'],
     ['7', 'Cada integrante ejecutó al menos seis casos.', 'Sí', 'Tabla de reparto (17 y 17)'],
@@ -545,6 +547,62 @@ def capturas_ciclo(ciclo_datos, numero):
 
 capturas_ciclo(ciclo1, 1)
 capturas_ciclo(ciclo2, 2)
+
+# ======================= ANEXO F: EJECUCIÓN MANUAL EN RAILWAY =======================
+if manual:
+    salto(doc)
+    doc.add_heading('Anexo F. Ejecución manual en Railway (Google y Firefox)', level=1)
+    pendientes = [m for m in manual if not m['hecho']]
+    parrafo(doc,
+        'Estas ejecuciones se hacen a mano sobre la aplicación desplegada en Railway. CP-014 y CP-015 '
+        'necesitan una cuenta real de Google, que el entorno automatizado no tiene, y el contraste del '
+        'ciclo 2 en Firefox se hace a mano porque ese entorno solo dispone de Chromium. Cada caso sigue '
+        'los mismos pasos del ciclo 1 y lo ejecuta el integrante que no lo corrió antes.', size=10.5)
+    if pendientes:
+        parrafo(doc,
+            f'Nota para el equipo (borrar antes de entregar): faltan {len(pendientes)} capturas. Para cada '
+            'una, abrir este archivo en Word, hacer clic dentro del recuadro punteado, borrar el texto gris, '
+            'pegar la captura con Ctrl+V y llenar «Estado obtenido», «Resultado real» y «Fecha y navegador». '
+            'Que en la captura se vean la barra de direcciones de Railway y la hora del computador.',
+            size=9.5, italic=True)
+
+    def separador():
+        """Párrafo mínimo para que Word no pegue la ficha y el recuadro en una sola tabla."""
+        sep = parrafo(doc, ' ', size=2, space=0)
+        sep.paragraph_format.keep_with_next = True
+
+    def ejecucion_manual(m):
+        doc.add_heading(f"{m['id']} · {m['titulo']}", level=3)
+        n = proxima_figura() if m['hecho'] else None
+        ficha(doc, [
+            ('Lo ejecuta · entorno', f"{m['ejecuta']} · {m['entorno']}"),
+            ('Qué se hace', m['que']),
+            ('Resultado esperado', f"{m['esperado']} Estado esperado: {m['estado_esperado']}."),
+            ('Estado obtenido', m['estado'] or '☐ Aprobado     ☐ Fallido'),
+            ('Resultado real', m.get('real') or ' '),
+            ('Fecha y navegador', ' · '.join(x for x in (m.get('fecha'), m.get('navegador')) if x)
+             or '____ /10/2026 · navegador y versión: ____________'),
+            ('Evidencia', f"{m['archivo']} (figura {n}, debajo)" if n else f"{m['archivo']} (recuadro de abajo)"),
+        ])
+        separador()
+        if m['hecho']:
+            figura(doc, m['ruta'], f"{m['id']} · {m['archivo']}. {m['entorno']}: {m['titulo'].lower()}",
+                   ancho_cm=15)
+        else:
+            recuadro_captura(doc, f"Pegue aquí la captura de {m['id']} · {m['archivo']}\n"
+                                  'Clic dentro del recuadro, borrar este texto y Ctrl+V', alto_cm=8.6)
+
+    # Un caso por página: su ficha y su captura siempre quedan juntas.
+    doc.add_heading('F.1 Inicio de sesión con Google (ciclo 1)', level=2)
+    for k, m in enumerate(x for x in manual if x['ciclo'] == 1):
+        if k:
+            salto(doc)
+        ejecucion_manual(m)
+    for k, m in enumerate(x for x in manual if x['ciclo'] == 2):
+        salto(doc)
+        if k == 0:
+            doc.add_heading('F.2 Ciclo 2 en Firefox', level=2)
+        ejecucion_manual(m)
 
 salida = os.path.join(BUILD, '..', '..', '..', 'docs', 'entrega-2', 'E2_F_Equipo.docx')
 os.makedirs(os.path.dirname(salida), exist_ok=True)

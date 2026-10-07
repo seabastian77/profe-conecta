@@ -12,6 +12,13 @@ ciclo1 = cargar('ciclo-1')
 ciclo2 = cargar('ciclo-2')
 defs_expl = cargar('defectos-exploratorios')
 
+# Ejecuciones manuales del equipo en Railway (Google y Firefox): datos y capturas.
+try:
+    with open(os.path.join(RAIZ, 'manual', 'manual.json'), encoding='utf-8') as _f:
+        manual = json.load(_f)['pendientes']
+except (FileNotFoundError, OSError):
+    manual = []
+
 # Pruebas por consola del navegador (F12); opcional, se omite si aún no se corrieron.
 try:
     consola = cargar('consola')
@@ -116,6 +123,12 @@ def desc_evidencia(nombre):
     return re.sub(r'(\. )([a-záéíóúñ])', lambda m: m.group(1) + m.group(2).upper(), texto)
 
 
+# Una ejecución manual está hecha cuando ya tiene su captura y su estado.
+for _m in manual:
+    _m['ruta'] = _RUTAS.get(_m['archivo'])
+    _m['hecho'] = bool(_m['ruta'] and _m.get('estado'))
+
+
 # Enlaza cada defecto con la evidencia y el resultado observado en la ejecución.
 _expl = {d['id']: d for d in defs_expl['defectos']}
 _caso_por_defecto = {}
@@ -189,6 +202,11 @@ def filas_registro():
         filas.append((c['id'], 2, c['entorno'].replace('Chromium', 'Chromium (sustituye a Firefox)'),
                       c['fecha'], c['ejecutor'], c['estado'],
                       c['real'], ', '.join(c['evidencias']) or '—', c['defecto'] or '—'))
+    for m in manual:
+        if m['hecho']:
+            filas.append((m['id'], m['ciclo'], f"{m.get('navegador') or 'navegador sin anotar'} · Railway (manual)",
+                          m.get('fecha') or '—', m['ejecuta'], m['estado'], m.get('real') or '—',
+                          m['archivo'], '—'))
     return filas
 
 if __name__ == '__main__':

@@ -246,6 +246,37 @@ def figura(doc, ruta, pie, ancho_cm=15.5, comprimir=True):
     return _FIG[0]
 
 
+def recuadro_captura(doc, texto, alto_cm=6.5):
+    """Recuadro punteado donde el equipo pega una captura en Word (clic adentro y Ctrl+V)."""
+    t = doc.add_table(rows=1, cols=1)
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tblPr = t._tbl.tblPr
+    layout = OxmlElement('w:tblLayout'); layout.set(qn('w:type'), 'fixed'); tblPr.append(layout)
+    borders = OxmlElement('w:tblBorders')
+    for lado in ('top', 'left', 'bottom', 'right'):
+        el = OxmlElement(f'w:{lado}')
+        el.set(qn('w:val'), 'dashed'); el.set(qn('w:sz'), '8'); el.set(qn('w:space'), '0'); el.set(qn('w:color'), '9CA3AF')
+        borders.append(el)
+    tblPr.append(borders)
+    fila = t.rows[0]
+    trPr = fila._tr.get_or_add_trPr()
+    alto = OxmlElement('w:trHeight'); alto.set(qn('w:val'), str(int(alto_cm * 567))); alto.set(qn('w:hRule'), 'atLeast')
+    trPr.append(alto)
+    cell = t.cell(0, 0)
+    cell.width = Cm(15.5)
+    tcPr = cell._tc.get_or_add_tcPr()
+    va = OxmlElement('w:vAlign'); va.set(qn('w:val'), 'center'); tcPr.append(va)
+    _set_cell_bg(cell, 'F9FAFB')
+    cell.text = ''
+    for i, linea in enumerate(texto.split('\n')):
+        p = cell.paragraphs[0] if i == 0 else cell.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run(linea); r.font.size = Pt(10 if i == 0 else 9); r.font.italic = i > 0
+        r.font.bold = i == 0; r.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+    _no_partir(t)
+    return t
+
+
 def salto(doc):
     doc.add_page_break()
 
