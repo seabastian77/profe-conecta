@@ -3,8 +3,8 @@
 import os
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, vineta, numerada,
-                      imagen, salto, titulo_portada, TEAL, NARANJA)
-from datos import EQUIPO, DEFECTOS, M, ciclo1, ciclo2
+                      codigo, imagen, salto, titulo_portada, TEAL, NARANJA)
+from datos import EQUIPO, DEFECTOS, M, ciclo1, ciclo2, consola
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
 GRAFICO = os.path.join(BUILD, 'grafico_defectos.png')
@@ -493,6 +493,34 @@ for d in DEFECTOS:
     if d['notas']:
         parrafo(doc, 'Nota: ' + ' '.join(d['notas']), size=9.5, italic=True, space=4)
     doc.add_paragraph()
+
+# ======================= ANEXO D: PRUEBAS POR CONSOLA =======================
+if consola.get('pruebas'):
+    salto(doc)
+    doc.add_heading('Anexo D. Pruebas por consola del navegador (F12)', level=1)
+    parrafo(doc,
+        'Cinco verificaciones se hacen pegando un fetch() en la consola del navegador, con el token de la '
+        'sesión, porque prueban la capa del servidor directamente: el control de acceso por rol, el manejo '
+        'de datos inexistentes y las validaciones que el formulario no deja disparar. Son las pruebas más '
+        'cercanas a cómo se tantea una API, así que las dejamos con el comando exacto para copiar y pegar, '
+        'su resultado esperado y lo que respondió el servidor. Cada una tiene su captura de la consola '
+        '(carpeta pruebas/e2/resultados/consola/).')
+    parrafo(doc, 'Las rutas son relativas (/api/...), así que el mismo comando sirve en localhost y en el '
+                 'entorno de Railway sin cambiar nada.', size=10, italic=True)
+    for pr in consola['pruebas']:
+        doc.add_heading(f"{pr['id']} · {pr['titulo']}", level=3)
+        parrafo(doc, pr['descripcion'], size=10.5, space=3)
+        parrafo(doc, 'Comando (se pega en la pestaña Consola de F12):', size=9.5, bold=True, space=2)
+        codigo(doc, pr['comando'])
+        ficha(doc, [
+            ('Requisito', pr['requisito']),
+            ('Resultado esperado', pr['esperado']),
+            ('Resultado real', pr['resultadoReal']),
+            ('Código HTTP', str(pr['httpStatus'])),
+            ('Estado', pr['estado']),
+            ('Evidencia', pr['evidencia']),
+        ])
+        doc.add_paragraph()
 
 salida = os.path.join(BUILD, '..', '..', '..', 'docs', 'entrega-2', 'E2_F_Equipo.docx')
 os.makedirs(os.path.dirname(salida), exist_ok=True)

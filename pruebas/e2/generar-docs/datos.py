@@ -12,6 +12,12 @@ ciclo1 = cargar('ciclo-1')
 ciclo2 = cargar('ciclo-2')
 defs_expl = cargar('defectos-exploratorios')
 
+# Pruebas por consola del navegador (F12); opcional, se omite si aún no se corrieron.
+try:
+    consola = cargar('consola')
+except (FileNotFoundError, OSError):
+    consola = {'pruebas': []}
+
 # --- Equipo e identificación -------------------------------------------------
 EQUIPO = {
     'curso': 'Verificación y Validación de Software',

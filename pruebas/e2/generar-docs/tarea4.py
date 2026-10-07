@@ -4,9 +4,9 @@ Selecciona ocho de los catorce defectos del Entregable 2, con el formato complet
 la matriz de reproducción cruzada y el análisis por riesgo."""
 import os
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, vineta, numerada,
+from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, vineta, numerada, codigo,
                       imagen, salto, titulo_portada, TEAL)
-from datos import EQUIPO, DEFECTOS, M
+from datos import EQUIPO, DEFECTOS, M, consola
 import informe_e2 as E2  # reutiliza los textos de pasos, precondición, etc.
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
@@ -201,6 +201,31 @@ tabla(doc, [
     ['11', 'La evidencia existe, está nombrada con el identificador y corresponde al fallo.', 'Sí'],
     ['12', 'El defecto enlaza con su caso de prueba o con la sesión exploratoria que lo encontró.', 'Sí'],
 ], anchos=[1.0, 13.0, 1.4], fuente=9)
+
+# ===== Anexo F: pruebas por consola (las esenciales de la capa del servidor) =====
+if consola.get('pruebas'):
+    doc.add_heading('Anexo F. Pruebas por consola del navegador (F12)', level=1)
+    parrafo(doc,
+        'Estas son las verificaciones que se hacen pegando un fetch() en la consola del navegador, con el '
+        'token de la sesión. Prueban la capa del servidor directamente —control de acceso por rol, datos '
+        'inexistentes y validaciones que el formulario no deja disparar— y son las más cercanas a cómo se '
+        'tantea una API. Van con el comando exacto para copiar y pegar; las rutas son relativas, así que '
+        'sirven igual en localhost y en Railway. En la sustentación, cualquiera del equipo puede reproducirlas '
+        'en vivo.')
+    for pr in consola['pruebas']:
+        doc.add_heading(f"{pr['id']} · {pr['titulo']}", level=3)
+        parrafo(doc, pr['descripcion'], size=10.5, space=3)
+        parrafo(doc, 'Comando (pestaña Consola de F12):', size=9.5, bold=True, space=2)
+        codigo(doc, pr['comando'])
+        ficha(doc, [
+            ('Requisito', pr['requisito']),
+            ('Resultado esperado', pr['esperado']),
+            ('Resultado real', pr['resultadoReal']),
+            ('Código HTTP', str(pr['httpStatus'])),
+            ('Estado', pr['estado']),
+            ('Evidencia', pr['evidencia']),
+        ])
+        doc.add_paragraph()
 
 salida = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'docs', 'entrega-2', 'IS071_T4_EquipoF.docx')
 doc.save(salida)

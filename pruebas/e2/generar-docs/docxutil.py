@@ -130,6 +130,23 @@ def parrafo(doc, texto, size=11, bold=False, italic=False, space=6, align=None):
     return p
 
 
+def codigo(doc, texto):
+    """Bloque de código monoespaciado con fondo gris, para los comandos de consola."""
+    t = doc.add_table(rows=1, cols=1)
+    _bordes_tabla(t, color='D1D5DB', sz=4)
+    cell = t.cell(0, 0)
+    cell.text = ''
+    _set_cell_bg(cell, '1E1E1F')
+    _set_cell_margins(cell, top=80, bottom=80, left=120, right=120)
+    for i, linea in enumerate(texto.split('\n')):
+        p = cell.paragraphs[0] if i == 0 else cell.add_paragraph()
+        p.paragraph_format.space_after = Pt(0); p.paragraph_format.line_spacing = 1.0
+        r = p.add_run(linea or ' ')
+        r.font.name = 'Consolas'; r.font.size = Pt(9)
+        r.font.color.rgb = RGBColor(0xE8, 0xEA, 0xED)
+    return t
+
+
 def vineta(doc, texto, nivel=0):
     p = doc.add_paragraph(style='List Bullet')
     p.paragraph_format.left_indent = Cm(0.8 + nivel * 0.6)

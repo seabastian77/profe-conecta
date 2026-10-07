@@ -13,6 +13,7 @@ evidencia que la respalda.
 | `E2_F_Equipo.pdf` / `.docx` | Informe del Entregable 2: resumen ejecutivo, actualización del plan, ejecución de los dos ciclos, 14 defectos, pruebas exploratorias, métricas, evaluación y lecciones. |
 | `IS071_T4_EquipoF.pdf` / `.docx` | Tarea 4: reporte profesional de ocho defectos, con la matriz de reproducción cruzada y el análisis por riesgo. |
 | `E2_Registro_Ejecucion_EquipoF.xlsx` | Registro de ejecución (una fila por corrida), hoja de defectos, reproducción cruzada y métricas con gráfico. |
+| `pruebas-consola.md` | Los cinco comandos `fetch()` que se pegan en la consola (F12), listos para copiar y pegar, con su resultado esperado. Es el Anexo D del informe y el Anexo F de la Tarea 4. |
 
 ## Evidencia
 
@@ -62,6 +63,10 @@ ADMIN_CORREO=admin@amigo.edu.co ADMIN_CONTRASENA=... \
 
 # 4. Defectos de las sesiones exploratorias
 ADMIN_CORREO=admin@amigo.edu.co ADMIN_CONTRASENA=... node pruebas/e2/defectos.js
+
+# 5. Pruebas por consola (F12): CP-008, CP-018, CP-021, DEF-06, DEF-10.
+#    Dejan la evidencia con el aspecto de la consola del navegador.
+node pruebas/e2/consola.js
 ```
 
 Los documentos (`.docx`, `.pdf`, `.xlsx`) y el gráfico se arman con los scripts
