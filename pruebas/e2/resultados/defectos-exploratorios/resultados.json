@@ -1,5 +1,5 @@
 {
-  "inicio": "07/10/2026, 17:15:21",
+  "inicio": "07/10/2026, 18:46:35",
   "navegador": "Chromium 141.0.7390.37",
   "defectos": [
     {
@@ -21,7 +21,7 @@
         "EV-DEF05-C1-01.png": "Día 08/10/2026 en el calendario de «Mi Panel»: la observación se ve como texto literal y no se ejecuta"
       },
       "notas": [
-        "En la base, la observación quedó guardada tal cual: «<img src=x onerror=\"alert('XSS-DEF05')\">». La protección está al mostrarla, no al guardarla."
+        "En la base, la observación quedó guardada tal cual: «». La protección está al mostrarla, no al guardarla."
       ]
     },
     {
@@ -35,16 +35,16 @@
       "reproduce": "Esteban Palencia",
       "estado": "Abierto",
       "frecuencia": "3 de 3 intentos",
-      "resultado": "La tutoría #16 se canceló (estado «cancelada»). El docente ejecutó PATCH /api/tutorias/16/realizada: respuesta {\"mensaje\":\"Tutoría completada\"} y la tutoría quedó en «completada». Una tutoría cancelada no debería admitir nuevas transiciones.",
+      "resultado": "La tutoría #25 se canceló (estado «cancelada»). El docente ejecutó PATCH /api/tutorias/25/realizada: respuesta {\"mensaje\":\"Tutoría completada\"} y la tutoría quedó en «completada». Una tutoría cancelada no debería admitir nuevas transiciones.",
       "evidencias": [
         "EV-DEF06-C1-01.png",
         "EV-DEF06-C1-02.png",
         "EV-DEF06-C1-03.png"
       ],
       "descripciones": {
-        "EV-DEF06-C1-01.png": "Antes: la tutoría #16 aparece «Cancelada» en el panel de la docente",
-        "EV-DEF06-C1-02.png": "Consola F12: Sesión de mgonzalez@amigo.edu.co (docente). La tutoría #16 estaba cancelada.",
-        "EV-DEF06-C1-03.png": "Después de PATCH /realizada (200 {\"mensaje\":\"Tutoría completada\"}): la misma tutoría #16 queda «completada»"
+        "EV-DEF06-C1-01.png": "Antes: la tutoría #25 aparece «Cancelada» en el panel de la docente",
+        "EV-DEF06-C1-02.png": "Consola F12: Sesión de mgonzalez@amigo.edu.co (docente). La tutoría #25 estaba cancelada.",
+        "EV-DEF06-C1-03.png": "Después de PATCH /realizada (200 {\"mensaje\":\"Tutoría completada\"}): la misma tutoría #25 queda «completada»"
       },
       "notas": []
     },
@@ -61,10 +61,12 @@
       "frecuencia": "3 de 3 intentos",
       "resultado": "En «Nuevo Usuario» el campo de contraseña es de tipo «text» y trae escrita «Cambiar123», legible a simple vista. En «Editar Usuario», «Prueba1234» se ve tal cual en un campo de tipo «text». Ninguno es un campo de contraseña.",
       "evidencias": [
-        "EV-DEF07-C1-01.png"
+        "EV-DEF07-C1-01.png",
+        "EV-DEF07-C1-02.png"
       ],
       "descripciones": {
-        "EV-DEF07-C1-01.png": "«Nuevo Usuario»: campo contraseña type=\"text\" con el valor «Cambiar123». «Editar»: type=\"text\" muestra «Prueba1234»."
+        "EV-DEF07-C1-01.png": "«Nuevo Usuario»: el campo de contraseña es type=\"text\" y ya trae escrita «Cambiar123»",
+        "EV-DEF07-C1-02.png": "«Editar Usuario» de jperez: la nueva contraseña «Prueba1234» se lee tal cual (type=\"text\")"
       },
       "notas": []
     },
@@ -79,14 +81,14 @@
       "reproduce": "Esteban Palencia",
       "estado": "Abierto",
       "frecuencia": "3 de 3 intentos",
-      "resultado": "Las dos peticiones respondieron 201 {\"mensaje\":\"Tutoría programada\",\"id\":17} y 201 {\"mensaje\":\"Tutoría programada\",\"id\":18}. En «Mis Tutorías Programadas» las tarjetas muestran «📅 undefined/undefined/mañana · ⏰ 25:99» y «📅 45/13/2027 · ⏰ 09:00»: el servidor guarda fechas y horas que no existen sin validarlas; solo se llega por la API.",
+      "resultado": "Las dos peticiones respondieron 201 {\"mensaje\":\"Tutoría programada\",\"id\":26} y 201 {\"mensaje\":\"Tutoría programada\",\"id\":27}. En «Mis Tutorías Programadas» las tarjetas muestran «📅 undefined/undefined/mañana · ⏰ 25:99» y «📅 undefined/undefined/mañana · ⏰ 25:99» y «📅 undefined/undefined/mañana · ⏰ 25:99» y «📅 45/13/2027 · ⏰ 25:99» y «📅 45/13/2027 · ⏰ 09:00» y «📅 45/13/2027 · ⏰ 09:00» y «📅 45/13/2027 · ⏰ 09:00»: el servidor guarda fechas y horas que no existen sin validarlas; solo se llega por la API.",
       "evidencias": [
         "EV-DEF10-C1-01.png",
         "EV-DEF10-C1-02.png"
       ],
       "descripciones": {
         "EV-DEF10-C1-01.png": "Consola F12: Sesión de dmontoya@amigo.edu.co (estudiante)",
-        "EV-DEF10-C1-02.png": "POST con fecha «2027-13-45» → 201; con fecha «mañana» y hora «25:99» → 201. Tarjetas: 📅 undefined/undefined/mañana · ⏰ 25:99 | 📅 45/13/2027 · ⏰ 09:00"
+        "EV-DEF10-C1-02.png": "POST con fecha «2027-13-45» → 201; con fecha «mañana» y hora «25:99» → 201. Tarjetas: 📅 undefined/undefined/mañana · ⏰ 25:99 | 📅 undefined/undefined/mañana · ⏰ 25:99 | 📅 undefined/undefined/mañana · ⏰ 25:99 | 📅 45/13/2027 · ⏰ 25:99 | 📅 45/13/2027 · ⏰ 09:00 | 📅 45/13/2027 · ⏰ 09:00 | 📅 45/13/2027 · ⏰ 09:00"
       },
       "notas": []
     },
@@ -101,17 +103,17 @@
       "reproduce": "Sebastián González González",
       "estado": "Abierto",
       "frecuencia": "3 de 3 intentos",
-      "resultado": "El estudiante guardó el perfil sin promedio; en la base quedó promedio 0. Su panel muestra «Sin», pero la campana sí trae la alerta enviada al grupo «en alerta», porque el grupo incluye a quien tiene promedio 0.",
+      "resultado": "El estudiante guardó el perfil sin promedio; en la base quedó promedio 0. Su panel muestra «Sin alertas», pero la campana sí trae la alerta enviada al grupo «en alerta», porque el grupo incluye a quien tiene promedio 0.",
       "evidencias": [
         "EV-DEF14-C1-01.png",
         "EV-DEF14-C1-02.png"
       ],
       "descripciones": {
         "EV-DEF14-C1-01.png": "Promedio guardado en la base: 0. El panel del estudiante dice «Sin alertas»",
-        "EV-DEF14-C1-02.png": "Campana abierta: llega «Seguimiento académico», enviada a «Todos los estudiantes en alerta»"
+        "EV-DEF14-C1-02.png": "Campana abierta: llega «Seguimiento académico», enviada a «Todos los estudiantes en alerta». En la base, promedio 0"
       },
       "notas": []
     }
   ],
-  "fin": "07/10/2026, 17:16:05"
+  "fin": "07/10/2026, 18:47:14"
 }

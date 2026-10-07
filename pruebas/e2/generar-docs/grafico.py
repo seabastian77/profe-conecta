@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from datos import DEFECTOS
+from textos import DEFECTOS_BASE as DEFECTOS
 
 # Agrupa el requisito a su etiqueta corta (R1..R8, RNF, transversal).
 def grupo(req):

@@ -1,31 +1,29 @@
 # -*- coding: utf-8 -*-
-"""Consolida los resultados de ejecución y define los 14 defectos del Entregable 2."""
-import json, os, re
+"""Datos del Entregable 2 y la Tarea 4.
 
-RAIZ = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'resultados')
+La fuente es lo que el equipo ejecuta a mano en Railway:
+  - docs/entrega-2/E2_Registro_Ejecucion_EquipoF.xlsx (columnas amarillas: fecha, navegador,
+    estado, resultado real, intentos, evidencia, reproducción cruzada y sesiones exploratorias);
+  - las capturas en pruebas/e2/evidencias-equipo/.
 
-def cargar(nombre):
-    with open(os.path.join(RAIZ, nombre, 'resultados.json'), encoding='utf-8') as f:
-        return json.load(f)
+De pruebas/e2/resultados/ (la corrida del script sobre una copia local) solo se toman las
+definiciones de los casos (título, requisito, prioridad, resultado esperado); sus capturas y
+resultados son referencia y no entran a los documentos.
+"""
+import datetime
+import json
+import os
 
-ciclo1 = cargar('ciclo-1')
-ciclo2 = cargar('ciclo-2')
-defs_expl = cargar('defectos-exploratorios')
+import openpyxl
 
-# Ejecuciones manuales del equipo en Railway (Google y Firefox): datos y capturas.
-try:
-    with open(os.path.join(RAIZ, 'manual', 'manual.json'), encoding='utf-8') as _f:
-        manual = json.load(_f)['pendientes']
-except (FileNotFoundError, OSError):
-    manual = []
+from textos import DEFECTOS_BASE, EVIDENCIA_SUGERIDA, MISIONES
 
-# Pruebas por consola del navegador (F12); opcional, se omite si aún no se corrieron.
-try:
-    consola = cargar('consola')
-except (FileNotFoundError, OSError):
-    consola = {'pruebas': []}
+BUILD = os.path.dirname(os.path.abspath(__file__))
+RAIZ_E2 = os.path.normpath(os.path.join(BUILD, '..'))
+REGISTRO = os.path.normpath(os.path.join(BUILD, '..', '..', '..', 'docs', 'entrega-2',
+                                         'E2_Registro_Ejecucion_EquipoF.xlsx'))
+CAPTURAS = os.path.join(RAIZ_E2, 'evidencias-equipo')
 
-# --- Equipo e identificación -------------------------------------------------
 EQUIPO = {
     'curso': 'Verificación y Validación de Software',
     'codigos': 'IS019 · IS071 · TDS004',
@@ -37,179 +35,157 @@ EQUIPO = {
     'url': 'https://profe-conecta-production-e40c.up.railway.app',
     'commit': '693358a (rama main)',
     'entrega': 'Martes 13 de octubre de 2026 · sesión 12',
-    'navegador_c1': ciclo1['navegador'],
-    'navegador_c2': ciclo2['navegador'],
-    'so': ciclo1['sistemaOperativo'],
 }
+PENDIENTE = '____'
 
-# Fecha de la ejecución (dd/mm/aaaa, hora de Colombia) y entorno de los reportes.
-fecha_ejecucion = ciclo1['inicio'][:10]
-ENTORNO_DEF = (f"{ciclo1['navegador']} · Linux · ConectaProfe en copia local del commit 693358a, la misma "
-               f"versión desplegada en Railway · ejecución automatizada con Playwright el {fecha_ejecucion}")
-
-# --- Los 14 defectos (texto del reporte + estado comprobado por ejecución) ---
-# severidad/prioridad/estado se declaran aquí; la columna "comprobado" enlaza
-# con la ejecución real (caso o reproducción exploratoria).
-DEFECTOS = [
-  dict(id='DEF-01', titulo='La sesión sigue abierta después de 16 minutos sin actividad; solo se cierra a las 2 horas, y únicamente al recargar',
-       requisito='RNF02', severidad='Alta', prioridad='Alta', origen='SE-01 · CP-034', estado='Abierto',
-       reporta='Esteban Palencia', reproduce='Sebastián González González'),
-  dict(id='DEF-02', titulo='El administrador programa una asesoría con fecha de hoy, y por la API también con fechas pasadas',
-       requisito='R5 · RRN06', severidad='Media', prioridad='Alta', origen='CP-032', estado='Abierto',
-       reporta='Esteban Palencia', reproduce='Sebastián González González'),
-  dict(id='DEF-03', titulo='La foto de 2,5 MB no se rechaza: la interfaz la reduce y la guarda sin avisar del límite de 2 MB',
-       requisito='R4 · RF036', severidad='Baja', prioridad='Baja', origen='CP-017', estado='Abierto',
-       reporta='Sebastián González González', reproduce='Esteban Palencia'),
-  dict(id='DEF-04', titulo='El acceso se bloquea después de cinco intentos fallidos y no después de tres',
-       requisito='R2 · RRN01', severidad='Baja', prioridad='Media', origen='CP-013', estado='Abierto',
-       reporta='Esteban Palencia', reproduce='Sebastián González González'),
-  dict(id='DEF-05', titulo='El HTML escrito en las observaciones de una tutoría se ejecutaba al abrir ese día en el calendario',
-       requisito='R5 · RNF06', severidad='Crítica', prioridad='Alta', origen='SE-02', estado='Verificado',
-       reporta='Sebastián González González', reproduce='Esteban Palencia'),
-  dict(id='DEF-06', titulo='Una tutoría cancelada pasa a «completada» si el docente la marca como realizada por la API',
-       requisito='R6', severidad='Media', prioridad='Media', origen='SE-02', estado='Abierto',
-       reporta='Sebastián González González', reproduce='Esteban Palencia'),
-  dict(id='DEF-07', titulo='Las contraseñas se ven en claro en «Nuevo usuario» y «Editar usuario», y la primera trae «Cambiar123» escrita',
-       requisito='R7 · RNF05', severidad='Media', prioridad='Alta', origen='SE-01', estado='Abierto',
-       reporta='Esteban Palencia', reproduce='Sebastián González González'),
-  dict(id='DEF-08', titulo='La regla de 24 horas para cancelar se calcula con 5 horas de diferencia: con 26 h de margen dice que faltan 21',
-       requisito='R6', severidad='Alta', prioridad='Alta', origen='CP-025', estado='Abierto',
-       reporta='Sebastián González González', reproduce='Esteban Palencia'),
-  dict(id='DEF-09', titulo='Un estudiante queda con dos tutorías a la misma fecha y hora con docentes distintos',
-       requisito='R5', severidad='Media', prioridad='Media', origen='CP-033', estado='Abierto',
-       reporta='Esteban Palencia', reproduce='Sebastián González González'),
-  dict(id='DEF-10', titulo='La API guarda tutorías con fechas y horas que no existen («2027-13-45», «mañana», «25:99»)',
-       requisito='R5', severidad='Media', prioridad='Baja', origen='SE-02', estado='Abierto',
-       reporta='Sebastián González González', reproduce='Esteban Palencia'),
-  dict(id='DEF-11', titulo='El filtro «Activos» muestra cuentas inactivas y oculta a los estudiantes activos que están en alerta',
-       requisito='R7 · RF049', severidad='Media', prioridad='Media', origen='CP-031', estado='Abierto',
-       reporta='Sebastián González González', reproduce='Esteban Palencia'),
-  dict(id='DEF-12', titulo='La auditoría y el historial de notificaciones muestran la hora 5 horas adelantada',
-       requisito='R8', severidad='Media', prioridad='Media', origen='CP-029', estado='Abierto',
-       reporta='Sebastián González González', reproduce='Esteban Palencia'),
-  dict(id='DEF-13', titulo='Los mensajes emergentes se generan pero nunca se ven: el usuario no recibe confirmaciones ni errores',
-       requisito='RF028 · transversal', severidad='Media', prioridad='Alta', origen='CP-016 · CP-024', estado='Abierto',
-       reporta='Sebastián González González', reproduce='Esteban Palencia'),
-  dict(id='DEF-14', titulo='El estudiante que deja vacío el promedio queda con 0 y recibe alertas académicas, aunque su panel dice «Sin alertas»',
-       requisito='R4 · RRN07', severidad='Media', prioridad='Media', origen='SE-01', estado='Abierto',
-       reporta='Esteban Palencia', reproduce='Sebastián González González'),
-]
-
-# --- Evidencias: ruta en disco y descripción de cada captura -----------------
-_RUTAS = {}
-for carpeta, _, archivos in os.walk(RAIZ):
-    for a in archivos:
-        if a.lower().endswith('.png'):
-            _RUTAS[a] = os.path.join(carpeta, a)
-
-_DESC = {}
-for fuente in (ciclo1['casos'], ciclo2['casos'], defs_expl['defectos']):
-    for item in fuente:
-        _DESC.update(item.get('descripciones') or {})
-for pr in consola.get('pruebas', []):
-    if pr.get('evidencia'):
-        _DESC[pr['evidencia']] = f"Consola F12: {pr['descripcion']}"
+# --- Definición de los casos (del diseño de la suite) --------------------------
+with open(os.path.join(RAIZ_E2, 'resultados', 'ciclo-1', 'resultados.json'), encoding='utf-8') as _f:
+    CASOS = {c['id']: {k: c[k] for k in ('id', 'titulo', 'requisito', 'riesgo', 'tecnica', 'prioridad',
+                                          'responsable', 'esperado')}
+             for c in json.load(_f)['casos']}
 
 
-def ruta_evidencia(nombre):
-    """Ruta de la captura en pruebas/e2/resultados/ (None si no existe)."""
-    return _RUTAS.get(nombre)
+def _texto(v):
+    if v is None:
+        return ''
+    if isinstance(v, (datetime.datetime, datetime.date)):
+        return v.strftime('%d/%m/%Y')
+    return str(v).strip()
 
 
-def desc_evidencia(nombre):
-    """Descripción que se estampó en la captura, lista para un pie de figura."""
-    texto = (_DESC.get(nombre) or '').strip().replace('\n', ' · ').rstrip('. ')
-    # Mayúscula al empezar cada frase («… 200. el elemento» → «… 200. El elemento»).
-    return re.sub(r'(\. )([a-záéíóúñ])', lambda m: m.group(1) + m.group(2).upper(), texto)
+def _lista(v):
+    return [x.strip() for x in _texto(v).replace(';', ',').split(',') if x.strip()]
 
 
-# Una ejecución manual está hecha cuando ya tiene su captura y su estado.
-for _m in manual:
-    _m['ruta'] = _RUTAS.get(_m['archivo'])
-    _m['hecho'] = bool(_m['ruta'] and _m.get('estado'))
+# --- Capturas del equipo ----------------------------------------------------------
+_ARCHIVOS = {}
+if os.path.isdir(CAPTURAS):
+    for _a in os.listdir(CAPTURAS):
+        if _a.lower().endswith(('.png', '.jpg', '.jpeg')):
+            _ARCHIVOS[os.path.splitext(_a)[0].lower()] = os.path.join(CAPTURAS, _a)
 
 
-# Enlaza cada defecto con la evidencia y el resultado observado en la ejecución.
-_expl = {d['id']: d for d in defs_expl['defectos']}
-_caso_por_defecto = {}
-_casos_del_defecto = {}
-for c in ciclo1['casos']:
-    if c['defecto']:
-        _caso_por_defecto.setdefault(c['defecto'], c)
-        _casos_del_defecto.setdefault(c['defecto'], []).append(c)
+def ruta_captura(nombre):
+    """Ruta de una captura del equipo; acepta .png, .jpg o .jpeg con el mismo nombre."""
+    return _ARCHIVOS.get(os.path.splitext(nombre)[0].lower())
 
-for d in DEFECTOS:
-    e = _expl.get(d['id'])
-    caso = _caso_por_defecto.get(d['id'])
-    if e:
-        d['frecuencia'] = e.get('frecuencia', '3 de 3 intentos')
-        d['resultado_real'] = e['resultado']
-        d['evidencias'] = e.get('evidencias', [])
-        d['notas'] = e.get('notas', [])
-    elif caso:
-        d['frecuencia'] = '3 de 3 intentos (resultado estable en los ciclos 1 y 2)'
-        d['resultado_real'] = caso['real']
-        # Todas las capturas del ciclo 1 de los casos que fallaron por este defecto.
-        d['evidencias'] = [ev for c in _casos_del_defecto[d['id']] for ev in c['evidencias']]
-        d['notas'] = []
-    else:
-        d['frecuencia'] = '—'
-        d['resultado_real'] = ''
-        d['evidencias'] = []
-        d['notas'] = []
 
-# Añade la evidencia de la consola (F12) a los defectos que también se verifican por ahí.
-_ev_consola = {p['id']: p.get('evidencia') for p in consola.get('pruebas', [])}
-for d in DEFECTOS:
-    ev = _ev_consola.get(d['id'])
-    if ev and ev != '—' and ev not in d['evidencias']:
-        d['evidencias'].append(ev)
-    faltan = [e for e in d['evidencias'] if not ruta_evidencia(e)]
-    if faltan:
-        raise SystemExit(f"{d['id']}: no se encontró la captura {faltan}")
-    if not d['evidencias']:
-        raise SystemExit(f"{d['id']} no tiene evidencia")
-
-# --- Métricas ----------------------------------------------------------------
-def contar(casos, estado):
-    return sum(1 for c in casos if c['estado'] == estado)
-
-def metricas():
-    c1 = ciclo1['casos']
-    aprob1 = contar(c1, 'Aprobado'); fall1 = contar(c1, 'Fallido'); bloq1 = contar(c1, 'Bloqueado')
-    ejec1 = aprob1 + fall1
-    c2 = ciclo2['casos']
-    aprob2 = contar(c2, 'Aprobado'); fall2 = contar(c2, 'Fallido')
-    ejec2 = aprob2 + fall2
-    por_sev = {}
-    for d in DEFECTOS:
-        if d['estado'] != 'Verificado':
-            por_sev[d['severidad']] = por_sev.get(d['severidad'], 0) + 1
-    # incluye el crítico verificado en el conteo total de defectos reportados
-    return dict(aprob1=aprob1, fall1=fall1, bloq1=bloq1, ejec1=ejec1, dis1=len(c1),
-                aprob2=aprob2, fall2=fall2, ejec2=ejec2,
-                total_def=len(DEFECTOS), por_sev=por_sev)
-
-M = metricas()
-
-# --- Registro de ejecución (una fila por ejecución) --------------------------
-def filas_registro():
+# --- Registro del equipo ----------------------------------------------------------
+def _hoja(wb, nombre):
+    if nombre not in wb.sheetnames:
+        return []
+    ws = wb[nombre]
+    cab = [_texto(c.value) for c in ws[1]]
     filas = []
-    for c in ciclo1['casos']:
-        filas.append((c['id'], 1, c['entorno'], c['fecha'], c['ejecutor'], c['estado'],
-                      c['real'], ', '.join(c['evidencias']) or '—', c['defecto'] or '—'))
-    for c in ciclo2['casos']:
-        filas.append((c['id'], 2, c['entorno'].replace('Chromium', 'Chromium (sustituye a Firefox)'),
-                      c['fecha'], c['ejecutor'], c['estado'],
-                      c['real'], ', '.join(c['evidencias']) or '—', c['defecto'] or '—'))
-    for m in manual:
-        if m['hecho']:
-            filas.append((m['id'], m['ciclo'], f"{m.get('navegador') or 'navegador sin anotar'} · Railway (manual)",
-                          m.get('fecha') or '—', m['ejecuta'], m['estado'], m.get('real') or '—',
-                          m['archivo'], '—'))
+    for fila in ws.iter_rows(min_row=2, values_only=True):
+        if not any(v not in (None, '') for v in fila):
+            continue
+        filas.append({cab[j]: fila[j] for j in range(min(len(cab), len(fila)))})
     return filas
 
+
+if not os.path.exists(REGISTRO):
+    raise SystemExit(f'Falta el registro {REGISTRO}; créelo con plantilla_registro.py')
+_wb = openpyxl.load_workbook(REGISTRO, data_only=True)
+
+EJEC = []
+for f in _hoja(_wb, 'Registro de ejecución'):
+    caso = _texto(f.get('Caso'))
+    if not caso.startswith('CP-'):
+        continue
+    evid = _lista(f.get('Evidencia'))
+    e = dict(
+        caso=caso, ciclo=int(f.get('Ciclo') or 1), que=_texto(f.get('Qué prueba')), ejecuta=_texto(f.get('Lo ejecuta')),
+        navegador=_texto(f.get('Navegador y versión')), so=_texto(f.get('Sistema operativo')),
+        fecha=_texto(f.get('Fecha')), estado=_texto(f.get('Estado')), real=_texto(f.get('Resultado real')),
+        evidencias=evid, defecto=_texto(f.get('Defecto')),
+        esperado_hoy=_texto(f.get('Estado esperado hoy')), defecto_esperado=_texto(f.get('Defecto esperado')),
+    )
+    e['rutas'] = [ruta_captura(x) for x in evid]
+    e['hecho'] = e['estado'] in ('Aprobado', 'Fallido', 'Bloqueado')
+    EJEC.append(e)
+
+_def_eq = {_texto(f.get('ID')): f for f in _hoja(_wb, 'Defectos')}
+DEFECTOS = []
+for base in DEFECTOS_BASE:
+    f = _def_eq.get(base['id'], {})
+    d = dict(base)
+    d.update(fecha=_texto(f.get('Fecha')), navegador=_texto(f.get('Navegador y versión')),
+             so=_texto(f.get('Sistema operativo')), intentos=_texto(f.get('Intentos')),
+             resultado_real=_texto(f.get('Resultado real')),
+             evidencias=_lista(f.get('Evidencia')) or list(EVIDENCIA_SUGERIDA[base['id']]))
+    d['estado'] = _texto(f.get('Estado')) or base['estado']
+    d['rutas'] = [ruta_captura(x) for x in d['evidencias']]
+    d['hecho'] = bool(d['fecha'] and d['resultado_real'])
+    DEFECTOS.append(d)
+
+REPRO = {}
+for f in _hoja(_wb, 'Reproducción cruzada'):
+    REPRO[_texto(f.get('Defecto'))] = dict(fecha=_texto(f.get('Fecha')), resultado=_texto(f.get('Resultado')),
+                                           falto=_texto(f.get('Qué faltó o qué se observó')))
+
+SESIONES = {}
+NOTAS = {'SE-01': [], 'SE-02': []}
+if 'Sesiones exploratorias' in _wb.sheetnames:
+    _ws = _wb['Sesiones exploratorias']
+    for r in (2, 3):
+        sid = _texto(_ws.cell(r, 1).value)
+        if sid:
+            SESIONES[sid] = dict(integrante=_texto(_ws.cell(r, 2).value),
+                                 mision=_texto(_ws.cell(r, 3).value) or MISIONES.get(sid, ''),
+                                 fecha=_texto(_ws.cell(r, 4).value), duracion=_texto(_ws.cell(r, 5).value),
+                                 defectos=_texto(_ws.cell(r, 6).value), preguntas=_texto(_ws.cell(r, 7).value),
+                                 distribucion=_texto(_ws.cell(r, 8).value))
+    for r in range(7, _ws.max_row + 1):
+        sid = _texto(_ws.cell(r, 1).value)
+        minuto, hice, vi = (_texto(_ws.cell(r, j).value) for j in (2, 3, 4))
+        if sid in NOTAS and (minuto or hice or vi):
+            NOTAS[sid].append((minuto, hice, vi))
+
+
+# --- Métricas (solo con lo que el equipo ya ejecutó) -----------------------------
+def _contar(ciclo, estado):
+    return sum(1 for e in EJEC if e['ciclo'] == ciclo and e['estado'] == estado)
+
+
+def metricas():
+    m = {}
+    for c in (1, 2):
+        m[f'aprob{c}'] = _contar(c, 'Aprobado')
+        m[f'fall{c}'] = _contar(c, 'Fallido')
+        m[f'bloq{c}'] = _contar(c, 'Bloqueado')
+        m[f'ejec{c}'] = m[f'aprob{c}'] + m[f'fall{c}']
+        m[f'dis{c}'] = sum(1 for e in EJEC if e['ciclo'] == c)
+        m[f'pend{c}'] = sum(1 for e in EJEC if e['ciclo'] == c and not e['hecho'])
+    alta = [e for e in EJEC if e['ciclo'] == 1 and CASOS.get(e['caso'], {}).get('prioridad') == 'Alta']
+    m['alta'] = len(alta)
+    m['alta_ejec'] = sum(1 for e in alta if e['estado'] in ('Aprobado', 'Fallido'))
+    m['total_def'] = len(DEFECTOS)
+    m['def_hechos'] = sum(1 for d in DEFECTOS if d['hecho'])
+    m['repro_hechas'] = sum(1 for d in DEFECTOS if REPRO.get(d['id'], {}).get('resultado'))
+    m['capturas'] = sum(1 for e in EJEC for r in e['rutas'] if r)
+    m['capturas_esperadas'] = sum(len(e['evidencias']) for e in EJEC)
+    return m
+
+
+M = metricas()
+COMPLETO = (M['pend1'] == 0 and M['pend2'] == 0 and M['def_hechos'] == len(DEFECTOS)
+            and M['repro_hechas'] == len(DEFECTOS) and M['capturas'] == M['capturas_esperadas'])
+
+
+def v(x, raya=PENDIENTE):
+    """El dato del equipo o una raya para llenar."""
+    return x if x not in (None, '') else raya
+
+
+def entorno(navegador, so):
+    """Entorno de una ejecución manual en Railway."""
+    partes = [p for p in (navegador, so) if p]
+    return 'Railway (commit 693358a) · ' + (' · '.join(partes) if partes else
+                                            'navegador y versión: ____ · sistema operativo: ____')
+
+
 if __name__ == '__main__':
-    print('Ciclo 1:', M['aprob1'], 'aprob,', M['fall1'], 'fall,', M['bloq1'], 'bloq de', M['dis1'])
-    print('Ciclo 2:', M['aprob2'], 'aprob,', M['fall2'], 'fall de', M['ejec2'])
-    print('Defectos:', M['total_def'], 'por severidad', M['por_sev'])
+    print('Ejecuciones:', len(EJEC), '· pendientes', M['pend1'] + M['pend2'])
+    print('Defectos con datos del equipo:', M['def_hechos'], 'de', len(DEFECTOS))
+    print('Reproducciones cruzadas:', M['repro_hechas'], '· capturas', M['capturas'], 'de', M['capturas_esperadas'])

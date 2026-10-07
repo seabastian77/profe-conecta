@@ -7,10 +7,10 @@ const path = require('path');
 const { chromium } = require('playwright');
 const {
   Caso, fechaColombia, marcaColombia, iniciarSesion, llenarRegistro,
-  cerrarSesion, ir, consola, programarTutoria, prepararSalida
+  cerrarSesion, ir, consola, programarTutoria, prepararSalida, lanzarNavegador
 } = require('./apoyo');
 
-const SEMILLA = '123456';
+const SEMILLA = process.env.CLAVE_CUENTAS || '123456';
 const dma = (f) => f.split('-').reverse().join('/');
 
 const DEFECTOS = {
@@ -117,20 +117,24 @@ const DEFECTOS = {
       await iniciarSesion(p, d.admin.correo, d.admin.clave);
       await ir(p, 'admin-usuarios');
       await p.click('button:has-text("+ Nuevo Usuario")');
+      await p.waitForSelector('#nuContra', { state: 'visible' });
+      await p.waitForTimeout(500);
       const nuevo = await p.evaluate(() => {
         const e = document.getElementById('nuContra');
         return { tipo: e.type, valor: e.value };
       });
+      await c.evidencia(s, `«Nuevo Usuario»: el campo de contraseña es type="${nuevo.tipo}" y ya trae escrita «${nuevo.valor}»`, [], '#nuContra');
       await p.evaluate(() => cerrarModalNuevoUsuario());
       // Editar un usuario: el campo de nueva contraseña también es de texto.
       await p.locator('#cuerpoTablaUsuarios tr', { hasText: 'jperez@amigo.edu.co' }).locator('.btn-accion--editar').click();
-      await p.waitForSelector('#modalEditarUsuario');
+      await p.waitForSelector('#euContra', { state: 'visible' });
+      await p.waitForTimeout(500);
       await p.fill('#euContra', 'Prueba1234');
       const editar = await p.evaluate(() => {
         const e = document.getElementById('euContra');
         return { tipo: e.type, valor: e.value };
       });
-      await c.evidencia(s, `«Nuevo Usuario»: campo contraseña type="${nuevo.tipo}" con el valor «${nuevo.valor}». «Editar»: type="${editar.tipo}" muestra «${editar.valor}».`);
+      await c.evidencia(s, `«Editar Usuario» de jperez: la nueva contraseña «${editar.valor}» se lee tal cual (type="${editar.tipo}")`, [], '#euContra');
       const reproduce = nuevo.tipo === 'text' && nuevo.valor === 'Cambiar123' && editar.tipo === 'text';
       return {
         estado: reproduce ? 'Abierto' : 'No reproducido',
@@ -149,9 +153,17 @@ const DEFECTOS = {
       const p = s.pagina;
       await iniciarSesion(p, 'dmontoya@amigo.edu.co', SEMILLA);
       const docentes = (await consola(p, 'GET', '/api/tutorias/docentes-disponibles')).datos;
-      const doc1 = docentes[0].id, doc2 = docentes[1] ? docentes[1].id : docentes[0].id;
-      const r1 = await consola(p, 'POST', '/api/tutorias', { docente_id: doc1, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', fecha: '2027-13-45', hora: '09:00' });
-      const r2 = await consola(p, 'POST', '/api/tutorias', { docente_id: doc2, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', fecha: 'mañana', hora: '25:99' });
+      // Si la franja ya existe en la base (409, por ejemplo en Railway), se prueba con el siguiente docente.
+      const intentar = async (fecha, hora, desde) => {
+        for (let k = 0; k < docentes.length; k++) {
+          const doc = docentes[(desde + k) % docentes.length].id;
+          const r = await consola(p, 'POST', '/api/tutorias', { docente_id: doc, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', fecha, hora });
+          if (r.estado !== 409) return { doc, r };
+        }
+        return { doc: docentes[desde % docentes.length].id, r: { estado: 409, datos: {} } };
+      };
+      const { doc: doc1, r: r1 } = await intentar('2027-13-45', '09:00', 0);
+      const { doc: doc2, r: r2 } = await intentar('mañana', '25:99', 1);
       const cmd = (docente, fecha, hora) =>
         `fetch("/api/tutorias",{method:"POST",headers:{\n  "Content-Type":"application/json",Authorization:"Bearer "\n  +localStorage.getItem("cp.token")},\n  body:JSON.stringify({docente_id:${docente},asignatura:"Cálculo Diferencial",\n  modalidad:"Virtual",fecha:"${fecha}",hora:"${hora}"})})\n  .then(r=>r.json()).then(console.log)`;
       await c.evidenciaConsola(s, [
@@ -217,17 +229,45 @@ const DEFECTOS = {
       const notifs = (await consola(est.pagina, 'GET', '/api/notificaciones')).datos || [];
       const recibioAlerta = notifs.some(n => /seguimiento acad/i.test(n.titulo));
       await c.evidencia(est, `Promedio guardado en la base: ${promedioGuardado}. El panel del estudiante dice «${avisoPanel} alertas»`, [], '#estAlertaTarjeta');
-      // ...pero la campana trae la alerta enviada al grupo «en alerta».
-      await est.pagina.click('#botonCampana');
-      await est.pagina.waitForSelector('#notifPanel:not(.oculto)', { timeout: 4000 }).catch(() => {});
-      await est.pagina.waitForTimeout(600);
-      await c.evidencia(est, `Campana abierta: ${recibioAlerta ? 'llega «Seguimiento académico», enviada a «Todos los estudiantes en alerta»' : 'no llega la alerta'}`,
-        [`GET /api/perfil → promedio: ${promedioGuardado}`]);
+      // ...pero la campana trae la alerta enviada al grupo «en alerta». El panel de la
+      // campana cuelga de la barra superior, así que primero se vuelve al inicio de la página.
+      await est.pagina.evaluate(() => {
+        // Sube todos los contenedores con scroll hasta arriba, para que la barra con la campana quede a la vista.
+        let e = document.getElementById('botonCampana');
+        while (e) { if (e.scrollTop) e.scrollTop = 0; e = e.parentElement; }
+        document.querySelectorAll('*').forEach(x => { if (x.scrollTop > 0) x.scrollTop = 0; });
+        window.scrollTo(0, 0);
+      });
+      await est.pagina.waitForTimeout(300);
+      // El número rojo de la campana tapa el centro del botón y un clic ahí abre y cierra el
+      // panel al instante (lo toma como un clic «por fuera»). Se hace clic en una parte del
+      // botón que no tape el número, como haría quien lo intenta otra vez.
+      const punto = await est.pagina.evaluate(() => {
+        const btn = document.getElementById('botonCampana');
+        const r = btn.getBoundingClientRect();
+        for (let y = r.bottom - 3; y > r.top; y -= 3) {
+          for (let x = r.left + 3; x < r.right; x += 3) {
+            if (document.elementFromPoint(x, y) === btn) return { x: x - r.left, y: y - r.top };
+          }
+        }
+        return null;
+      });
+      await est.pagina.click('#botonCampana', punto ? { position: punto } : {});
+      await est.pagina.waitForSelector('#notifPanel:not(.oculto)', { timeout: 4000 });
+      await est.pagina.waitForFunction(() => /Seguimiento acad/i.test(document.getElementById('notifLista')?.textContent || ''), null, { timeout: 5000 }).catch(() => {});
+      const panelAbierto = await est.pagina.evaluate(() => {
+        const panel = document.getElementById('notifPanel');
+        const r = panel.getBoundingClientRect();
+        return !panel.classList.contains('oculto') && r.height > 0 && r.top >= 0 && r.top < window.innerHeight;
+      });
+      const textoPanel = await est.pagina.evaluate(() => document.getElementById('notifLista')?.textContent.replace(/\s+/g, ' ').trim() || '');
+      await c.evidencia(est, `Campana abierta: ${/Seguimiento acad/i.test(textoPanel) ? 'llega «Seguimiento académico», enviada a «Todos los estudiantes en alerta»' : 'no llega la alerta'}. En la base, promedio ${promedioGuardado}`);
+      if (!panelAbierto) throw new Error('El panel de la campana no quedó visible para la captura');
       const reproduce = Number(promedioGuardado) === 0 && recibioAlerta;
       return {
         estado: reproduce ? 'Abierto' : 'No reproducido',
         frecuencia: '3 de 3 intentos',
-        resultado: `El estudiante guardó el perfil sin promedio; en la base quedó promedio ${promedioGuardado}. Su panel muestra «${avisoPanel}», pero la campana ${recibioAlerta ? 'sí' : 'no'} trae la alerta enviada al grupo «en alerta», porque el grupo incluye a quien tiene promedio 0.`
+        resultado: `El estudiante guardó el perfil sin promedio; en la base quedó promedio ${promedioGuardado}. Su panel muestra «${avisoPanel} alertas», pero la campana ${recibioAlerta ? 'sí' : 'no'} trae la alerta enviada al grupo «en alerta», porque el grupo incluye a quien tiene promedio 0.`
       };
     }
   }
@@ -236,10 +276,11 @@ const DEFECTOS = {
 (async () => {
   const salida = path.resolve(path.join(__dirname, 'resultados', 'defectos-exploratorios'));
   prepararSalida(salida);
-  const navegador = await chromium.launch();
+  const baseUrl = (process.env.BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
+  const navegador = await lanzarNavegador(chromium, baseUrl);
   const admin = { correo: process.env.ADMIN_CORREO, clave: process.env.ADMIN_CONTRASENA };
-  const entorno = { navegador, baseUrl: (process.env.BASE_URL || 'http://localhost:3000').replace(/\/$/, ''), perfil: 'escritorio', ciclo: 1, salida, versionNavegador: `Chromium ${navegador.version()}` };
-  const datos = { sufijo: 'se', admin };
+  const entorno = { navegador, baseUrl, perfil: 'escritorio', ciclo: 1, salida, versionNavegador: `Chromium ${navegador.version()}` };
+  const datos = { sufijo: process.env.SUFIJO || 'se', admin };
   const salidaFinal = { inicio: marcaColombia(), navegador: entorno.versionNavegador, defectos: [] };
 
   for (const [id, def] of Object.entries(DEFECTOS)) {

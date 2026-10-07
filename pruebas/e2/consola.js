@@ -16,10 +16,10 @@ const path = require('path');
 const { chromium } = require('playwright');
 const {
   iniciarSesion, marcaColombia, prepararSalida, programarTutoria, ir, fechaColombia, instanteColombia,
-  dibujarConsola, fmtRespuesta
+  dibujarConsola, fmtRespuesta, lanzarNavegador
 } = require('./apoyo');
 
-const SEMILLA = '123456';
+const SEMILLA = process.env.CLAVE_CUENTAS || '123456';
 const dma = (f) => f.split('-').reverse().join('/');
 
 // Los cinco casos/defectos que se verifican por la consola del navegador.
@@ -92,7 +92,7 @@ const PRUEBAS = [
 `fetch("/api/tutorias/ID/realizada",{method:"PATCH",
   headers:{Authorization:"Bearer "+localStorage.getItem("cp.token")}})
   .then(r=>r.json()).then(console.log)`,
-    esperado: 'El servidor debería rechazar el cambio (la tutoría está cancelada). En su lugar responde {mensaje: "Tutoría completada"} y la tutoría pasa a «completada»: DEFECTO.',
+    esperado: 'R6: una tutoría cancelada no admite nuevas transiciones. El servidor rechaza el cambio con un error y la tutoría sigue «cancelada».',
     prepararId: true,
     async correr(p, ctx) {
       const r = await ejecutarFetch(p, 'PATCH', `/api/tutorias/${ctx.id}/realizada`, null, true);
@@ -115,13 +115,20 @@ const PRUEBAS = [
   body:JSON.stringify({docente_id:9,asignatura:"Cálculo Diferencial",
   modalidad:"Virtual",fecha:"2027-13-45",hora:"25:99"})})
   .then(r=>r.json()).then(console.log)`,
-    esperado: 'El servidor debería rechazar la fecha y la hora inválidas. En su lugar responde 201 {mensaje: "Tutoría programada"}: DEFECTO.',
+    esperado: 'R5: el servidor rechaza una fecha o una hora que no existen (código 400 con un mensaje claro) y no guarda la tutoría.',
     async correr(p) {
       // Usa el docente 9 del comando si existe; si no, el primero disponible, y muestra el id real usado.
       const docs = (await ejecutarFetch(p, 'GET', '/api/tutorias/docentes-disponibles', null, true)).body;
-      const docente = (docs.find(d => d.id === 9) || docs[0]).id;
-      const r = await ejecutarFetch(p, 'POST', '/api/tutorias',
-        { docente_id: docente, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', fecha: '2027-13-45', hora: '25:99' }, true);
+      // En Railway la misma petición pudo hacerse antes a mano: si esa franja ya existe (409),
+      // se repite con otro docente para que la prueba mida la validación y no el choque.
+      const orden = [docs.find(d => d.id === 9), ...docs.filter(d => d.id !== 9)].filter(Boolean);
+      let docente, r;
+      for (const d of orden) {
+        docente = d.id;
+        r = await ejecutarFetch(p, 'POST', '/api/tutorias',
+          { docente_id: docente, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', fecha: '2027-13-45', hora: '25:99' }, true);
+        if (r.status !== 409) break;
+      }
       r.comandoReal = this.comando.replace('docente_id:9', `docente_id:${docente}`);
       return r;
     },
@@ -186,7 +193,7 @@ async function ejecutarFetch(p, metodo, ruta, cuerpo, conToken) {
   const filtro = args.casos ? args.casos.split(',') : null;
 
   prepararSalida(salida);
-  const navegador = await chromium.launch();
+  const navegador = await lanzarNavegador(chromium, base);
   const versionNavegador = `Chromium ${navegador.version()}`;
   const corrida = { inicio: marcaColombia(), base, navegador: versionNavegador, pruebas: [] };
 

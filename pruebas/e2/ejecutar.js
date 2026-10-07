@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 const { CASOS } = require('./casos');
-const { Caso, horaColombia, marcaColombia, prepararSalida } = require('./apoyo');
+const { Caso, horaColombia, marcaColombia, prepararSalida, lanzarNavegador } = require('./apoyo');
 
 // Oculta contraseñas, tokens y fotos en base64 de los cuerpos que se guardan.
 function redactar(texto) {
@@ -80,7 +80,7 @@ async function prepararFoto(navegador, carpeta) {
   }
 
   prepararSalida(salida);
-  const navegador = await chromium.launch();
+  const navegador = await lanzarNavegador(chromium, baseUrl);
   const versionNavegador = `Chromium ${navegador.version()}`;
   const foto = await prepararFoto(navegador, path.join(__dirname, 'datos'));
 
@@ -92,8 +92,9 @@ async function prepararFoto(navegador, carpeta) {
     admin: { correo: process.env.ADMIN_CORREO, clave: process.env.ADMIN_CONTRASENA },
     foto,
     cuentaFoto: ciclo === 1 ? 'clondono@amigo.edu.co' : 'crios@amigo.edu.co',
-    choqueDocente: ciclo === 1 ? '2027-03-10' : '2027-03-11',
-    choqueEstudiante: ciclo === 1 ? '2027-04-01' : '2027-04-02',
+    // En un entorno compartido (Railway) se usa otro año para no chocar con tutorías ya creadas a mano.
+    choqueDocente: `${a.anio || '2027'}-03-${ciclo === 1 ? '10' : '11'}`,
+    choqueEstudiante: `${a.anio || '2027'}-04-${ciclo === 1 ? '01' : '02'}`,
     horaAsesoriaHoy: horaHoy
   };
 
@@ -142,9 +143,13 @@ async function prepararFoto(navegador, carpeta) {
       evidencias: caso.evidencias,
       descripciones: caso.descripciones,
       red: caso.red().map(r => {
-        // Oculta credenciales y datos binarios antes de guardar el cuerpo enviado.
-        const limpio = redactar(r.enviado);
-        return { ...r, enviado: limpio.length > 200 ? `${limpio.slice(0, 200)}… (${r.bytesEnviados} caracteres)` : limpio };
+        // Oculta credenciales, tokens y datos binarios antes de guardar lo enviado y lo recibido.
+        const limpio = redactar(r.enviado) || '';
+        const conClave = /"contrasena"/i.test(r.enviado || '');
+        const salida = { ...r, enviado: limpio.length > 200 ? `${limpio.slice(0, 200)}…` : limpio, respuesta: redactar(r.respuesta) };
+        // El largo de un cuerpo con la contraseña dejaría deducir cuántos caracteres tiene.
+        if (conClave) delete salida.bytesEnviados;
+        return salida;
       }),
       dialogos: caso.dialogos(),
       erroresPagina: caso.sesiones.flatMap(s => s.errores),

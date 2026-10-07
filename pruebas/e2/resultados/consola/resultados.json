@@ -1,5 +1,5 @@
 {
-  "inicio": "07/10/2026, 17:16:08",
+  "inicio": "07/10/2026, 18:24:19",
   "base": "http://localhost:3000",
   "navegador": "Chromium 141.0.7390.37",
   "pruebas": [
@@ -48,7 +48,7 @@
       "requisito": "R6",
       "descripcion": "Una tutoría ya cancelada no debería admitir nuevas transiciones; por la API se puede marcar «realizada».",
       "comando": "fetch(\"/api/tutorias/19/realizada\",{method:\"PATCH\",headers:{Authorization:\"Bearer \"+localStorage.getItem(\"cp.token\")}}).then(r=>r.json()).then(console.log)",
-      "esperado": "El servidor debería rechazar el cambio (la tutoría está cancelada). En su lugar responde {mensaje: \"Tutoría completada\"} y la tutoría pasa a «completada»: DEFECTO.",
+      "esperado": "R6: una tutoría cancelada no admite nuevas transiciones. El servidor rechaza el cambio con un error y la tutoría sigue «cancelada».",
       "estado": "Defecto confirmado",
       "resultadoReal": "El servidor respondió 200 {mensaje: 'Tutoría completada'} y la tutoría cancelada pasó a «completada». Debería haberlo rechazado.",
       "evidencia": "EV-DEF06-CONSOLA.png",
@@ -61,7 +61,7 @@
       "requisito": "R5",
       "descripcion": "El servidor no valida que la fecha y la hora existan; acepta «2027-13-45» y «25:99».",
       "comando": "fetch(\"/api/tutorias\",{method:\"POST\",headers:{\n  \"Content-Type\":\"application/json\",Authorization:\"Bearer \"\n  +localStorage.getItem(\"cp.token\")},\n  body:JSON.stringify({docente_id:9,asignatura:\"Cálculo Diferencial\",\n  modalidad:\"Virtual\",fecha:\"2027-13-45\",hora:\"25:99\"})})\n  .then(r=>r.json()).then(console.log)",
-      "esperado": "El servidor debería rechazar la fecha y la hora inválidas. En su lugar responde 201 {mensaje: \"Tutoría programada\"}: DEFECTO.",
+      "esperado": "R5: el servidor rechaza una fecha o una hora que no existen (código 400 con un mensaje claro) y no guarda la tutoría.",
       "estado": "Defecto confirmado",
       "resultadoReal": "El servidor respondió 201 {mensaje: 'Tutoría programada', id: 20}: acepta la fecha «2027-13-45» y la hora «25:99» sin validar que existan.",
       "evidencia": "EV-DEF10-CONSOLA.png",
@@ -82,5 +82,5 @@
       "tipo": "inspeccion"
     }
   ],
-  "fin": "07/10/2026, 17:16:32"
+  "fin": "07/10/2026, 18:24:42"
 }

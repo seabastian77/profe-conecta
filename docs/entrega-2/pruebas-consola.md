@@ -1,13 +1,10 @@
 # Pruebas por consola del navegador (F12) — Equipo F
 
-Estas 6 verificaciones se hacen desde la pestaña **Consola** de las herramientas del navegador (F12). Cinco pegan un `fetch()` con el token de la sesión y prueban la capa del servidor directamente, así que son las más cercanas a cómo se tantea una API. La de DEF-13 no hace ninguna petición: inspecciona un elemento de la página con `document.getElementById()` para ver lo que la pantalla no muestra.
+Estas son las pruebas que se hacen desde la pestaña **Consola** de las herramientas del navegador (F12), en https://profe-conecta-production-e40c.up.railway.app. En cinco se pega un `fetch()`: cuatro con el token de la sesión y el de CP-008 sin sesión, como lo haría un visitante. En la de DEF-13 se inspecciona el elemento del mensaje emergente con `document.getElementById()`.
 
-Las rutas son **relativas** (`/api/...`): el mismo comando sirve en `localhost` y en
-el entorno de Railway (http://localhost:3000 se usó para esta corrida).
-
-Debajo de cada comando está la captura de la consola tal como quedó después de pegarlo.
-
-> Si Chrome pide permiso para pegar en la consola, escribe `allow pasting` y Enter.
+- En DEF-06 hay que cambiar `ID` por el número de una tutoría cancelada (se ve en la pestaña Red) y entrar como su docente. En DEF-10, `docente_id` tiene que ser el de un docente activo.
+- Firefox pide escribir `permitir pegar` antes de dejar pegar en la consola; Chrome pide `allow pasting`.
+- La captura que va como evidencia es la de ustedes en Railway, con la consola abierta y la respuesta a la vista. La imagen que aparece debajo de cada comando es una **referencia de la copia local, no es evidencia**.
 
 ## CP-008 · Rechazo de registro con rol de administrador
 
@@ -23,11 +20,10 @@ fetch("/api/auth/registro",{method:"POST",headers:{
 ```
 
 - **Resultado esperado:** La consola muestra {error: "Rol inválido"} y la pestaña Red, el código 400. No se crea la cuenta.
-- **Resultado real:** La consola muestra {error: 'Rol inválido'} y la pestaña Red el código 400. El servidor no crea la cuenta de administrador.
-- **Código HTTP:** 400 · **Estado:** Aprobado
-- **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-CP008-CONSOLA.png`
 
-![CP-008 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-CP008-CONSOLA.png)
+Referencia (copia local, no es evidencia):
+
+![CP-008 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-CP008-CONSOLA.png)
 
 ## CP-018 · Un estudiante no puede guardar un perfil de docente
 
@@ -43,11 +39,10 @@ fetch("/api/perfil/docente",{method:"POST",headers:{
 ```
 
 - **Resultado esperado:** La consola muestra {error: "No tienes permiso para esto"} y la pestaña Red, el código 403. No se crea ningún perfil de docente.
-- **Resultado real:** La consola muestra {error: 'No tienes permiso para esto'} y la pestaña Red el código 403. El servidor no crea ningún perfil de docente para el estudiante.
-- **Código HTTP:** 403 · **Estado:** Aprobado
-- **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-CP018-CONSOLA.png`
 
-![CP-018 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-CP018-CONSOLA.png)
+Referencia (copia local, no es evidencia):
+
+![CP-018 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-CP018-CONSOLA.png)
 
 ## CP-021 · Rechazo de tutoría con docente inexistente
 
@@ -64,11 +59,10 @@ fetch("/api/tutorias",{method:"POST",headers:{
 ```
 
 - **Resultado esperado:** La consola muestra {error: "Docente no encontrado o inactivo"} y la pestaña Red, el código 404. Al recargar, la página carga normal: el servidor sigue arriba (no hay error 500).
-- **Resultado real:** La consola muestra {error: 'Docente no encontrado o inactivo'} y la pestaña Red el código 404. Al recargar, la página carga normal y el servidor sigue arriba (no hay error 500).
-- **Código HTTP:** 404 · **Estado:** Aprobado
-- **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-CP021-CONSOLA.png`
 
-![CP-021 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-CP021-CONSOLA.png)
+Referencia (copia local, no es evidencia):
+
+![CP-021 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-CP021-CONSOLA.png)
 
 ## DEF-06 · Una tutoría cancelada se marca «completada» por la API
 
@@ -76,15 +70,14 @@ fetch("/api/tutorias",{method:"POST",headers:{
 Una tutoría ya cancelada no debería admitir nuevas transiciones; por la API se puede marcar «realizada».
 
 ```js
-fetch("/api/tutorias/19/realizada",{method:"PATCH",headers:{Authorization:"Bearer "+localStorage.getItem("cp.token")}}).then(r=>r.json()).then(console.log)
+fetch("/api/tutorias/ID/realizada",{method:"PATCH",headers:{Authorization:"Bearer "+localStorage.getItem("cp.token")}}).then(r=>r.json()).then(console.log)
 ```
 
-- **Resultado esperado:** El servidor debería rechazar el cambio (la tutoría está cancelada). En su lugar responde {mensaje: "Tutoría completada"} y la tutoría pasa a «completada»: DEFECTO.
-- **Resultado real:** El servidor respondió 200 {mensaje: 'Tutoría completada'} y la tutoría cancelada pasó a «completada». Debería haberlo rechazado.
-- **Código HTTP:** 200 · **Estado:** Defecto confirmado
-- **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-DEF06-CONSOLA.png`
+- **Resultado esperado:** R6: una tutoría cancelada no admite nuevas transiciones. El servidor rechaza el cambio con un error y la tutoría sigue «cancelada».
 
-![DEF-06 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-DEF06-CONSOLA.png)
+Referencia (copia local, no es evidencia):
+
+![DEF-06 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-DEF06-CONSOLA.png)
 
 ## DEF-10 · La API guarda tutorías con fechas y horas que no existen
 
@@ -100,12 +93,11 @@ fetch("/api/tutorias",{method:"POST",headers:{
   .then(r=>r.json()).then(console.log)
 ```
 
-- **Resultado esperado:** El servidor debería rechazar la fecha y la hora inválidas. En su lugar responde 201 {mensaje: "Tutoría programada"}: DEFECTO.
-- **Resultado real:** El servidor respondió 201 {mensaje: 'Tutoría programada', id: 20}: acepta la fecha «2027-13-45» y la hora «25:99» sin validar que existan.
-- **Código HTTP:** 201 · **Estado:** Defecto confirmado
-- **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-DEF10-CONSOLA.png`
+- **Resultado esperado:** R5: el servidor rechaza una fecha o una hora que no existen (código 400 con un mensaje claro) y no guarda la tutoría.
 
-![DEF-10 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-DEF10-CONSOLA.png)
+Referencia (copia local, no es evidencia):
+
+![DEF-10 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-DEF10-CONSOLA.png)
 
 ## DEF-13 · Los mensajes emergentes se generan pero nunca se ven
 
@@ -119,8 +111,7 @@ console.log(t.textContent, "|", t.className,
 ```
 
 - **Resultado esperado:** RF028: el mensaje emergente se ve en pantalla (opacidad 1) y después desaparece solo.
-- **Resultado real:** La consola imprime «Faltan 7h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente. | tostada tostada--visible tostada--error | opacidad: 0». El elemento tiene el mensaje y la clase «tostada--visible», pero la hoja de estilos solo define «.tostada.visible»; por eso la opacidad se queda en 0 y en pantalla no aparece nada.
-- **Código HTTP:** — (inspección del elemento, sin petición al servidor) · **Estado:** Defecto confirmado
-- **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-DEF13-CONSOLA.png`
 
-![DEF-13 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-DEF13-CONSOLA.png)
+Referencia (copia local, no es evidencia):
+
+![DEF-13 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-DEF13-CONSOLA.png)

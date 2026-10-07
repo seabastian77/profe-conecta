@@ -7,7 +7,7 @@ const {
   llenarRegistro, cerrarSesion, ir, consola, textoError, estadoTostada, programarTutoria
 } = require('./apoyo');
 
-const SEMILLA = '123456';
+const SEMILLA = process.env.CLAVE_CUENTAS || '123456';
 const APROBADO = 'Aprobado';
 const FALLIDO = 'Fallido';
 const BLOQUEADO = 'Bloqueado';
@@ -443,7 +443,12 @@ const CASOS = [
       const prep = await c.abrir();
       await iniciarSesion(prep.pagina, 'jperez@amigo.edu.co', SEMILLA);
       const manana = fechaColombia(1);
-      const prog = await programarTutoria(prep.pagina, { tutor: 'María González Ramos', fecha: manana, hora: '07:00' });
+      // En Railway la docente puede tener ya una tutoría a las 07:00; se toma la franja libre más cercana.
+      let prog, horaPrep;
+      for (horaPrep of ['07:00', '06:30', '06:00', '07:30']) {
+        prog = await programarTutoria(prep.pagina, { tutor: 'María González Ramos', fecha: manana, hora: horaPrep });
+        if (prog.estado !== 409) break;
+      }
       await cerrarSesion(prep.pagina);
 
       // La tutoría tiene que estar vencida: se adelanta el reloj del navegador al día siguiente.
@@ -451,7 +456,7 @@ const CASOS = [
       const s = await c.abrir({ reloj: siguiente });
       const p = s.pagina;
       await iniciarSesion(p, 'mgonzalez@amigo.edu.co', SEMILLA);
-      const tarjeta = p.locator('#docListaTutorias .tarjeta-tutoria', { hasText: dma(manana) }).filter({ hasText: 'Juan' }).first();
+      const tarjeta = p.locator('#docListaTutorias .tarjeta-tutoria', { hasText: dma(manana) }).filter({ hasText: 'Juan' }).filter({ hasText: horaPrep }).first();
       const boton = tarjeta.locator('button:has-text("Marcar realizada")');
       const tieneBoton = await boton.count();
       if (tieneBoton) {
@@ -459,12 +464,12 @@ const CASOS = [
         await p.waitForResponse(r => r.url().includes('/realizada')).catch(() => null);
         await p.waitForTimeout(1200);
       }
-      const final = p.locator('#docListaTutorias .tarjeta-tutoria', { hasText: dma(manana) }).filter({ hasText: 'Juan' }).first();
+      const final = p.locator('#docListaTutorias .tarjeta-tutoria', { hasText: dma(manana) }).filter({ hasText: 'Juan' }).filter({ hasText: horaPrep }).first();
       const estadoTxt = (await final.locator('.tarjeta-tutoria__estado').textContent().catch(() => '')).trim();
       const marca = ultima(s, 'PATCH', '/api/tutorias/');
       await c.evidencia(s, `Docente mgonzalez, reloj en ${manana} 08:00 → «${estadoTxt}»`, marca ? [lineaRed(marca)] : [], final);
       const ok = prog.estado === 201 && marca && marca.estado === 200 && estadoTxt === 'Completada';
-      return { estado: ok ? APROBADO : FALLIDO, real: `Preparación: jperez programó con María González Ramos el ${dma(manana)} a las 07:00 (${prog.estado}). Con el reloj del navegador en ese día a las 08:00, la docente ve «Marcar realizada»; al confirmar, PATCH → ${marca ? marca.estado : '—'} y la tarjeta pasa a «${estadoTxt}».` };
+      return { estado: ok ? APROBADO : FALLIDO, real: `Preparación: jperez programó con María González Ramos el ${dma(manana)} a las ${horaPrep} (${prog.estado}). Con el reloj del navegador en ese día a las 08:00, la docente ve «Marcar realizada»; al confirmar, PATCH → ${marca ? marca.estado : '—'} y la tarjeta pasa a «${estadoTxt}».` };
     }
   },
   {
@@ -534,7 +539,7 @@ const CASOS = [
       await p.waitForSelector('#pagina-admin-auditoria .tabla-datos tbody tr td');
       const celdas = await p.locator('#pagina-admin-auditoria .tabla-datos tbody tr').first().locator('td').allTextContents();
       const [fechaMostrada, usuario, evento] = celdas.map(x => x.trim());
-      await c.evidencia(s, `Primera fila: ${fechaMostrada} · ${usuario} · ${evento}. Hora real del login: ${dma(real.fecha)} ${real.hora}`, [], '#pagina-admin-auditoria .tabla-datos');
+      await c.evidencia(s, `Primera fila: ${fechaMostrada} · ${usuario} · ${evento}. Hora real del login: ${dma(real.fecha)} ${real.hora}`, [], '#pagina-admin-auditoria .tabla-datos thead');
       const legible = /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/.test(fechaMostrada);
       const tipo = /login/i.test(evento) && usuario === d.admin.correo;
       const horaMostrada = fechaMostrada.slice(11, 16);

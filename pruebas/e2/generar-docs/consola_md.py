@@ -1,49 +1,40 @@
 # -*- coding: utf-8 -*-
-"""Genera docs/entrega-2/pruebas-consola.md a partir de resultados/consola/resultados.json."""
+"""Genera docs/entrega-2/pruebas-consola.md: los comandos que se pegan en la consola (F12) para las
+pruebas de la capa del servidor. Las capturas que acompañan cada comando salen de la corrida del
+script sobre una copia local y son solo de referencia: la evidencia es la que toma el equipo en Railway."""
+import json
 import os
-from datos import consola, ruta_evidencia
+import re
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
+REF = os.path.normpath(os.path.join(BUILD, '..', 'resultados', 'consola'))
 DESTINO_DIR = os.path.normpath(os.path.join(BUILD, '..', '..', '..', 'docs', 'entrega-2'))
 DESTINO = os.path.join(DESTINO_DIR, 'pruebas-consola.md')
 
-pruebas = consola.get('pruebas', [])
-con_fetch = [p for p in pruebas if p.get('httpStatus') is not None]
-inspecciones = [p for p in pruebas if p.get('httpStatus') is None]
-NUM = {1: 'Una', 2: 'Dos', 3: 'Tres', 4: 'Cuatro', 5: 'Cinco', 6: 'Seis', 7: 'Siete', 8: 'Ocho'}
+with open(os.path.join(REF, 'resultados.json'), encoding='utf-8') as f:
+    pruebas = json.load(f)['pruebas']
 
-lineas = ['# Pruebas por consola del navegador (F12) — Equipo F', '']
-intro = (f"Estas {len(pruebas)} verificaciones se hacen desde la pestaña **Consola** de las herramientas "
-         f"del navegador (F12). {NUM.get(len(con_fetch), len(con_fetch))} pegan un `fetch()` con el token "
-         "de la sesión y prueban la capa del servidor directamente, así que son las más cercanas a cómo se "
-         "tantea una API.")
-if inspecciones:
-    ids = ', '.join(p['id'] for p in inspecciones)
-    intro += (f" La de {ids} no hace ninguna petición: inspecciona un elemento de la página con "
-              "`document.getElementById()` para ver lo que la pantalla no muestra.")
-lineas += [intro, '']
-lineas += ['Las rutas son **relativas** (`/api/...`): el mismo comando sirve en `localhost` y en',
-           f"el entorno de Railway ({consola.get('base', 'http://localhost:3000')} se usó para esta corrida).", '',
-           'Debajo de cada comando está la captura de la consola tal como quedó después de pegarlo.', '',
-           '> Si Chrome pide permiso para pegar en la consola, escribe `allow pasting` y Enter.', '']
-
+lineas = ['# Pruebas por consola del navegador (F12) — Equipo F', '',
+          'Estas son las pruebas que se hacen desde la pestaña **Consola** de las herramientas del navegador (F12), '
+          'en https://profe-conecta-production-e40c.up.railway.app. En cinco se pega un `fetch()`: cuatro con el '
+          'token de la sesión y el de CP-008 sin sesión, como lo haría un visitante. En la de DEF-13 se inspecciona '
+          'el elemento del mensaje emergente con `document.getElementById()`.', '',
+          '- En DEF-06 hay que cambiar `ID` por el número de una tutoría cancelada (se ve en la pestaña Red) y entrar '
+          'como su docente. En DEF-10, `docente_id` tiene que ser el de un docente activo.',
+          '- Firefox pide escribir `permitir pegar` antes de dejar pegar en la consola; Chrome pide `allow pasting`.',
+          '- La captura que va como evidencia es la de ustedes en Railway, con la consola abierta y la respuesta a la '
+          'vista. La imagen que aparece debajo de cada comando es una **referencia de la copia local, no es evidencia**.',
+          '']
 for p in pruebas:
-    lineas += [f"## {p['id']} · {p['titulo']}", '',
-               f"**Requisito:** {p['requisito']}  ", p['descripcion'], '',
-               '```js', p['comando'], '```', '',
-               f"- **Resultado esperado:** {p['esperado']}",
-               f"- **Resultado real:** {p['resultadoReal']}"]
-    codigo = (f"{p['httpStatus']}" if p.get('httpStatus') is not None
-              else '— (inspección del elemento, sin petición al servidor)')
-    lineas.append(f"- **Código HTTP:** {codigo} · **Estado:** {p['estado']}")
-    ruta = ruta_evidencia(p['evidencia']) if p.get('evidencia') else None
-    if ruta:
+    comando = re.sub(r'/api/tutorias/\d+/realizada', '/api/tutorias/ID/realizada', p['comando'])
+    if p['id'] == 'DEF-10':
+        comando = re.sub(r'docente_id:\d+', 'docente_id:9', comando)
+    lineas += [f"## {p['id']} · {p['titulo']}", '', f"**Requisito:** {p['requisito']}  ", p['descripcion'], '',
+               '```js', comando, '```', '', f"- **Resultado esperado:** {p['esperado']}", '']
+    ruta = os.path.join(REF, 'evidencias', p.get('evidencia') or '')
+    if p.get('evidencia') and os.path.exists(ruta):
         rel = os.path.relpath(ruta, DESTINO_DIR).replace(os.sep, '/')
-        lineas += [f"- **Evidencia:** `{os.path.relpath(ruta, os.path.join(DESTINO_DIR, '..', '..')).replace(os.sep, '/')}`", '',
-                   f"![{p['id']} en la consola F12]({rel})"]
-    else:
-        lineas.append('- **Evidencia:** —')
-    lineas.append('')
+        lineas += ["Referencia (copia local, no es evidencia):", '', f"![{p['id']} · referencia]({rel})", '']
 
 with open(DESTINO, 'w', encoding='utf-8') as f:
     f.write('\n'.join(lineas).rstrip() + '\n')

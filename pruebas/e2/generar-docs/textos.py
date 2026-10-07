@@ -3,7 +3,7 @@
 justificación de severidad y prioridad. Los comparten el informe E2 y la Tarea 4."""
 
 PASOS = {
- 'DEF-01': '1. Iniciar sesión como sgarcia@amigo.edu.co (contraseña 123456).\n2. Dejar la pestaña sin actividad durante 16 minutos (en la ejecución automatizada se adelanta el reloj del navegador).\n3. Hacer clic en «Programar Tutoría» y recargar la página.',
+ 'DEF-01': '1. Iniciar sesión como sgarcia@amigo.edu.co (contraseña 123456).\n2. Dejar la pestaña sin actividad durante 16 minutos, con cronómetro.\n3. Hacer clic en «Programar Tutoría» y recargar la página.',
  'DEF-02': '1. En «Panel Admin», abrir la tarjeta «Asignación».\n2. En «Nueva Sesión de Asesoría», elegir a Sandra Ríos Montoya y a Camilo Ríos Zapata.\n3. Materia: la primera de la lista. Fecha: la de hoy. Hora: dos horas después de la actual. Modalidad: Virtual.\n4. Presionar «Crear Asesoría (+)».',
  'DEF-03': '1. Iniciar sesión como un estudiante.\n2. Abrir «Mi Perfil», presionar el ícono de la foto y elegir foto_2-5MB.jpg (2,50 MB).',
  'DEF-04': '1. Crear la cuenta prueba.bloqueo2@amigo.edu.co y cerrar sesión.\n2. Iniciar sesión con la contraseña incorrecta tres veces seguidas.\n3. Iniciar sesión con la contraseña correcta.',
@@ -81,4 +81,78 @@ PRIO_JUST = {
  'DEF-12': 'Media. Tiene la misma causa que DEF-08, así que conviene corregirlos juntos.',
  'DEF-13': 'Alta. Afecta a todos los usuarios en todas las pantallas y se corrige cambiando el nombre de una clase.',
  'DEF-14': 'Media. Afecta a todo estudiante nuevo que todavía no tiene promedio, por ejemplo los de primer semestre.',
+}
+
+
+# --- Los 14 defectos (lo que el equipo ya decidió: título, clasificación y quién reporta) ---
+DEFECTOS_BASE = [
+  dict(id='DEF-01', titulo='La sesión sigue abierta después de 16 minutos sin actividad; solo se cierra a las 2 horas, y únicamente al recargar',
+       requisito='RNF02', severidad='Alta', prioridad='Alta', origen='SE-01 · CP-034', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-02', titulo='El administrador programa una asesoría con fecha de hoy, y por la API también con fechas pasadas',
+       requisito='R5 · RRN06', severidad='Media', prioridad='Alta', origen='CP-032', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-03', titulo='La foto de 2,5 MB no se rechaza: la interfaz la reduce y la guarda sin avisar del límite de 2 MB',
+       requisito='R4 · RF036', severidad='Baja', prioridad='Baja', origen='CP-017', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-04', titulo='El acceso se bloquea después de cinco intentos fallidos y no después de tres',
+       requisito='R2 · RRN01', severidad='Baja', prioridad='Media', origen='CP-013', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-05', titulo='El HTML escrito en las observaciones de una tutoría se ejecutaba al abrir ese día en el calendario',
+       requisito='R5 · RNF06', severidad='Crítica', prioridad='Alta', origen='SE-02', estado='Verificado',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-06', titulo='Una tutoría cancelada pasa a «completada» si el docente la marca como realizada por la API',
+       requisito='R6', severidad='Media', prioridad='Media', origen='SE-02', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-07', titulo='Las contraseñas se ven en claro en «Nuevo usuario» y «Editar usuario», y la primera trae «Cambiar123» escrita',
+       requisito='R7 · RNF05', severidad='Media', prioridad='Alta', origen='SE-01', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-08', titulo='La regla de 24 horas para cancelar se calcula con 5 horas de diferencia: con 26 h de margen dice que faltan 21',
+       requisito='R6', severidad='Alta', prioridad='Alta', origen='CP-025', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-09', titulo='Un estudiante queda con dos tutorías a la misma fecha y hora con docentes distintos',
+       requisito='R5', severidad='Media', prioridad='Media', origen='CP-033', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-10', titulo='La API guarda tutorías con fechas y horas que no existen («2027-13-45», «mañana», «25:99»)',
+       requisito='R5', severidad='Media', prioridad='Baja', origen='SE-02', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-11', titulo='El filtro «Activos» muestra cuentas inactivas y oculta a los estudiantes activos que están en alerta',
+       requisito='R7 · RF049', severidad='Media', prioridad='Media', origen='CP-031', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-12', titulo='La auditoría y el historial de notificaciones muestran la hora 5 horas adelantada',
+       requisito='R8', severidad='Media', prioridad='Media', origen='CP-029', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-13', titulo='Los mensajes emergentes se generan pero nunca se ven: el usuario no recibe confirmaciones ni errores',
+       requisito='RF028 · transversal', severidad='Media', prioridad='Alta', origen='CP-016 · CP-024', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-14', titulo='El estudiante que deja vacío el promedio queda con 0 y recibe alertas académicas, aunque su panel dice «Sin alertas»',
+       requisito='R4 · RRN07', severidad='Media', prioridad='Media', origen='SE-01', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+]
+
+# Capturas que respaldan cada defecto. Los que salen de un caso usan la captura de ese caso
+# (ciclo 1); los de las sesiones exploratorias tienen su propia captura.
+EVIDENCIA_SUGERIDA = {
+    'DEF-01': ['EV-CP034-C1-01.png'],
+    'DEF-02': ['EV-CP032-C1-01.png'],
+    'DEF-03': ['EV-CP017-C1-01.png'],
+    'DEF-04': ['EV-CP013-C1-01.png'],
+    'DEF-05': ['EV-DEF05-01.png'],
+    'DEF-06': ['EV-DEF06-01.png'],
+    'DEF-07': ['EV-DEF07-01.png', 'EV-DEF07-02.png'],
+    'DEF-08': ['EV-CP025-C1-01.png'],
+    'DEF-09': ['EV-CP033-C1-01.png'],
+    'DEF-10': ['EV-DEF10-01.png'],
+    'DEF-11': ['EV-CP031-C1-01.png'],
+    'DEF-12': ['EV-CP029-C1-01.png'],
+    'DEF-13': ['EV-CP016-C1-01.png', 'EV-CP024-C1-01.png'],
+    'DEF-14': ['EV-DEF14-01.png', 'EV-DEF14-02.png'],
+}
+
+MISIONES = {
+    'SE-01': ('Recorrer los requisitos y reglas de prioridad alta (RNF02, RNF05, RRN07) para descubrir dónde '
+              'la aplicación hace algo distinto de lo que promete el documento de requisitos.'),
+    'SE-02': ('Explorar lo que la interfaz no deja hacer, enviando las mismas peticiones desde la consola, y lo '
+              'que se escribe en un campo y después se muestra en otra pantalla, para descubrir validaciones que '
+              'solo existen en el navegador.'),
 }

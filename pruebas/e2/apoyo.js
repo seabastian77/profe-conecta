@@ -35,6 +35,22 @@ function marcaColombia(fecha = new Date()) {
 
 const esperar = (ms) => new Promise(r => setTimeout(r, ms));
 
+// Espera a que terminen las animaciones finitas (ventanas que aparecen, paneles que
+// se despliegan) para que la captura no salga con un elemento a medio dibujar.
+async function esperarAnimaciones(p, limite = 2000) {
+  await p.waitForFunction(() => document.getAnimations()
+    .filter(a => a.effect && a.effect.getTiming().iterations !== Infinity)
+    .every(a => a.playState !== 'running'), null, { timeout: limite }).catch(() => {});
+}
+
+// Abre Chromium. Si la aplicación no es local (por ejemplo, Railway), el tráfico sale por el
+// proxy del entorno, que ya está en el almacén de certificados del navegador.
+async function lanzarNavegador(chromium, baseUrl) {
+  const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(baseUrl);
+  const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+  return chromium.launch(!local && proxy ? { proxy: { server: proxy } } : {});
+}
+
 // Crea el contexto del caso: una ventana limpia por cada sesión que abre el caso.
 class Caso {
   constructor(definicion, entorno) {
@@ -149,6 +165,7 @@ class Caso {
       lineas: extra || []
     });
 
+    await esperarAnimaciones(p);
     await p.screenshot({ path: ruta });
     await p.evaluate(() => { document.getElementById('__selloE2')?.remove(); document.getElementById('__redE2')?.remove(); });
     this.evidencias.push(nombre);
@@ -394,5 +411,6 @@ function prepararSalida(dir) {
 module.exports = {
   ZONA, Caso, esperar, fechaColombia, horaColombia, instanteColombia, marcaColombia,
   lineaRed, abrirAplicacion, iniciarSesion, llenarRegistro, cerrarSesion, ir, consola,
-  textoError, estadoTostada, programarTutoria, prepararSalida, dibujarConsola, fmtRespuesta
+  textoError, estadoTostada, programarTutoria, prepararSalida, dibujarConsola, fmtRespuesta,
+  lanzarNavegador
 };

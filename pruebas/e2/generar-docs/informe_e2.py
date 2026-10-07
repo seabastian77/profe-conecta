@@ -1,35 +1,88 @@
 # -*- coding: utf-8 -*-
-"""Genera el informe del Entregable 2 (E2_F_Equipo.docx)."""
+"""Genera el informe del Entregable 2 (E2_F_Equipo.docx) con lo que el equipo ejecutó a mano en
+Railway: el registro (xlsx) y las capturas de pruebas/e2/evidencias-equipo/. Donde todavía falta un
+dato o una captura, el documento lo deja marcado en vez de inventarlo."""
+import json
 import os
-from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, numerada,
-                      codigo, figura, proxima_figura, recuadro_captura, salto, titulo_portada,
-                      pie_de_pagina, TEAL)
-from datos import (EQUIPO, DEFECTOS, M, ciclo1, ciclo2, consola, manual,
-                   ruta_evidencia, desc_evidencia, ENTORNO_DEF)
-from textos import PASOS, PRECOND, ESPERADO, SEV_JUST, PRIO_JUST
+import re
+from collections import Counter
+
+from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, numerada, codigo, figura, proxima_figura,
+                      recuadro_captura, salto, titulo_portada, titulo_en_pagina_nueva, pie_de_pagina, TEAL)
+from datos import (EQUIPO, CASOS, EJEC, DEFECTOS, REPRO, SESIONES, NOTAS, M, COMPLETO, v, entorno)
+from textos import PASOS, PRECOND, ESPERADO, SEV_JUST, PRIO_JUST, MISIONES
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
 GRAFICO = os.path.join(BUILD, 'grafico_defectos.png')
 doc = nuevo_doc()
 pie_de_pagina(doc, 'ConectaProfe · Entregable 2 · Equipo F')
 
+POR_CASO = {(e['caso'], e['ciclo']): e for e in EJEC}
+POR_DEF = {d['id']: d for d in DEFECTOS}
 
-def es_consola(nombre):
-    return nombre.endswith('-CONSOLA.png')
+
+def ids(lista):
+    lista = list(lista)
+    if not lista:
+        return ''
+    return lista[0] if len(lista) == 1 else ', '.join(lista[:-1]) + ' y ' + lista[-1]
 
 
-# Numeración de figuras calculada antes de escribir, para poder citarlas.
-# Figura 1: gráfico de la sección 6. Luego, en orden: Anexo C (capturas de cada
-# defecto), Anexo D (capturas de la consola) y Anexo E (capturas de los ciclos).
+def num(valor, ciclo):
+    """Un conteo del ciclo solo se escribe cuando el ciclo está completo; si no, queda la raya."""
+    return str(valor) if M[f'pend{ciclo}'] == 0 else '__'
+
+
+def mas_comun(valores):
+    valores = [x for x in valores if x]
+    return Counter(valores).most_common(1)[0][0] if valores else ''
+
+
+def resumen_real(texto, limite=240):
+    """Frases completas del resultado real hasta el límite, sin cortar palabras."""
+    if not texto:
+        return 'Pendiente'
+    frases = re.split(r'(?<=[.;])\s+(?=[A-ZÁÉÍÓÚÑ«(])', texto.strip())
+    salida = ''
+    for f in frases:
+        if len(salida) + len(f) + 1 > limite:
+            break
+        salida = (salida + ' ' + f).strip()
+    return salida or texto[:limite].rsplit(' ', 1)[0].rstrip(',;:') + '…'
+
+
+NAV1 = mas_comun(e['navegador'] for e in EJEC if e['ciclo'] == 1)
+NAV2 = mas_comun(e['navegador'] for e in EJEC if e['ciclo'] == 2)
+SO = mas_comun(e['so'] for e in EJEC)
+BLOQ1 = [e['caso'] for e in EJEC if e['ciclo'] == 1 and e['estado'] == 'Bloqueado']
+FALL1 = [e['caso'] for e in EJEC if e['ciclo'] == 1 and e['estado'] == 'Fallido']
+FALL2 = [e['caso'] for e in EJEC if e['ciclo'] == 2 and e['estado'] == 'Fallido']
+C2 = [e for e in EJEC if e['ciclo'] == 2]
+
+
+def estado_de(caso, ciclo=1):
+    e = POR_CASO.get((caso, ciclo))
+    return e['estado'] if e else ''
+
+
+# Numeración de figuras: 1 es el gráfico; luego las capturas de cada defecto (Anexo C) y después
+# las de cada ejecución que no estén ya en el Anexo C (Anexo E). Se calcula antes para poder citarlas.
+FIG = {}
 _n = 2
 for d in DEFECTOS:
-    _n += sum(1 for e in d['evidencias'] if not es_consola(e))
-FIG_CONSOLA = {}
-for pr in consola.get('pruebas', []):
-    if pr.get('evidencia') and ruta_evidencia(pr['evidencia']):
-        FIG_CONSOLA[pr['evidencia']] = _n
-        _n += 1
-MOSTRADAS = {}   # captura -> número de figura ya insertada
+    for nombre, ruta in zip(d['evidencias'], d['rutas']):
+        if ruta and nombre not in FIG:
+            FIG[nombre] = _n
+            _n += 1
+for e in EJEC:
+    for nombre, ruta in zip(e['evidencias'], e['rutas']):
+        if ruta and nombre not in FIG:
+            FIG[nombre] = _n
+            _n += 1
+
+
+def cita(nombre):
+    return f'{nombre} (figura {FIG[nombre]})' if nombre in FIG else f'{nombre} (pendiente)'
 
 # ======================= PORTADA =======================
 for _ in range(2): doc.add_paragraph()
@@ -52,21 +105,20 @@ ficha(doc, [
     ('Equipo', EQUIPO['equipo']),
     ('Integrantes', ' · '.join(EQUIPO['integrantes'])),
     ('Sistema bajo prueba', EQUIPO['sistema']),
-    ('Entorno', EQUIPO['url'] + '\nversión del commit ' + EQUIPO['commit']),
+    ('Entorno', f"{EQUIPO['url']} (commit {EQUIPO['commit']})"),
     ('Docente', EQUIPO['docente']),
     ('Fecha de entrega', EQUIPO['entrega']),
-    ('Carpeta de evidencias', 'pruebas/e2/resultados/ en el repositorio (lectura para el docente)'),
-    ('Registro de ejecución', 'docs/entrega-2/E2_Registro_Ejecucion_EquipoF.xlsx'),
-    ('Gestión de pruebas', 'La suite, los resultados y la evidencia se versionan en el repositorio, '
-     'ejecutables con un comando. El enlace de Qase del Entregable 1 queda como respaldo manual.'),
+    ('Carpeta de evidencias', 'Carpeta compartida (lectura para el docente): ______________________\n'
+     'Copia en el repositorio: pruebas/e2/evidencias-equipo/'),
+    ('Registro de ejecución', 'E2_Registro_Ejecucion_EquipoF.xlsx (en la carpeta compartida y en docs/entrega-2/)'),
 ])
 salto(doc)
 
-# ======================= REPARTO INTERNO =======================
-doc.add_heading('Tabla de reparto interno', level=2)
+# ======================= ANEXO A: REPARTO INTERNO =======================
+doc.add_heading('Anexo A. Tabla de reparto interno', level=2)
 parrafo(doc, 'Desde esta entrega el equipo es de dos integrantes, así que repartimos los 34 casos en dos '
-             'bloques de 17. Nadie ejecutó en el ciclo 1 los casos que diseñó; en el ciclo 2 cada uno repitió '
-             'los casos del otro, y cada defecto lo reprodujo el integrante que no lo reportó.', size=10.5)
+             'bloques de 17. Nadie ejecuta en el ciclo 1 los casos que diseñó; en el ciclo 2 cada uno repite '
+             'en Firefox los casos del otro, y cada defecto lo reproduce el integrante que no lo reportó.', size=10.5)
 tabla(doc, [
     ['Integrante', 'Casos ejecutados (ciclo 1)', 'Defectos reportados', 'Secciones del informe', 'Firma'],
     ['Sebastián González González', 'CP-016 a CP-031 y CP-034 (17 casos)',
@@ -78,45 +130,70 @@ tabla(doc, [
 ], anchos=[3.2, 4.2, 3.8, 4.3, 1.8], fuente=9)
 parrafo(doc, 'Firma: ___________________________        Firma: ___________________________', size=10, space=2)
 
-# Nota de método
+if not COMPLETO:
+    faltan = []
+    if M['pend1'] + M['pend2']:
+        faltan.append(f"{M['pend1'] + M['pend2']} ejecuciones sin registrar")
+    if M['capturas'] < M['capturas_esperadas']:
+        faltan.append(f"{M['capturas_esperadas'] - M['capturas']} capturas de ejecución")
+    if M['def_hechos'] < len(DEFECTOS):
+        faltan.append(f"{len(DEFECTOS) - M['def_hechos']} reportes sin los datos de quien los reprodujo")
+    if M['repro_hechas'] < len(DEFECTOS):
+        faltan.append(f"{len(DEFECTOS) - M['repro_hechas']} reproducciones cruzadas")
+    parrafo(doc, 'Borrador para el equipo (este aviso sale solo mientras falte algo): faltan ' + ids(faltan)
+            + '. Todo lo que dice «____» o «pendiente» se llena con el registro y las capturas de Railway.',
+            size=9.5, italic=True, resaltado=True)
+
 recuadro(doc,
-    'Cómo se ejecutó esta suite. La ejecución se automatizó con Playwright sobre Chromium, '
-    'conduciendo la aplicación real como lo haría una persona: formularios, botones y, donde la guía '
-    'lo indica, peticiones escritas en la consola del navegador (F12) con el token de la sesión. '
-    'Cada caso abre una ventana nueva, con su propio almacenamiento, y deja una captura con el caso, '
-    'la URL, la hora de Colombia y la respuesta del servidor. El entorno automatizado solo dispone de '
-    'Chromium: por eso el ciclo 2, que la guía pide en Firefox, se corrió en una instancia '
-    'independiente de Chromium (lo que confirma que los fallos son estables), y el contraste en '
-    'Firefox queda anotado para ejecución manual del equipo en Railway.', bold_primero=True)
+    'Cómo ejecutamos la suite. Cada caso lo ejecutamos a mano en la aplicación desplegada en Railway '
+    f"({EQUIPO['url']}, commit 693358a): el ciclo 1 en {NAV1 or 'Chrome'} y el ciclo 2 en {NAV2 or 'Firefox'}, "
+    f"sobre {SO or 'Windows'}. Para lo que se mira en el servidor usamos la pestaña Red de F12, con «Conservar "
+    'registro» marcado, y las peticiones que la interfaz no deja hacer las pegamos en la consola con el token '
+    'de la sesión. Cada ejecución tiene su captura, tomada con Windows + Shift + S, donde se ven la barra de '
+    'direcciones y la hora de Windows, y su fila en el registro con fecha, navegador, estado y resultado. '
+    'Aparte, armamos un script de Playwright que recorre la misma suite sobre una copia local del mismo commit; '
+    'lo usamos para preparar los casos y como base para el Entregable 3, pero sus capturas no son evidencia de '
+    'esta ejecución.', bold_primero=True)
 salto(doc)
 
 # ======================= 1. RESUMEN EJECUTIVO =======================
 doc.add_heading('1. Resumen ejecutivo', level=1)
+_bloq = f" ({ids(BLOQ1)})" if BLOQ1 and M['pend1'] == 0 else ''
+_misma = (M['pend1'] == 0 and M['pend2'] == 0 and set(FALL1) <= set(FALL2))
 parrafo(doc,
-    f"Ejecutamos a mano la suite de ConectaProfe en dos ciclos, sobre la versión que está desplegada en "
-    f"Railway (commit 693358a). Antes de empezar, la suite pasó de 31 a 34 casos: corregimos once que no se "
-    f"podían ejecutar tal como estaban escritos y agregamos tres para cerrar huecos. En el ciclo 1 se "
-    f"ejecutaron {M['ejec1']} de los 34 casos: {M['aprob1']} aprobaron y {M['fall1']} fallaron; los dos "
-    f"restantes (CP-014 y CP-015, inicio de sesión con Google) quedaron bloqueados porque el entorno "
-    f"automatizado no tiene credenciales del proveedor. En el ciclo 2 volvimos sobre los {M['fall1']} "
-    f"fallidos y repetimos los siete casos de riesgo alto que habían pasado; de esas {M['ejec2']} "
-    f"ejecuciones, {M['aprob2']} aprobaron y {M['fall2']} volvieron a fallar con el mismo resultado.")
+    f"Ejecutamos a mano la suite de ConectaProfe en dos ciclos, directamente en Railway (commit 693358a): el "
+    f"ciclo 1 en {NAV1 or 'Chrome'} y el ciclo 2 en {NAV2 or 'Firefox'}. Antes de empezar, la suite pasó de 31 a "
+    f"34 casos: corregimos once que no se podían ejecutar tal como estaban escritos y agregamos tres para "
+    f"cerrar huecos. En el ciclo 1 ejecutamos {num(M['ejec1'], 1)} de los 34 casos: {num(M['aprob1'], 1)} "
+    f"aprobaron, {num(M['fall1'], 1)} fallaron y {num(M['bloq1'], 1)} quedaron bloqueados{_bloq}. En el ciclo 2 "
+    f"volvimos en Firefox sobre los fallidos y repetimos los casos de riesgo alto que habían pasado; de esas "
+    f"{num(M['ejec2'], 2)} ejecuciones, {num(M['aprob2'], 2)} aprobaron y {num(M['fall2'], 2)} fallaron"
+    + (', los mismos que en el ciclo 1.' if _misma else '.'))
+_sev = Counter(d['severidad'] for d in DEFECTOS)
+_expl = sum(1 for d in DEFECTOS if d['origen'].startswith('SE'))
+_d5 = POR_DEF['DEF-05']
+_abiertos = sum(1 for d in DEFECTOS if d['estado'] == 'Abierto')
 parrafo(doc,
-    f"Reportamos {M['total_def']} defectos: 1 crítico, 2 de severidad alta, 9 medios y 2 bajos. Ocho "
-    f"salieron de la ejecución de casos y seis de las dos sesiones exploratorias. El crítico (DEF-05, "
-    f"código HTML que se ejecutaba desde las observaciones de una tutoría) ya estaba corregido y lo "
-    f"verificamos sobre la versión desplegada; los otros trece siguen abiertos. R5, la programación de "
-    f"tutorías, concentra cuatro defectos y es el requisito al que el Entregable 1 le había asignado el "
-    f"riesgo más alto (R-03). El hallazgo que más nos sorprendió fue DEF-13: los mensajes emergentes del "
-    f"sistema se generan pero nunca se ven, así que el usuario no se entera de por qué se rechaza lo que intenta hacer.")
+    f"Reportamos {len(DEFECTOS)} defectos: {_sev['Crítica']} crítico, {_sev['Alta']} de severidad alta, "
+    f"{_sev['Media']} medios y {_sev['Baja']} bajos. {len(DEFECTOS) - _expl} salieron de la ejecución de casos y "
+    f"{_expl} de las dos sesiones exploratorias. El crítico (DEF-05, código HTML que se ejecutaba desde las "
+    "observaciones de una tutoría) ya estaba corregido"
+    + (f" y lo verificamos en Railway el {_d5['fecha']}" if _d5['estado'] == 'Verificado' and _d5['fecha']
+       else '; su verificación en Railway está pendiente')
+    + f"; {_abiertos} siguen abiertos. R5, la programación de tutorías, concentra "
+    f"{sum(1 for d in DEFECTOS if 'R5' in d['requisito'])} defectos y es el requisito al que el Entregable 1 le "
+    "había asignado el riesgo más alto (R-03). El hallazgo que más nos sorprendió fue DEF-13: los mensajes "
+    "emergentes del sistema se generan pero nunca se ven, así que el usuario no se entera de por qué se rechaza "
+    "lo que intenta hacer.")
+_crit_abiertos = [d['id'] for d in DEFECTOS if d['severidad'] == 'Crítica' and d['estado'] != 'Verificado']
 recuadro(doc,
-    'Recomendación: apto con condiciones. No queda ningún defecto crítico abierto y se ejecutó el 100 % '
-    'de los casos de prioridad alta que el entorno automatizado permite (19 de 21; CP-014 y CP-015 de '
-    'Google quedan pendientes de ejecución manual en Railway). Los dos defectos de severidad alta, DEF-01 '
-    '(la sesión no expira a los 15 minutos) y DEF-08 (la regla de las 24 horas para cancelar se calcula '
-    'con 5 horas de diferencia), siguen abiertos con plan de acción. Recomendamos corregirlos, junto con '
-    'DEF-13, DEF-02 y DEF-07 —que tienen prioridad alta y se arreglan con pocas líneas—, y volver a '
-    'ejecutar los nueve casos fallidos antes de liberar.', bold_primero=True)
+    'Recomendación: apto con condiciones. '
+    + ('No queda ningún defecto crítico abierto' if not _crit_abiertos else f'Falta verificar {ids(_crit_abiertos)}')
+    + f" y ejecutamos {num(M['alta_ejec'], 1)} de los {M['alta']} casos de prioridad alta. Los dos defectos de "
+    'severidad alta, DEF-01 (la sesión no expira a los 15 minutos) y DEF-08 (la regla de las 24 horas para '
+    'cancelar se calcula con 5 horas de diferencia), siguen abiertos con plan de acción. Recomendamos '
+    'corregirlos, junto con DEF-13, DEF-02 y DEF-07 —que tienen prioridad alta y se arreglan con pocas líneas—, '
+    'y volver a ejecutar los casos fallidos antes de liberar.', bold_primero=True)
 salto(doc)
 
 # ======================= 2. ACTUALIZACIÓN DEL PLAN =======================
@@ -168,200 +245,203 @@ salto(doc)
 # ======================= 3. EJECUCIÓN DE LA SUITE =======================
 doc.add_heading('3. Ejecución de la suite', level=1)
 parrafo(doc,
-    'El ciclo 1 recorrió la suite completa en Chromium sobre Linux. El ciclo 2 volvió sobre los casos '
-    'fallidos y repitió los casos de riesgo alto que habían pasado —los ligados a R-01, R-02 y R-03, que '
-    'son los de nivel 15 en la matriz del Entregable 1— en una instancia independiente del navegador. Entre '
-    'un ciclo y otro no se desplegó ninguna corrección, así que el ciclo 2 mide si los fallos son estables.')
+    f"El ciclo 1 recorrió la suite completa en {NAV1 or 'Chrome'} sobre {SO or 'Windows'}, en Railway. El ciclo 2 "
+    f"volvió en {NAV2 or 'Firefox'} sobre los casos fallidos y repitió los de riesgo alto que habían pasado —los "
+    'ligados a R-01, R-02 y R-03, que son los de nivel 15 en la matriz del Entregable 1—. Cada caso del ciclo 2 '
+    'lo ejecutó el integrante que no lo tuvo en el ciclo 1. Entre un ciclo y otro no se desplegó ninguna '
+    'corrección, así que el ciclo 2 mide si los fallos son estables y si algo cambia con el navegador.')
+
+
+def avance(c):
+    total = M[f'dis{c}']
+    hechos = total - M[f'pend{c}']
+    return f'{round(hechos / total * 100)} %' if total else '—'
+
+
 tabla(doc, [
-    ['Ciclo', 'Aprobados', 'Fallidos', 'Bloqueados', 'Ejecutados', 'Avance'],
-    ['Ciclo 1 · Chromium (escritorio 1366 px)', str(M['aprob1']), str(M['fall1']), str(M['bloq1']), f"{M['ejec1']} de 34 ejecutables", '100 %'],
-    ['Ciclo 2 · Chromium, instancia nueva', str(M['aprob2']), str(M['fall2']), '0', f"{M['ejec2']} de {M['ejec2']}", '100 %'],
-], anchos=[5.5, 2.2, 2.0, 2.2, 2.6, 1.8], fuente=9.5)
-parrafo(doc,
-    f"Los {M['fall1']} casos que fallaron en el ciclo 1 volvieron a fallar en el ciclo 2 con el mismo "
-    f"resultado, lo que confirma que ninguno es intermitente. Los siete casos de riesgo alto que se "
-    f"repitieron (CP-007, CP-008, CP-018, CP-019, CP-020, CP-021 y CP-022) pasaron igual que en el ciclo 1. "
-    f"CP-014 y CP-015 (Google) no entran en ningún ciclo porque quedaron bloqueados por falta de credenciales "
-    f"del proveedor en el entorno automatizado, no por el sistema.")
+    ['Ciclo', 'Aprobados', 'Fallidos', 'Bloqueados', 'Sin registrar', 'Avance'],
+    [f"Ciclo 1 · {NAV1 or 'Chrome'}", str(M['aprob1']), str(M['fall1']), str(M['bloq1']), str(M['pend1']), avance(1)],
+    [f"Ciclo 2 · {NAV2 or 'Firefox'}", str(M['aprob2']), str(M['fall2']), str(M['bloq2']), str(M['pend2']), avance(2)],
+], anchos=[5.0, 2.2, 2.0, 2.2, 2.6, 1.8], fuente=9.5)
+
+if M['pend1'] == 0 and M['pend2'] == 0:
+    _repetidos = [c for c in FALL1 if (c, 2) in POR_CASO]
+    _siguen = [c for c in _repetidos if estado_de(c, 2) == 'Fallido']
+    _alto = [e['caso'] for e in C2 if e['caso'] not in FALL1]
+    _alto_ok = [c for c in _alto if estado_de(c, 2) == 'Aprobado']
+    texto = (f"De los {len(_repetidos)} casos que fallaron en el ciclo 1, {len(_siguen)} volvieron a fallar en "
+             "Firefox con el mismo resultado" + (', así que ninguno es intermitente.' if len(_siguen) == len(_repetidos)
+                                                 else f"; {ids(sorted(set(_repetidos) - set(_siguen)))} cambió.")
+             + f" De los {len(_alto)} casos de riesgo alto que repetimos, {len(_alto_ok)} pasaron igual que en el ciclo 1.")
+    if BLOQ1:
+        texto += (f" {ids(BLOQ1)} {'quedó bloqueado' if len(BLOQ1) == 1 else 'quedaron bloqueados'} por el "
+                  'entorno, no por el sistema; el motivo está en su fila del registro y en su captura.')
+    parrafo(doc, texto)
+else:
+    parrafo(doc, 'Faltan ejecuciones por registrar; esta lectura se completa cuando los dos ciclos estén en el '
+                 'registro.', size=10, italic=True)
+
 parrafo(doc, 'Cómo decidimos el estado.', bold=True, space=2)
 parrafo(doc,
-    'Cuando el resultado esperado habla de la respuesta del servidor (un código HTTP), la verificamos en el '
-    'registro de red de las herramientas del navegador. Cuando habla de un mensaje en pantalla, el mensaje '
-    'tiene que verse; si no aparece, el caso falla aunque el servidor haya respondido bien. Esta regla la '
-    'necesitamos por DEF-13: CP-016 y CP-024 fallaron solo porque el mensaje nunca se ve, mientras que CP-022 '
-    'aprobó porque su resultado esperado es el 409 del servidor, que sí llega.', size=10.5)
+    'Cuando el resultado esperado habla de la respuesta del servidor (un código HTTP), la verificamos en la '
+    'pestaña Red de F12. Cuando habla de un mensaje en pantalla, el mensaje tiene que verse; si no aparece, el '
+    'caso falla aunque el servidor haya respondido bien. Esta regla la necesitamos por DEF-13: los mensajes '
+    'emergentes se generan pero no se ven, así que un caso cuyo resultado esperado es un mensaje falla, y uno '
+    'cuyo resultado esperado es el código del servidor (como el 409 de CP-022) se puede aprobar.', size=10.5)
 
 parrafo(doc, 'Extracto del registro de ejecución', bold=True, space=2)
-parrafo(doc, 'El registro completo, con una fila por ejecución, está en la hoja de cálculo enlazada en la '
-             'portada. Aquí van las filas que mejor muestran cómo se llevó. Todas las capturas de los dos '
-             'ciclos, una por una y con su pie, están en el Anexo E; las de los casos fallidos aparecen '
-             'también debajo del reporte de su defecto, en el Anexo C. Lo que se ejecuta a mano en Railway '
-             '(CP-014 y CP-015 con Google, y el contraste del ciclo 2 en Firefox) va en el Anexo F.', size=10.5)
-# Extracto: elegimos casos representativos reales del ciclo 1.
-repr_ids = ['CP-001', 'CP-013', 'CP-016', 'CP-017', 'CP-022', 'CP-025', 'CP-029', 'CP-032', 'CP-034']
-por_id = {c['id']: c for c in ciclo1['casos']}
-filas_ext = [['Caso', 'Estado', 'Resultado real (resumen)', 'Evidencia', 'Defecto']]
-for cid in repr_ids:
-    c = por_id[cid]
-    resumen = c['real']
-    resumen = (resumen[:180] + '…') if len(resumen) > 181 else resumen
-    filas_ext.append([cid, c['estado'], resumen, (c['evidencias'][0] if c['evidencias'] else '—'), c['defecto'] or '—'])
-tabla(doc, filas_ext, anchos=[1.8, 1.8, 9.0, 3.2, 1.6], fuente=8.3)
-parrafo(doc,
-    'Dos resultados nos obligaron a mirar el sistema por capas. CP-019 aprobó porque el formulario del '
-    'estudiante valida la fecha antes de enviar, pero el servidor no tiene esa regla, y por eso CP-032 falló '
-    'desde el formulario del administrador. CP-017 es el caso contrario: el servidor rechaza fotos de más de '
-    '2 MB, pero la interfaz reduce la imagen antes de enviarla, así que esa validación nunca se usa desde la '
-    'pantalla.', size=10.5)
+parrafo(doc, 'El registro completo, con una fila por ejecución, está en la hoja de cálculo que citamos en la '
+             'portada; aquí van las filas que mejor muestran cómo lo llevamos. La evidencia de cada ejecución '
+             'está en el Anexo E; las capturas que respaldan un defecto van además debajo de su reporte, en el '
+             'Anexo C.', size=10.5)
+filas_ext = [['Caso', 'Fecha y quién', 'Estado', 'Resultado real (resumen)', 'Evidencia', 'Defecto']]
+for cid in ['CP-001', 'CP-013', 'CP-016', 'CP-017', 'CP-022', 'CP-025', 'CP-029', 'CP-032', 'CP-034']:
+    e = POR_CASO[(cid, 1)]
+    filas_ext.append([cid, f"{v(e['fecha'])}\n{e['ejecuta']}", v(e['estado'], 'Pendiente'), resumen_real(e['real']),
+                      '\n'.join(e['evidencias']) or '—', e['defecto'] or '—'])
+tabla(doc, filas_ext, anchos=[1.6, 2.8, 1.7, 6.6, 3.3, 1.5], fuente=8.2)
 salto(doc)
 
 # ======================= 4. REPORTE DE DEFECTOS =======================
 doc.add_heading('4. Reporte de defectos', level=1)
-parrafo(doc, 'Los catorce defectos están registrados con los trece campos del formato. Aquí va la tabla '
-             'resumen; los reportes completos están en el Anexo C. Usamos las escalas de severidad y prioridad '
-             'del curso y en cada reporte justificamos las dos por separado.')
+parrafo(doc, f'Los {len(DEFECTOS)} defectos están registrados con los trece campos del formato. Aquí va la tabla '
+             'resumen; los reportes completos están en el Anexo C, con sus capturas. Usamos las escalas de '
+             'severidad y prioridad del curso y en cada reporte justificamos las dos por separado.')
 filas_def = [['ID', 'Título', 'Requisito', 'Severidad', 'Prioridad', 'Origen', 'Estado']]
 for d in DEFECTOS:
     filas_def.append([d['id'], d['titulo'], d['requisito'], d['severidad'], d['prioridad'], d['origen'], d['estado']])
 tabla(doc, filas_def, anchos=[1.5, 6.6, 2.0, 1.5, 1.5, 1.6, 1.6], fuente=8.2)
 parrafo(doc, 'Cómo leemos el estado.', bold=True, space=2)
 parrafo(doc,
-    '«Abierto» quiere decir que un segundo integrante lo reprodujo siguiendo solo el reporte y que todavía '
-    'no se ha corregido. ConectaProfe es nuestro, así que el ciclo de vida del defecto no se queda en '
-    '«confirmado»: DEF-05 se corrigió el 29 de septiembre (commits 938bc53 y 693358a) y quedó en '
-    '«Verificado» al repetir sus pasos sobre la versión desplegada. Para los trece abiertos, la corrección '
-    'y la reejecución quedan programadas en las sesiones 14 y 15 del cronograma del Entregable 1.', size=10.5)
+    '«Abierto» quiere decir que un segundo integrante lo reprodujo siguiendo solo el reporte y que todavía no se '
+    'ha corregido. ConectaProfe es nuestro, así que el ciclo de vida del defecto no se queda en «confirmado»: '
+    'DEF-05 se corrigió el 29 de septiembre (commits 938bc53 y 693358a) y pasa a «Verificado» cuando repetimos '
+    'sus pasos en Railway' + (f" (lo hicimos el {_d5['fecha']})" if _d5['fecha'] else '') + '. Para los abiertos, '
+    'la corrección y la reejecución quedan programadas en las sesiones 14 y 15 del cronograma del Entregable 1.',
+    size=10.5)
 parrafo(doc, 'Severidad y prioridad no siempre coinciden.', bold=True, space=2)
 parrafo(doc,
-    'En seis de los catorce defectos son distintas. DEF-13 es de severidad media, porque el servidor acepta '
-    'o rechaza bien cada acción, pero su prioridad es alta: afecta a todos los usuarios en todas las '
-    'pantallas y se corrige cambiando el nombre de una clase. DEF-10 va al revés: guarda fechas que no '
-    'existen, pero solo se llega por la API, así que su prioridad es baja.', size=10.5)
+    f"En {sum(1 for d in DEFECTOS if d['severidad'] != d['prioridad'])} de los {len(DEFECTOS)} defectos son "
+    'distintas. DEF-13 es de severidad media, porque el servidor acepta o rechaza bien cada acción, pero su '
+    'prioridad es alta: afecta a todos los usuarios en todas las pantallas y se corrige cambiando el nombre de una '
+    'clase. DEF-10 va al revés: guarda fechas que no existen, pero solo se llega por la API, así que su prioridad '
+    'es baja.', size=10.5)
 salto(doc)
 
 # ======================= 5. PRUEBAS EXPLORATORIAS =======================
 doc.add_heading('5. Pruebas exploratorias', level=1)
-parrafo(doc, 'Cada integrante hizo una sesión con la misión escrita antes de empezar, y las dos se hicieron '
-             'antes del ciclo 1. Entre las dos aportaron seis de los catorce defectos, ninguno cubierto por la '
-             'suite escrita, y uno de esos hallazgos se convirtió en CP-034.')
-tabla(doc, [
-    ['Sesión', 'Misión', 'Integrante', 'Duración', 'Defectos'],
-    ['SE-01', 'Recorrer los requisitos y reglas de prioridad alta (RNF02, RNF05, RRN07) para descubrir dónde '
-     'la aplicación hace algo distinto de lo que promete el documento de requisitos.', 'Esteban Palencia',
-     '55 min', 'DEF-01, DEF-07, DEF-14'],
-    ['SE-02', 'Explorar lo que la interfaz no deja hacer, enviando las mismas peticiones desde la consola, y lo '
-     'que se escribe en un campo y después se muestra en otra pantalla, para descubrir validaciones que solo '
-     'existen en el navegador.', 'Sebastián González González', '60 min', 'DEF-05, DEF-06, DEF-10'],
-], anchos=[1.6, 8.6, 3.2, 1.6, 2.6], fuente=8.8)
-
-parrafo(doc, 'Hoja de sesión · SE-02', bold=True, space=2)
-ficha(doc, [
-    ('Identificador', 'SE-02'),
-    ('Integrante, fecha y duración', 'Sebastián González González · 60 minutos'),
-    ('Misión', 'Explorar lo que la interfaz no deja hacer, enviando las mismas peticiones desde la consola, y '
-     'lo que se escribe en un campo y después se muestra en otra pantalla, para descubrir validaciones que '
-     'solo existen en el navegador.'),
-    ('Áreas recorridas', 'Observaciones de una tutoría y su vista en el calendario; cambios de estado de una '
-     'tutoría por la API (PATCH /api/tutorias/:id/realizada); programación de tutorías por la API con fechas y '
-     'horas que el formulario no deja escribir (POST /api/tutorias).'),
-    ('Notas', '0–15 min: el HTML en «observaciones» se muestra escapado en el calendario (verifica DEF-05). '
-     '15–35 min: una tutoría cancelada se marca «completada» con PATCH …/realizada desde la consola (DEF-06). '
-     '35–55 min: la API acepta fecha «2027-13-45» y hora «25:99» con 201 (DEF-10). 55–60 min: la modalidad '
-     'tampoco se valida en el servidor.'),
-    ('Defectos', 'DEF-05 (verificación), DEF-06, DEF-10.'),
-    ('Preguntas y riesgos', 'Si la fecha solo se valida en el navegador, ¿qué otras reglas de R5 dependen solo '
-     'del formulario? Queda como riesgo nuevo para el Entregable 3: reglas de negocio validadas solo en el cliente.'),
-    ('Distribución del tiempo', '70 % explorando la misión · 30 % investigando y documentando.'),
-])
-doc.add_paragraph()
-parrafo(doc, 'Hoja de sesión · SE-01', bold=True, space=2)
-ficha(doc, [
-    ('Identificador', 'SE-01'),
-    ('Integrante, fecha y duración', 'Esteban Palencia · 55 minutos'),
-    ('Misión', 'Recorrer los requisitos y reglas de prioridad alta (RNF02, RNF05, RRN07) para descubrir '
-     'dónde la aplicación hace algo distinto de lo que promete el documento de requisitos.'),
-    ('Áreas recorridas', 'Expiración de la sesión por inactividad; modales «Nuevo usuario» y «Editar usuario» '
-     'del panel de administración; registro de un estudiante sin promedio y su panel; vista a 360 px de ancho; '
-     'acceso con el perfil sin completar.'),
-    ('Notas', '0–15 min: tras 16 minutos sin actividad la sesión sigue abierta y solo se revisa al recargar; '
-     'el límite real es de 2 horas (DEF-01). 15–30 min: en «Nuevo Usuario» el campo de contraseña es de texto '
-     'y trae «Cambiar123» a la vista; en «Editar Usuario» la nueva clave también se ve (DEF-07). 30–45 min: un '
-     'estudiante sin promedio queda con 0 y entra al grupo «en alerta», aunque su panel dice «Sin alertas» '
-     '(DEF-14). 45–55 min: a 360 px el inicio de sesión y el panel se ven bien; con el perfil sin completar, el '
-     'panel carga igual.'),
-    ('Defectos', 'DEF-01, DEF-07, DEF-14.'),
-    ('Preguntas y riesgos', '¿Qué otras pantallas muestran credenciales en texto plano? ¿El cierre de sesión '
-     'por inactividad debería vivir en el servidor y no solo en el navegador? Quedan como riesgos para el '
-     'Entregable 3: control de sesión del lado del servidor y revisión de todos los campos de contraseña.'),
-    ('Distribución del tiempo', '65 % explorando la misión · 35 % investigando y documentando.'),
-])
+parrafo(doc, 'Cada integrante hace una sesión de 45 a 60 minutos, con la misión escrita antes de empezar y '
+             'cronómetro, anotando con el minuto lo que hace y lo que ve. La hoja de cada sesión sale tal cual '
+             'de sus notas.')
+tabla(doc, [['Sesión', 'Misión', 'Integrante', 'Fecha y duración', 'Defectos']] + [
+    [sid, MISIONES[sid], quien, f"{v(SESIONES.get(sid, {}).get('fecha'))} · {v(SESIONES.get(sid, {}).get('duracion'))} min",
+     v(SESIONES.get(sid, {}).get('defectos'))]
+    for sid, quien in (('SE-01', 'Esteban Palencia'), ('SE-02', 'Sebastián González González'))
+], anchos=[1.6, 8.0, 3.2, 2.4, 2.4], fuente=8.8)
+for sid, quien in (('SE-02', 'Sebastián González González'), ('SE-01', 'Esteban Palencia')):
+    s = SESIONES.get(sid, {})
+    parrafo(doc, f'Hoja de sesión · {sid}', bold=True, space=2)
+    ficha(doc, [
+        ('Identificador', sid),
+        ('Integrante, fecha y duración', f"{quien} · {v(s.get('fecha'))} · {v(s.get('duracion'))} minutos"),
+        ('Misión', MISIONES[sid]),
+        ('Defectos', v(s.get('defectos'))),
+        ('Preguntas y riesgos', v(s.get('preguntas'))),
+        ('Distribución del tiempo', v(s.get('distribucion'), '____ % explorando la misión · ____ % investigando y documentando')),
+    ])
+    notas = NOTAS.get(sid) or [('', '', '')] * 4
+    tabla(doc, [['Minuto', 'Qué hice', 'Qué vi']] + [[v(a, ''), v(b, ''), v(c, '')] for a, b, c in notas],
+          anchos=[1.8, 7.4, 7.4], fuente=8.8)
+    doc.add_paragraph()
 salto(doc)
 
 # ======================= 6. MÉTRICAS =======================
 doc.add_heading('6. Métricas', level=1)
-tasa1 = round(M['aprob1'] / M['ejec1'] * 100)
-tasa2 = round(M['aprob2'] / M['ejec2'] * 100)
+
+
+def pct(a, b):
+    return f'{round(a / b * 100)} %' if b else '—'
+
+
+_req = sum(1 for d in DEFECTOS if re.search(r'\bR[1-8]\b', d['requisito']))
 tabla(doc, [
     ['Métrica', 'Cómo se calculó', 'Valor', 'Meta del plan'],
     ['Cobertura de requisitos', '8 requisitos con casos ÷ 8 del alcance', '100 %', '100 %'],
-    ['Avance de ejecución · ciclo 1', f'{M["ejec1"]} ejecutados ÷ 32 ejecutables', '100 %', '100 % de prioridad alta'],
-    ['Prioridad alta ejecutada', '19 ejecutados ÷ 21 (CP-014/CP-015 bloqueados)', '90 %', '100 % (resto en Railway)'],
-    ['Tasa de aprobación · ciclo 1', f'{M["aprob1"]} aprobados ÷ {M["ejec1"]} ejecutados', f'{tasa1} %', 'Se lee con el riesgo'],
-    ['Tasa de aprobación · ciclo 2', f'{M["aprob2"]} aprobados ÷ {M["ejec2"]} ejecutados', f'{tasa2} %', 'Se lee con el riesgo'],
-    ['Tasa de bloqueo', f'{M["bloq1"]} bloqueados ÷ 34 diseñados', f'{round(M["bloq1"]/34*100)} %', 'Menos de 10 %'],
-    ['Defectos reportados', 'Identificadores distintos', str(M['total_def']), '10 o más'],
-    ['Defectos por severidad', 'Conteo por nivel', '1 crítica · 2 altas · 9 medias · 2 bajas', 'Sin críticos abiertos'],
-    ['Densidad por requisito', '12 defectos de R1 a R8 ÷ 8 requisitos', '1,5', '—'],
-    ['Defectos verificados', 'Corregidos y comprobados ÷ reportados', '1 de 14 (7 %)', '—'],
-    ['Evidencia registrada', 'Ejecuciones con evidencia ÷ ejecutadas', '100 %', '100 %'],
+    ['Avance de ejecución · ciclo 1', f"{M['dis1'] - M['pend1']} registrados ÷ {M['dis1']}",
+     pct(M['dis1'] - M['pend1'], M['dis1']), '100 %'],
+    ['Prioridad alta ejecutada', f"{M['alta_ejec']} ejecutados ÷ {M['alta']}", pct(M['alta_ejec'], M['alta']), '100 %'],
+    ['Tasa de aprobación · ciclo 1', f"{M['aprob1']} aprobados ÷ {M['ejec1']} ejecutados", pct(M['aprob1'], M['ejec1']), 'Se lee con el riesgo'],
+    ['Tasa de aprobación · ciclo 2', f"{M['aprob2']} aprobados ÷ {M['ejec2']} ejecutados", pct(M['aprob2'], M['ejec2']), 'Se lee con el riesgo'],
+    ['Tasa de bloqueo', f"{M['bloq1']} bloqueados ÷ 34 diseñados", pct(M['bloq1'], 34), 'Menos de 10 %'],
+    ['Defectos reportados', 'Identificadores distintos', str(len(DEFECTOS)), '10 o más'],
+    ['Defectos por severidad', 'Conteo por nivel',
+     f"{_sev['Crítica']} crítica · {_sev['Alta']} altas · {_sev['Media']} medias · {_sev['Baja']} bajas", 'Sin críticos abiertos'],
+    ['Densidad por requisito', f'{_req} defectos de R1 a R8 ÷ 8 requisitos', f'{_req / 8:.1f}'.replace('.', ','), '—'],
+    ['Defectos verificados', 'Corregidos y comprobados ÷ reportados',
+     f"{sum(1 for d in DEFECTOS if d['estado'] == 'Verificado')} de {len(DEFECTOS)}", '—'],
+    ['Reproducción cruzada', 'Defectos reproducidos por el otro integrante ÷ reportados',
+     f"{M['repro_hechas']} de {len(DEFECTOS)}", '100 %'],
+    ['Evidencia registrada', 'Capturas de ejecución ÷ ejecuciones', pct(M['capturas'], M['capturas_esperadas']), '100 %'],
 ], anchos=[4.5, 6.5, 3.2, 3.4], fuente=8.6)
 doc.add_paragraph()
 figura(doc, GRAFICO, 'Defectos por requisito y severidad. Fuente: registro de defectos del equipo.',
        ancho_cm=15.5, comprimir=False)
 parrafo(doc, 'La lectura.', bold=True, space=2)
-parrafo(doc,
-    f'El {tasa1} % de aprobación del ciclo 1 parece aceptable, pero hay que mirar qué falló: de los {M["fall1"]} '
-    'casos fallidos, dos fallaron solo porque el sistema no muestra sus mensajes (DEF-13), y de los otros siete, '
-    'cuatro tocan reglas que el estudiante y el docente usan a diario o la seguridad de la sesión: CP-025, CP-032 '
-    'y CP-033 (R5 y R6) y CP-034 (RNF02). El '
-    f'{tasa2} % del ciclo 2 no significa que el sistema empeorara: ese ciclo se armó justamente con lo que había fallado.', size=10.5)
+if M['pend1'] == 0 and M['pend2'] == 0 and M['ejec1']:
+    _por13 = [e['caso'] for e in EJEC if e['ciclo'] == 1 and e['estado'] == 'Fallido' and e['defecto'] == 'DEF-13']
+    parrafo(doc,
+        f"El {pct(M['aprob1'], M['ejec1'])} de aprobación del ciclo 1 parece aceptable, pero hay que mirar qué falló: "
+        f"de los {M['fall1']} casos fallidos, {len(_por13)} fallaron solo porque el sistema no muestra sus mensajes "
+        f"(DEF-13){' (' + ids(_por13) + ')' if _por13 else ''}, y el resto toca reglas que el estudiante y el docente "
+        f"usan a diario o la seguridad de la sesión. El {pct(M['aprob2'], M['ejec2'])} del ciclo 2 no significa que "
+        'el sistema empeorara: ese ciclo se armó justamente con lo que había fallado.', size=10.5)
+else:
+    parrafo(doc, 'Las tasas se leen cuando los dos ciclos estén completos en el registro.', size=10, italic=True)
 parrafo(doc,
     'El análisis de riesgos del Entregable 1 acertó en el requisito más importante: R5 tenía el riesgo más alto '
-    'de la matriz (R-03, nivel 15) y terminó con cuatro defectos, incluido el único crítico. R6 lo habíamos '
-    'calificado como riesgo medio (R-11, nivel 9) y aportó un defecto alto, DEF-08; en el Entregable 3 sube a '
-    'riesgo alto. Lo que la matriz no vio fue la zona horaria: DEF-08 y DEF-12 tienen la misma causa (el servidor '
-    'trabaja en UTC y la aplicación en hora de Colombia) y ningún riesgo la mencionaba. Tampoco estaban en la '
-    'matriz RNF02 (DEF-01) ni los mensajes al usuario (DEF-13). La matriz miró los requisitos correctos, pero se '
-    'quedó corta en los riesgos transversales.', size=10.5)
+    'de la matriz (R-03, nivel 15) y es donde se concentran los defectos, incluido el único crítico. R6 lo '
+    'habíamos calificado como riesgo medio (R-11, nivel 9) y aportó un defecto alto, DEF-08; en el Entregable 3 '
+    'sube a riesgo alto. Lo que la matriz no vio fue la zona horaria: DEF-08 y DEF-12 tienen la misma causa (el '
+    'servidor trabaja en UTC y la aplicación en hora de Colombia) y ningún riesgo la mencionaba. Tampoco estaban '
+    'en la matriz RNF02 (DEF-01) ni los mensajes al usuario (DEF-13). La matriz miró los requisitos correctos, '
+    'pero se quedó corta en los riesgos transversales.', size=10.5)
 salto(doc)
 
 # ======================= 7. EVALUACIÓN Y RECOMENDACIÓN =======================
 doc.add_heading('7. Evaluación y recomendación', level=1)
 parrafo(doc, 'Revisamos uno por uno los criterios de salida de la sección 4.2 del Entregable 1.')
+_alta_falta = [e['caso'] for e in EJEC if e['ciclo'] == 1 and CASOS[e['caso']]['prioridad'] == 'Alta'
+               and e['estado'] not in ('Aprobado', 'Fallido')]
 tabla(doc, [
     ['N.º', 'Criterio de salida definido en el Entregable 1', '¿Se cumple?', 'Evidencia'],
-    ['1', 'El 100 % de los casos de prioridad alta se ejecutó.', 'Parcial',
-     '19 de 21 casos de prioridad alta ejecutados; CP-014 y CP-015 (Google) quedan bloqueados por el entorno '
-     'automatizado y pendientes de ejecución manual en Railway.'],
-    ['2', 'No quedan defectos de severidad crítica o alta sin resolver o sin plan de acción.', 'Sí, con plan',
-     'El crítico (DEF-05) está corregido y verificado. Los dos altos (DEF-01 y DEF-08) siguen abiertos con '
-     'plan: corrección en la sesión 14 y reejecución de CP-034 y CP-025 en la 15.'],
+    ['1', 'El 100 % de los casos de prioridad alta se ejecutó.', 'Sí' if not _alta_falta else 'Parcial',
+     f"{M['alta_ejec']} de {M['alta']} casos de prioridad alta ejecutados"
+     + (f"; faltan {ids(_alta_falta)}." if _alta_falta else '.')],
+    ['2', 'No quedan defectos de severidad crítica o alta sin resolver o sin plan de acción.',
+     'Sí, con plan' if not _crit_abiertos else 'Pendiente',
+     'El crítico (DEF-05) está corregido' + (' y verificado en Railway.' if not _crit_abiertos else '; falta verificarlo en Railway.')
+     + ' Los dos altos (DEF-01 y DEF-08) siguen abiertos con plan: corrección en la sesión 14 y reejecución de '
+     'CP-034 y CP-025 en la 15.'],
     ['3', 'La matriz de trazabilidad conserva el 100 % de cobertura de requisitos.', 'Sí',
      'Ocho de ocho requisitos con casos después de los cambios de la sección 2; RNF02 suma CP-034.'],
 ], anchos=[1.0, 6.0, 2.4, 7.2], fuente=8.8)
 recuadro(doc,
-    'Recomendación del equipo: apto con condiciones. Los criterios se cumplen, salvo el primero, que queda '
-    'parcial hasta ejecutar CP-014 y CP-015 en Railway, y el segundo, que se cumple solo porque los defectos '
-    'altos tienen un plan, no porque estén cerrados. Por eso no decimos «apto» a secas. ConectaProfe se puede '
-    'liberar una vez corregidos DEF-01 y DEF-08, y recomendamos incluir en la misma corrección a DEF-13, DEF-02 '
-    'y DEF-07: tienen prioridad alta y se arreglan con muy poco código. Después hay que volver a ejecutar los '
-    'nueve casos fallidos.', bold_primero=True)
+    'Recomendación del equipo: apto con condiciones. '
+    + ('Los criterios se cumplen, pero el segundo solo porque los defectos altos tienen un plan, no porque estén '
+       'cerrados. ' if not _alta_falta and not _crit_abiertos else
+       'Hay criterios que todavía no se cumplen del todo (ver la tabla), y el segundo depende de que los defectos '
+       'altos tengan un plan, no de que estén cerrados. ')
+    + 'Por eso no decimos «apto» a secas. ConectaProfe se puede liberar una vez corregidos DEF-01 y DEF-08, y '
+    'recomendamos incluir en la misma corrección a DEF-13, DEF-02 y DEF-07: tienen prioridad alta y se arreglan '
+    'con muy poco código. Después hay que volver a ejecutar los casos fallidos.', bold_primero=True)
 parrafo(doc, 'Riesgos residuales.', bold=True, space=2)
+_g = [c for c in ('CP-014', 'CP-015') if estado_de(c) == 'Bloqueado']
 parrafo(doc,
-    'CP-014 y CP-015 dependen de la configuración de Google en el entorno; en la ejecución automatizada no hay '
-    'credenciales, así que su resultado solo puede confirmarse a mano en Railway. La corrección de DEF-08 y '
-    'DEF-12 debe calcular las horas en la zona de Colombia y no depender de la del servidor, porque si Railway '
-    'cambia de región el desfase puede cambiar de tamaño.', size=10.5)
+    (f"{ids(_g)} {'depende' if len(_g) == 1 else 'dependen'} de la configuración de Google en Railway y "
+     f"{'quedó bloqueado' if len(_g) == 1 else 'quedaron bloqueados'}; hay que repetirlos cuando esa configuración "
+     'esté lista. ' if _g else '')
+    + 'La corrección de DEF-08 y DEF-12 debe calcular las horas en la zona de Colombia y no depender de la del '
+    'servidor, porque si Railway cambia de región el desfase puede cambiar de tamaño.', size=10.5)
 salto(doc)
 
 # ======================= 8. LECCIONES Y AUTOMATIZACIÓN =======================
@@ -381,14 +461,16 @@ for t in [
     'caso esperaba un mensaje concreto. Una suite también tiene que verificar lo que el usuario ve, no solo lo '
     'que el servidor responde.',
     'Las precondiciones que dependen del reloj salieron caras. CP-024, CP-025 y CP-026 necesitaban tutorías a 12 '
-    'horas, a 26 horas o vencidas; al automatizarlas pudimos fijar el reloj del navegador y prepararlas sin esperar.',
+    'horas, a 26 horas o vencidas, y hubo que planearlas en el calendario: programarlas de noche para la mañana '
+    'siguiente o un día antes. Al escribir un caso hay que pensar también cuándo se puede ejecutar.',
     'Hacer las sesiones exploratorias antes del ciclo 1 fue de lo mejor que decidimos: aportaron seis de los '
     'catorce defectos y dieron origen a CP-034.',
 ]:
     numerada(doc, t)
 parrafo(doc, 'Candidatos a automatizar en el Entregable 3', bold=True, space=2)
-parrafo(doc, 'La automatización de esta misma entrega ya nos deja la base: la suite corre sola con Playwright. '
-             'Para el Entregable 3 priorizamos estos casos por riesgo, repetición y estabilidad.', size=10.5)
+parrafo(doc, 'Ya tenemos una base: un script de Playwright que recorre la suite sobre una copia local del mismo '
+             'commit y que usamos para preparar los casos. Para el Entregable 3 priorizamos estos casos por '
+             'riesgo, repetición y estabilidad.', size=10.5)
 tabla(doc, [
     ['Caso', 'Qué prueba', 'Por qué se automatiza', 'Criterio'],
     ['CP-001 a CP-004', 'Reglas de la contraseña en el registro', 'Se repiten en cada versión y el resultado es un mensaje concreto', 'Repetición'],
@@ -405,204 +487,142 @@ parrafo(doc,
     'que se va a rehacer es trabajo perdido.', size=10.5)
 salto(doc)
 
-# ======================= ANEXO B =======================
+# ======================= ANEXO B: LISTA DE VERIFICACIÓN =======================
 doc.add_heading('Anexo B. Lista de verificación', level=1)
-chk = [
+_por_persona = Counter(e['ejecuta'] for e in EJEC if e['hecho'])
+_campos_ok = all(e['hecho'] and e['fecha'] and e['navegador'] and e['so'] and any(e['rutas']) for e in EJEC)
+_def_ev = all(any(d['rutas']) for d in DEFECTOS)
+
+
+def si(cond, parcial='Pendiente'):
+    return 'Sí' if cond else parcial
+
+
+tabla(doc, [
     ['N.º', 'Verificación', '✓', 'Dónde se comprueba'],
-    ['1', 'Tabla de reparto firmada después de la portada.', 'Sí', 'Página de reparto'],
+    ['1', 'Tabla de reparto firmada después de la portada.', 'Pendiente', 'Anexo A; falta la firma de los dos'],
     ['2', 'El resumen ejecutivo cabe en una página e incluye la recomendación.', 'Sí', 'Sección 1'],
     ['3', 'Los cambios a la suite del Entregable 1 están listados con su razón.', 'Sí', 'Sección 2, ocho filas'],
-    ['4', 'El ciclo 1 cubre toda la suite; el ciclo 2, lo fallido y el riesgo alto (ver nota de Firefox).', 'Sí', 'Sección 3 y Anexo F (Firefox)'],
-    ['5', 'Cada ejecución tiene estado, entorno, versión, fecha, ejecutor y evidencia.', 'Sí', 'Hoja de registro (xlsx) y Anexo E'],
-    ['6', 'Ningún caso bloqueado está registrado como fallido.', 'Sí', 'CP-014 y CP-015 como «Bloqueado»'],
-    ['7', 'Cada integrante ejecutó al menos seis casos.', 'Sí', 'Tabla de reparto (17 y 17)'],
-    ['8', 'Hay diez defectos o más, con todos los campos.', 'Sí', 'Sección 4 y Anexo C (14 defectos)'],
+    ['4', 'El ciclo 1 cubre toda la suite; el ciclo 2, lo fallido y el riesgo alto, en Firefox.',
+     si(M['pend1'] == 0 and M['pend2'] == 0), 'Sección 3 y registro'],
+    ['5', 'Cada ejecución tiene estado, entorno, versión, fecha, ejecutor y evidencia.', si(_campos_ok),
+     'Registro (xlsx) y Anexo E'],
+    ['6', 'Ningún caso bloqueado está registrado como fallido.', 'Sí',
+     (f'{ids(BLOQ1)} como «Bloqueado»' if BLOQ1 else 'Sin casos bloqueados') if M['pend1'] == 0 else 'Registro'],
+    ['7', 'Cada integrante ejecutó al menos seis casos.',
+     si(all(_por_persona.get(i, 0) >= 6 for i in EQUIPO['integrantes'])),
+     ' · '.join(f"{i.split()[0]}: {_por_persona.get(i, 0)}" for i in EQUIPO['integrantes'])],
+    ['8', 'Hay diez defectos o más, con todos los campos.', si(M['def_hechos'] == len(DEFECTOS), 'Parcial'),
+     f'Sección 4 y Anexo C ({len(DEFECTOS)} defectos; {M["def_hechos"]} con los datos de Railway)'],
     ['9', 'Cada integrante reportó al menos dos defectos.', 'Sí', 'Tabla de reparto'],
-    ['10', 'Cada defecto enlaza con su caso o sesión y tiene evidencia propia.', 'Sí', 'Columna «Origen»; capturas debajo de cada reporte (Anexo C)'],
-    ['11', 'Hay una hoja de sesión exploratoria por integrante.', 'Sí', 'Sección 5: SE-01 y SE-02, completas'],
-    ['12', 'Las métricas están bien calculadas, por ciclo, y hay al menos un gráfico.', 'Sí', 'Sección 6, Figura 1'],
+    ['10', 'Cada defecto enlaza con su caso o sesión y tiene evidencia propia.', si(_def_ev, 'Parcial'),
+     'Columna «Origen»; capturas debajo de cada reporte (Anexo C)'],
+    ['11', 'Hay una hoja de sesión exploratoria por integrante.',
+     si(all(SESIONES.get(s, {}).get('fecha') and NOTAS.get(s) for s in ('SE-01', 'SE-02'))), 'Sección 5'],
+    ['12', 'Las métricas están bien calculadas, por ciclo, y hay al menos un gráfico.',
+     si(M['pend1'] == 0 and M['pend2'] == 0), 'Sección 6, figura 1'],
     ['13', 'Los criterios de salida se revisan uno por uno.', 'Sí', 'Sección 7, tres criterios'],
     ['14', 'La recomendación es explícita.', 'Sí', 'Sección 7: apto con condiciones'],
-    ['15', 'Los archivos tienen los nombres pedidos y los enlaces abren.', 'Sí', 'Portada'],
-]
-tabla(doc, chk, anchos=[1.0, 9.2, 1.4, 5.2], fuente=8.8)
+    ['15', 'Los archivos tienen los nombres pedidos y los enlaces abren.', 'Pendiente',
+     'Falta pegar en la portada el enlace de la carpeta compartida'],
+], anchos=[1.0, 8.6, 1.8, 5.2], fuente=8.8)
 salto(doc)
 
-# ======================= ANEXO C =======================
+# ======================= ANEXO C: REPORTES COMPLETOS =======================
 doc.add_heading('Anexo C. Reportes completos de defectos', level=1)
-parrafo(doc, f'Entorno común salvo que se diga otra cosa: {ENTORNO_DEF}. Las cuentas de semilla usan la '
-             'contraseña «123456»; el administrador es la cuenta de pruebas del equipo. Cuando un paso dice '
-             '«consola», es la de las herramientas del navegador (F12), donde se pega el fetch con el token de '
-             'la sesión. Debajo de cada reporte van sus capturas, numeradas como figuras.',
-             size=10, italic=True)
-
-# Reportes completos de los 14 defectos, con los 13 campos.
-
-def texto_evidencia(d):
-    """Nombres de las capturas con la figura donde se ven."""
-    propias = [e for e in d['evidencias'] if not es_consola(e)]
-    partes = []
-    if propias:
-        n = proxima_figura()
-        rango = f'figura {n}' if len(propias) == 1 else f'figuras {n} a {n + len(propias) - 1}'
-        partes.append(f"{', '.join(propias)} ({rango}, debajo de este reporte)")
-    for e in d['evidencias']:
-        if es_consola(e):
-            partes.append(f'{e} (figura {FIG_CONSOLA[e]}, consola F12 en el Anexo D)')
-    return '; '.join(partes) or '—'
-
-
+parrafo(doc, 'Cada reporte tiene los trece campos. El entorno, la fecha, la frecuencia y el resultado real son '
+             'los de quien lo ejecutó en Railway; debajo de cada reporte van sus capturas, numeradas como figuras.',
+        size=10, italic=True)
+MOSTRADAS = {}
 for d in DEFECTOS:
     doc.add_heading(f"{d['id']} · {d['titulo']}", level=3)
-    ev = texto_evidencia(d)
+    rep = REPRO.get(d['id'], {})
     ficha(doc, [
         ('Identificador', d['id']),
         ('Título', d['titulo']),
-        ('Entorno y versión', ENTORNO_DEF),
+        ('Entorno y versión', entorno(d['navegador'], d['so']) + f" · probado el {v(d['fecha'])}"),
         ('Precondición', PRECOND[d['id']]),
         ('Pasos', PASOS[d['id']]),
         ('Resultado esperado', ESPERADO[d['id']]),
-        ('Resultado real', d['resultado_real'] or '—'),
-        ('Frecuencia', d['frecuencia']),
+        ('Resultado real', v(d['resultado_real'])),
+        ('Frecuencia', v(d['intentos'], '____ de ____ intentos')),
         ('Severidad', SEV_JUST[d['id']]),
         ('Prioridad', PRIO_JUST[d['id']]),
-        ('Evidencia', ev),
+        ('Evidencia', '; '.join(cita(x) for x in d['evidencias'])),
         ('Origen', d['origen']),
-        ('Reportado por', f"{d['reporta']} · reproducido por {d['reproduce']}"),
+        ('Reportado por', f"{d['reporta']} · reproducido por {d['reproduce']}"
+         + (f" el {rep['fecha']} ({rep['resultado'].lower()})" if rep.get('resultado') else ' (pendiente)')),
     ])
-    if d['notas']:
-        parrafo(doc, 'Nota: ' + ' '.join(d['notas']), size=9.5, italic=True, space=4)
-    for e in d['evidencias']:
-        if es_consola(e):
-            continue
-        desc = desc_evidencia(e)
-        MOSTRADAS[e] = figura(doc, ruta_evidencia(e), f"{d['id']} · {e}" + (f'. {desc}' if desc else ''))
+    for nombre, ruta in zip(d['evidencias'], d['rutas']):
+        if ruta:
+            assert proxima_figura() == FIG[nombre], 'la numeración de figuras se desfasó'
+            MOSTRADAS[nombre] = figura(doc, ruta, f"{d['id']} · {nombre}. Captura de {d['reporta']} en Railway"
+                                       + (f", {d['fecha']}" if d['fecha'] else ''))
+        else:
+            recuadro_captura(doc, f'Falta la captura {nombre}\nLa toma {d["reporta"]} en Railway', alto_cm=3.2)
     doc.add_paragraph()
 
-# ======================= ANEXO D: PRUEBAS POR CONSOLA =======================
-if consola.get('pruebas'):
-    salto(doc)
-    doc.add_heading('Anexo D. Pruebas por consola del navegador (F12)', level=1)
-    _fetch = sum(1 for pr in consola['pruebas'] if pr.get('httpStatus') is not None)
-    _insp = len(consola['pruebas']) - _fetch
-    parrafo(doc,
-        f'Estas {len(consola["pruebas"])} verificaciones se hicieron desde la consola del navegador. En '
-        f'{_fetch} se pega un fetch() con el token de la sesión, porque prueban la capa del servidor '
-        'directamente: el control de acceso por rol, el manejo de datos inexistentes y las validaciones que '
-        'el formulario no deja disparar.' + (
-        f' En {"la otra" if _insp == 1 else f"las otras {_insp}"} se inspecciona un elemento de la página '
-        'con document.getElementById(), para ver algo que la pantalla no muestra.' if _insp else '') +
-        ' Son las pruebas más cercanas a cómo se tantea una API, así que van con el comando exacto para '
-        'copiar y pegar, el resultado esperado, lo que respondió el sistema y la captura de la consola tal '
-        'como quedó (carpeta pruebas/e2/resultados/consola/).')
-    parrafo(doc, 'Las rutas son relativas (/api/...), así que el mismo comando sirve en localhost y en el '
-                 'entorno de Railway sin cambiar nada.', size=10, italic=True)
-    for pr in consola['pruebas']:
-        doc.add_heading(f"{pr['id']} · {pr['titulo']}", level=3)
-        parrafo(doc, pr['descripcion'], size=10.5, space=3)
-        parrafo(doc, 'Comando (se pega en la pestaña Consola de F12):', size=9.5, bold=True, space=2)
-        codigo(doc, pr['comando'])
-        n = FIG_CONSOLA.get(pr['evidencia'])
-        ficha(doc, [
-            ('Requisito', pr['requisito']),
-            ('Resultado esperado', pr['esperado']),
-            ('Resultado real', pr['resultadoReal']),
-            ('Código HTTP', str(pr['httpStatus']) if pr.get('httpStatus') is not None
-             else '— (inspección del elemento, sin petición al servidor)'),
-            ('Estado', pr['estado']),
-            ('Evidencia', f"{pr['evidencia']} (figura {n}, debajo)" if n else pr['evidencia']),
-        ])
-        if n:
-            assert proxima_figura() == n, 'la numeración de figuras se desfasó'
-            MOSTRADAS[pr['evidencia']] = figura(
-                doc, ruta_evidencia(pr['evidencia']),
-                f"{pr['id']} · {pr['evidencia']}. Consola F12 con el comando ejecutado y la respuesta: {pr['titulo'].lower()}.")
-        doc.add_paragraph()
-
-# ======================= ANEXO E: CAPTURAS DE LOS CICLOS =======================
-salto(doc)
-doc.add_heading('Anexo E. Evidencia de cada ejecución (ciclos 1 y 2)', level=1)
+# ======================= ANEXO D: COMANDOS DE CONSOLA =======================
+titulo_en_pagina_nueva(doc, 'Anexo D. Comandos para la consola del navegador (F12)', nivel=1)
 parrafo(doc,
-    'Aquí están todas las capturas de los dos ciclos, en el orden de la suite. Cada una lleva estampado en '
-    'la esquina el caso, el ciclo, la URL, la hora de Colombia y el navegador, y algunas el recuadro con la '
-    'respuesta del servidor. Las de los casos que se probaron desde la consola tienen el aspecto de la '
-    'pestaña Consola de F12. Cuando una captura ya está debajo del reporte de su defecto (Anexo C), aquí '
-    'solo se indica en qué figura verla, para no repetirla.', size=10.5)
+    'Estas son las pruebas que se hacen desde la consola del navegador. En cinco se pega un fetch(): cuatro con el '
+    'token de la sesión y el de CP-008 sin sesión, como lo haría un visitante. En la sexta (DEF-13) se inspecciona '
+    'el elemento del mensaje emergente. Van con el comando exacto para copiar y pegar; la captura de cada una es '
+    'la de su ejecución en Railway, con la consola abierta y la respuesta a la vista.', size=10.5)
+parrafo(doc,
+    'En DEF-06 hay que cambiar ID por el número de una tutoría cancelada (se ve en la pestaña Red) y entrar como '
+    'su docente; en DEF-10, docente_id tiene que ser el de un docente activo. Firefox pide escribir «permitir '
+    'pegar» antes de dejar pegar en la consola, y Chrome «allow pasting».', size=10, italic=True)
+with open(os.path.join(BUILD, '..', 'resultados', 'consola', 'resultados.json'), encoding='utf-8') as _f:
+    _consola = json.load(_f)['pruebas']
+_capturas_consola = {
+    'CP-008': ['EV-CP008-C1-01.png', 'EV-CP008-C2-01.png'], 'CP-018': ['EV-CP018-C1-01.png', 'EV-CP018-C2-01.png'],
+    'CP-021': ['EV-CP021-C1-01.png', 'EV-CP021-C2-01.png'], 'DEF-06': ['EV-DEF06-01.png'],
+    'DEF-10': ['EV-DEF10-01.png'], 'DEF-13': ['EV-CP024-C1-01.png'],
+}
+for pr in _consola:
+    comando = re.sub(r'/api/tutorias/\d+/realizada', '/api/tutorias/ID/realizada', pr['comando'])
+    if pr['id'] == 'DEF-10':
+        comando = re.sub(r'docente_id:\d+', 'docente_id:9', comando)
+    doc.add_heading(f"{pr['id']} · {pr['titulo']}", level=3)
+    parrafo(doc, pr['descripcion'], size=10.5, space=3)
+    codigo(doc, comando)
+    ficha(doc, [
+        ('Requisito', pr['requisito']),
+        ('Resultado esperado', pr['esperado']),
+        ('Captura', '; '.join(cita(x) for x in _capturas_consola.get(pr['id'], []))),
+    ])
+    doc.add_paragraph()
 
-
-def capturas_ciclo(ciclo_datos, numero):
-    doc.add_heading(f'E.{numero} Ciclo {numero} · {ciclo_datos["navegador"]}', level=2)
-    for c in ciclo_datos['casos']:
-        for e in c['evidencias']:
-            desc = desc_evidencia(e)
-            pie = (f"{c['id']} · ciclo {numero} · {c['estado']} · {e}. {c['titulo']}"
-                   + (f'. {desc}' if desc else ''))
-            if e in MOSTRADAS:
-                parrafo(doc, f"{e} ({c['id']}, ciclo {numero}, {c['estado']}): se ve en la figura "
-                             f"{MOSTRADAS[e]}, en el reporte de {c['defecto'] or 'su defecto'} (Anexo C).",
-                        size=9.5, italic=True, space=8)
-            else:
-                MOSTRADAS[e] = figura(doc, ruta_evidencia(e), pie, ancho_cm=12.5)
-
-
-capturas_ciclo(ciclo1, 1)
-capturas_ciclo(ciclo2, 2)
-
-# ======================= ANEXO F: EJECUCIÓN MANUAL EN RAILWAY =======================
-if manual:
-    salto(doc)
-    doc.add_heading('Anexo F. Ejecución manual en Railway (Google y Firefox)', level=1)
-    pendientes = [m for m in manual if not m['hecho']]
-    parrafo(doc,
-        'Estas ejecuciones se hacen a mano sobre la aplicación desplegada en Railway. CP-014 y CP-015 '
-        'necesitan una cuenta real de Google, que el entorno automatizado no tiene, y el contraste del '
-        'ciclo 2 en Firefox se hace a mano porque ese entorno solo dispone de Chromium. Cada caso sigue '
-        'los mismos pasos del ciclo 1 y lo ejecuta el integrante que no lo corrió antes.', size=10.5)
-    if pendientes:
-        parrafo(doc,
-            f'Nota para el equipo (borrar antes de entregar): faltan {len(pendientes)} capturas. Para cada '
-            'una, abrir este archivo en Word, hacer clic dentro del recuadro punteado, borrar el texto gris, '
-            'pegar la captura con Ctrl+V y llenar «Estado obtenido», «Resultado real» y «Fecha y navegador». '
-            'Que en la captura se vean la barra de direcciones de Railway y la hora del computador.',
-            size=9.5, italic=True)
-
-    def separador():
-        """Párrafo mínimo para que Word no pegue la ficha y el recuadro en una sola tabla."""
-        sep = parrafo(doc, ' ', size=2, space=0)
-        sep.paragraph_format.keep_with_next = True
-
-    def ejecucion_manual(m):
-        doc.add_heading(f"{m['id']} · {m['titulo']}", level=3)
-        n = proxima_figura() if m['hecho'] else None
-        ficha(doc, [
-            ('Lo ejecuta · entorno', f"{m['ejecuta']} · {m['entorno']}"),
-            ('Qué se hace', m['que']),
-            ('Resultado esperado', f"{m['esperado']} Estado esperado: {m['estado_esperado']}."),
-            ('Estado obtenido', m['estado'] or '☐ Aprobado     ☐ Fallido'),
-            ('Resultado real', m.get('real') or ' '),
-            ('Fecha y navegador', ' · '.join(x for x in (m.get('fecha'), m.get('navegador')) if x)
-             or '____ /10/2026 · navegador y versión: ____________'),
-            ('Evidencia', f"{m['archivo']} (figura {n}, debajo)" if n else f"{m['archivo']} (recuadro de abajo)"),
-        ])
-        separador()
-        if m['hecho']:
-            figura(doc, m['ruta'], f"{m['id']} · {m['archivo']}. {m['entorno']}: {m['titulo'].lower()}",
-                   ancho_cm=15)
-        else:
-            recuadro_captura(doc, f"Pegue aquí la captura de {m['id']} · {m['archivo']}\n"
-                                  'Clic dentro del recuadro, borrar este texto y Ctrl+V', alto_cm=8.6)
-
-    # Un caso por página: su ficha y su captura siempre quedan juntas.
-    doc.add_heading('F.1 Inicio de sesión con Google (ciclo 1)', level=2)
-    for k, m in enumerate(x for x in manual if x['ciclo'] == 1):
-        if k:
-            salto(doc)
-        ejecucion_manual(m)
-    for k, m in enumerate(x for x in manual if x['ciclo'] == 2):
-        salto(doc)
-        if k == 0:
-            doc.add_heading('F.2 Ciclo 2 en Firefox', level=2)
-        ejecucion_manual(m)
+# ======================= ANEXO E: EVIDENCIA DE CADA EJECUCIÓN =======================
+titulo_en_pagina_nueva(doc, 'Anexo E. Evidencia de cada ejecución (ciclos 1 y 2)', nivel=1)
+parrafo(doc,
+    'Las capturas de cada ejecución en Railway, en el orden de la suite. En cada una se ven la barra de '
+    'direcciones y la hora de Windows; las de consola muestran el comando y la respuesta. Cuando una captura '
+    'ya está debajo del reporte de su defecto (Anexo C), aquí solo se dice en qué figura verla.', size=10.5)
+_faltan = [(e, n) for e in EJEC for n, r in zip(e['evidencias'], e['rutas']) if not r]
+if _faltan:
+    parrafo(doc, f'Capturas que todavía faltan ({len(_faltan)})', bold=True, space=2)
+    tabla(doc, [['Caso', 'Ciclo', 'Captura', 'La toma']] +
+          [[e['caso'], str(e['ciclo']), n, e['ejecuta']] for e, n in _faltan],
+          anchos=[2.0, 1.4, 6.0, 6.0], fuente=8.5)
+for ciclo in (1, 2):
+    lista = [e for e in EJEC if e['ciclo'] == ciclo and any(e['rutas'])]
+    if not lista:
+        continue
+    doc.add_heading(f"E.{ciclo} Ciclo {ciclo} · {NAV1 if ciclo == 1 else NAV2}", level=2)
+    for e in lista:
+        for nombre, ruta in zip(e['evidencias'], e['rutas']):
+            if not ruta:
+                continue
+            if nombre in MOSTRADAS:
+                parrafo(doc, f"{nombre} ({e['caso']}, ciclo {ciclo}, {e['estado']}): se ve en la figura "
+                             f"{MOSTRADAS[nombre]}, en el Anexo C.", size=9.5, italic=True, space=8)
+                continue
+            assert proxima_figura() == FIG[nombre], 'la numeración de figuras se desfasó'
+            MOSTRADAS[nombre] = figura(doc, ruta,
+                f"{e['caso']} · ciclo {ciclo} · {v(e['estado'], 'sin estado')} · {nombre}. {CASOS[e['caso']]['titulo']}. "
+                f"{e['ejecuta']}, {v(e['fecha'])}, {v(e['navegador'])}", ancho_cm=12.5)
 
 salida = os.path.join(BUILD, '..', '..', '..', 'docs', 'entrega-2', 'E2_F_Equipo.docx')
 os.makedirs(os.path.dirname(salida), exist_ok=True)

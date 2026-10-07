@@ -4,7 +4,7 @@ import os
 from PIL import Image
 from docx import Document
 from docx.shared import Pt, RGBColor, Cm
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_COLOR_INDEX
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
@@ -77,6 +77,18 @@ def _no_partir(tabla):
         trPr.append(el)
 
 
+def _anchos(tabla, anchos):
+    """Fija el ancho de cada columna en la grilla y en cada celda (LibreOffice lee la grilla)."""
+    tabla.autofit = False
+    grilla = tabla._tbl.tblGrid
+    for j, w in enumerate(anchos):
+        if j < len(grilla.gridCol_lst):
+            grilla.gridCol_lst[j].w = Cm(w)
+        for fila in tabla.rows:
+            if j < len(fila.cells):
+                fila.cells[j].width = Cm(w)
+
+
 def _set_cell_bg(cell, hex_color):
     tcPr = cell._tc.get_or_add_tcPr()
     shd = OxmlElement('w:shd')
@@ -137,9 +149,7 @@ def tabla(doc, filas, anchos=None, cab=True, fuente=9.5, cab_bg=TEAL_HEX):
                    align=WD_ALIGN_PARAGRAPH.CENTER if es_cab else None,
                    bg=cab_bg if es_cab else (GRIS_HEX if i % 2 == 0 else None))
     if anchos:
-        for j, w in enumerate(anchos):
-            for i in range(len(filas)):
-                t.cell(i, j).width = Cm(w)
+        _anchos(t, anchos)
     _no_partir(t)
     return t
 
@@ -151,7 +161,7 @@ def ficha(doc, pares, ancho_k=4.2, ancho_v=12.5):
     for i, (k, v) in enumerate(pares):
         _celda(t.cell(i, 0), k, bold=True, size=9.5, bg=TEALCL_HEX)
         _celda(t.cell(i, 1), v, size=9.5)
-        t.cell(i, 0).width = Cm(ancho_k); t.cell(i, 1).width = Cm(ancho_v)
+    _anchos(t, [ancho_k, ancho_v])
     _no_partir(t)
     return t
 
@@ -164,13 +174,37 @@ def recuadro(doc, texto, bg=TEALCL_HEX, bold_primero=False):
     return t
 
 
-def parrafo(doc, texto, size=11, bold=False, italic=False, space=6, align=None):
+def parrafo(doc, texto, size=11, bold=False, italic=False, space=6, align=None, resaltado=False):
     p = doc.add_paragraph()
     if align: p.alignment = align
     p.paragraph_format.space_after = Pt(space)
     r = p.add_run(texto)
     r.font.size = Pt(size); r.font.bold = bold; r.font.italic = italic
+    if resaltado:
+        r.font.highlight_color = WD_COLOR_INDEX.YELLOW
     return p
+
+
+def titulo_en_pagina_nueva(doc, texto, nivel=3):
+    """Título que siempre empieza página (sin párrafo de salto que pueda quedar suelto)."""
+    h = doc.add_heading(texto, level=nivel)
+    h.paragraph_format.page_break_before = True
+    return h
+
+
+def minuscula_inicial(texto):
+    """«La API guarda…» → «la API guarda…»: solo la primera letra, y no si la palabra es una sigla."""
+    primera = texto.split(' ', 1)[0]
+    if len(primera) > 1 and primera.isupper():
+        return texto
+    return texto[:1].lower() + texto[1:]
+
+
+def rango_figuras(a, b):
+    """«figura 7», «figuras 7 y 8» o «figuras 7 a 9»."""
+    if a == b:
+        return f'figura {a}'
+    return f'figuras {a} y {b}' if b == a + 1 else f'figuras {a} a {b}'
 
 
 def codigo(doc, texto):
