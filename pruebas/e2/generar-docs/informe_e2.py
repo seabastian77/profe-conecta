@@ -73,8 +73,8 @@ salto(doc)
 # ======================= 1. RESUMEN EJECUTIVO =======================
 doc.add_heading('1. Resumen ejecutivo', level=1)
 parrafo(doc,
-    f"Ejecutamos a mano la suite de ConectaProfe en dos ciclos, sobre la versión desplegada (commit "
-    f"{EQUIPO['commit']}). Antes de empezar, la suite pasó de 31 a 34 casos: corregimos once que no se "
+    f"Ejecutamos a mano la suite de ConectaProfe en dos ciclos, sobre la versión que está desplegada en "
+    f"Railway (commit 693358a). Antes de empezar, la suite pasó de 31 a 34 casos: corregimos once que no se "
     f"podían ejecutar tal como estaban escritos y agregamos tres para cerrar huecos. En el ciclo 1 se "
     f"ejecutaron {M['ejec1']} de los 34 casos: {M['aprob1']} aprobaron y {M['fall1']} fallaron; los dos "
     f"restantes (CP-014 y CP-015, inicio de sesión con Google) quedaron bloqueados porque el entorno "
