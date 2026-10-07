@@ -72,6 +72,16 @@ node pruebas/e2/consola.js
 Los documentos (`.docx`, `.pdf`, `.xlsx`) y el gráfico se arman con los scripts
 de `pruebas/e2/generar-docs/` a partir de esos `resultados.json`.
 
+## Antes de entregar (lo único que falta, y es de ustedes)
+
+Todo lo demás ya está hecho con datos reales. Esto no lo puede poner un script:
+
+- [ ] **Firmar** la tabla de reparto interno en los dos documentos (hay línea para cada uno).
+- [ ] Pegar en la portada los **enlaces reales**: carpeta compartida de evidencias (si la suben a Drive) y el proyecto de Qase, si lo van a mantener.
+- [ ] **Contraste en Firefox** del ciclo 2: correr a mano los 16 casos del ciclo 2 en Firefox sobre Railway y confirmar que da igual (lo normal es que sí). Anotar la versión de Firefox.
+- [ ] **CP-014 y CP-015 (Google)** en Railway, con una cuenta institucional y una de Gmail, y guardar las dos capturas.
+- [ ] Revisar que el nombre del archivo final de la Tarea 4 sea el que pide el Campus (`IS071_T4_EquipoF.pdf`) y, si piden el E2 con otro nombre, renombrarlo.
+
 ## Notas de honestidad
 
 - **Firefox.** La guía pide repetir el ciclo 2 en Firefox. El entorno de

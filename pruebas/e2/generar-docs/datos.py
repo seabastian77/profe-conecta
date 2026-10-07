@@ -109,6 +109,13 @@ for d in DEFECTOS:
         d['evidencias'] = []
         d['notas'] = []
 
+# Añade la evidencia de la consola (F12) a los defectos que también se verifican por ahí.
+_ev_consola = {p['id']: p.get('evidencia') for p in consola.get('pruebas', [])}
+for d in DEFECTOS:
+    ev = _ev_consola.get(d['id'])
+    if ev and ev != '—' and ev not in d['evidencias']:
+        d['evidencias'].append(ev)
+
 # --- Métricas ----------------------------------------------------------------
 def contar(casos, estado):
     return sum(1 for c in casos if c['estado'] == estado)

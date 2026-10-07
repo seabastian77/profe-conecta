@@ -19,6 +19,30 @@ ESTADO_HEX = {'Aprobado': 'DCFCE7', 'Fallido': 'FEE2E2', 'Bloqueado': 'FEF9C3',
               'Abierto': 'FEE2E2', 'Verificado': 'DCFCE7', 'No ejecutado': 'E5E7EB'}
 
 
+def _campo(parrafo, instruccion):
+    """Inserta un campo de Word (p. ej. PAGE) dentro de un párrafo."""
+    run = parrafo.add_run()
+    fldBegin = OxmlElement('w:fldChar'); fldBegin.set(qn('w:fldCharType'), 'begin')
+    instr = OxmlElement('w:instrText'); instr.set(qn('xml:space'), 'preserve'); instr.text = instruccion
+    fldEnd = OxmlElement('w:fldChar'); fldEnd.set(qn('w:fldCharType'), 'end')
+    run._r.append(fldBegin); run._r.append(instr); run._r.append(fldEnd)
+    run.font.size = Pt(9); run.font.name = 'Calibri'
+    return run
+
+
+def pie_de_pagina(doc, etiqueta):
+    """Pie centrado con la etiqueta del documento y «Página X de Y»."""
+    from docx.enum.text import WD_ALIGN_PARAGRAPH as _A
+    for s in doc.sections:
+        p = s.footer.paragraphs[0]
+        p.alignment = _A.CENTER
+        r = p.add_run(f'{etiqueta}   ·   Página ')
+        r.font.size = Pt(9); r.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+        _campo(p, 'PAGE')
+        r2 = p.add_run(' de '); r2.font.size = Pt(9); r2.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+        _campo(p, 'NUMPAGES')
+
+
 def nuevo_doc():
     doc = Document()
     for s in doc.sections:

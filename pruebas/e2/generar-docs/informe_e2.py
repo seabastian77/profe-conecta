@@ -3,12 +3,13 @@
 import os
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, vineta, numerada,
-                      codigo, imagen, salto, titulo_portada, TEAL, NARANJA)
+                      codigo, imagen, salto, titulo_portada, pie_de_pagina, TEAL, NARANJA)
 from datos import EQUIPO, DEFECTOS, M, ciclo1, ciclo2, consola
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
 GRAFICO = os.path.join(BUILD, 'grafico_defectos.png')
 doc = nuevo_doc()
+pie_de_pagina(doc, 'ConectaProfe · Entregable 2 · Equipo F')
 
 # ======================= PORTADA =======================
 for _ in range(2): doc.add_paragraph()
@@ -36,6 +37,8 @@ ficha(doc, [
     ('Fecha de entrega', EQUIPO['entrega']),
     ('Carpeta de evidencias', 'pruebas/e2/resultados/ en el repositorio (lectura para el docente)'),
     ('Registro de ejecución', 'docs/entrega-2/E2_Registro_Ejecucion_EquipoF.xlsx'),
+    ('Gestión de pruebas', 'La suite, los resultados y la evidencia se versionan en el repositorio, '
+     'ejecutables con un comando. El enlace de Qase del Entregable 1 queda como respaldo manual.'),
 ])
 salto(doc)
 
@@ -247,7 +250,28 @@ ficha(doc, [
      'del formulario? Queda como riesgo nuevo para el Entregable 3: reglas de negocio validadas solo en el cliente.'),
     ('Distribución del tiempo', '70 % explorando la misión · 30 % investigando y documentando.'),
 ])
-parrafo(doc, 'La hoja completa de SE-01 está en la carpeta de evidencias.', size=10, italic=True)
+doc.add_paragraph()
+parrafo(doc, 'Hoja de sesión · SE-01', bold=True, space=2)
+ficha(doc, [
+    ('Identificador', 'SE-01'),
+    ('Integrante, fecha y duración', 'Esteban Palencia · 55 minutos'),
+    ('Misión', 'Recorrer los requisitos y reglas de prioridad alta (RNF02, RNF05, RRN07) para descubrir '
+     'dónde la aplicación hace algo distinto de lo que promete el documento de requisitos.'),
+    ('Áreas recorridas', 'Expiración de la sesión por inactividad; modales «Nuevo usuario» y «Editar usuario» '
+     'del panel de administración; registro de un estudiante sin promedio y su panel; vista a 360 px de ancho; '
+     'acceso con el perfil sin completar.'),
+    ('Notas', '0–15 min: tras 16 minutos sin actividad la sesión sigue abierta y solo se revisa al recargar; '
+     'el límite real es de 2 horas (DEF-01). 15–30 min: en «Nuevo Usuario» el campo de contraseña es de texto '
+     'y trae «Cambiar123» a la vista; en «Editar Usuario» la nueva clave también se ve (DEF-07). 30–45 min: un '
+     'estudiante sin promedio queda con 0 y entra al grupo «en alerta», aunque su panel dice «Sin alertas» '
+     '(DEF-14). 45–55 min: a 360 px el inicio de sesión y el panel se ven bien; con el perfil sin completar, el '
+     'panel carga igual.'),
+    ('Defectos', 'DEF-01, DEF-07, DEF-14.'),
+    ('Preguntas y riesgos', '¿Qué otras pantallas muestran credenciales en texto plano? ¿El cierre de sesión '
+     'por inactividad debería vivir en el servidor y no solo en el navegador? Quedan como riesgos para el '
+     'Entregable 3: control de sesión del lado del servidor y revisión de todos los campos de contraseña.'),
+    ('Distribución del tiempo', '65 % explorando la misión · 35 % investigando y documentando.'),
+])
 salto(doc)
 
 # ======================= 6. MÉTRICAS =======================
@@ -373,7 +397,7 @@ chk = [
     ['8', 'Hay diez defectos o más, con todos los campos.', 'Sí', 'Sección 4 y Anexo C (14 defectos)'],
     ['9', 'Cada integrante reportó al menos dos defectos.', 'Sí', 'Tabla de reparto'],
     ['10', 'Cada defecto enlaza con su caso o sesión y tiene evidencia propia.', 'Sí', 'Columna «Origen» y Anexo C'],
-    ['11', 'Hay una hoja de sesión exploratoria por integrante.', 'Sí', 'Sección 5 y carpeta de evidencias'],
+    ['11', 'Hay una hoja de sesión exploratoria por integrante.', 'Sí', 'Sección 5: SE-01 y SE-02, completas'],
     ['12', 'Las métricas están bien calculadas, por ciclo, y hay al menos un gráfico.', 'Sí', 'Sección 6, Figura 1'],
     ['13', 'Los criterios de salida se revisan uno por uno.', 'Sí', 'Sección 7, tres criterios'],
     ['14', 'La recomendación es explícita.', 'Sí', 'Sección 7: apto con condiciones'],

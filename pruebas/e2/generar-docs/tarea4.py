@@ -5,7 +5,7 @@ la matriz de reproducción cruzada y el análisis por riesgo."""
 import os
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, vineta, numerada, codigo,
-                      imagen, salto, titulo_portada, TEAL)
+                      imagen, salto, titulo_portada, pie_de_pagina, TEAL)
 from datos import EQUIPO, DEFECTOS, M, consola
 import informe_e2 as E2  # reutiliza los textos de pasos, precondición, etc.
 
@@ -21,6 +21,7 @@ elegidos = [por_id[i] for i in SELECCION]
 BLOQUEANTES = ['DEF-01', 'DEF-08', 'DEF-13']
 
 doc = nuevo_doc()
+pie_de_pagina(doc, 'ConectaProfe · Tarea 4 · Equipo F')
 
 # ===== Portada =====
 for _ in range(2): doc.add_paragraph()
