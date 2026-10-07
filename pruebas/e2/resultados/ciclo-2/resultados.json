@@ -6,7 +6,7 @@
   "navegador": "Chromium 141.0.7390.37",
   "sistemaOperativo": "linux 6.18.44-fc-v77",
   "zonaHorariaNavegador": "America/Bogota",
-  "inicio": "07/10/2026, 16:14:43",
+  "inicio": "07/10/2026, 17:13:35",
   "casos": [
     {
       "id": "CP-007",
@@ -19,7 +19,7 @@
       "esperado": "Crea la cuenta (HTTP 201) y continúa al formulario de perfil.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:14:43",
+      "fecha": "07/10/2026, 17:13:35",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Aprobado",
       "real": "POST /api/auth/registro → 201; pasa a «Completar perfil» con el formulario de estudiante y la sesión queda abierta (hay token). Se cerró sesión al terminar.",
@@ -27,15 +27,18 @@
       "evidencias": [
         "EV-CP007-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP007-C2-01.png": "Registro de valido.c2@amigo.edu.co (estudiante, clave «Password123»)"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/registro",
           "estado": 201,
-          "respuesta": "{\"mensaje\":\"Cuenta creada. Completa tu perfil.\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzAsImNvcnJlbyI6InZhbGlkby5jMkBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDA3Njg2LCJleHAiOjE3OTE0MzY0ODYsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.hSg2YvepWz5ZZ90XXrOFGPtCs3j4np63OYs78wUrdHw\",\"usuario\":{\"id\":30,\"nombres\":\"Mateo\",\"apellidos\":\"Rúa\",\"correo\":\"valido.c2@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"mensaje\":\"Cuenta creada. Completa tu perfil.\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzAsImNvcnJlbyI6InZhbGlkby5jMkBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDExMjE4LCJleHAiOjE3OTE0NDAwMTgsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.jDlHy1ksZ4_pv7n3DkqSiVeCQKsozTOBE-4Zr_ULCuo\",\"usuario\":{\"id\":30,\"nombres\":\"Mateo\",\"apellidos\":\"Rúa\",\"correo\":\"valido.c2@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"nombres\":\"Mateo\",\"apellidos\":\"Rúa\",\"correo\":\"valido.c2@amigo.edu.co\",\"contrasena\":\"[oculta]\",\"rol\":\"estudiante\"}",
           "bytesEnviados": 117,
-          "hora": "07/10/2026, 16:14:46"
+          "hora": "07/10/2026, 17:13:38"
         },
         {
           "metodo": "GET",
@@ -44,12 +47,12 @@
           "respuesta": "[]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:14:46"
+          "hora": "07/10/2026, 17:13:38"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 4.2
+      "duracionSeg": 4.1
     },
     {
       "id": "CP-008",
@@ -62,7 +65,7 @@
       "esperado": "HTTP 400 con «Rol inválido»; no se crea la cuenta de administrador.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:14:48",
+      "fecha": "07/10/2026, 17:13:39",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Aprobado",
       "real": "La consola muestra {\"error\":\"Rol inválido\"} y la pestaña Red el código 400.",
@@ -70,6 +73,9 @@
       "evidencias": [
         "EV-CP008-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP008-C2-01.png": "Consola F12: Registro forzado con rol «admin» desde la consola, sin sesión"
+      },
       "red": [
         {
           "metodo": "POST",
@@ -78,7 +84,7 @@
           "respuesta": "{\"error\":\"Rol inválido\"}",
           "enviado": "{\"nombres\":\"Intruso\",\"apellidos\":\"Prueba\",\"correo\":\"admin.c2@amigo.edu.co\",\"contrasena\":\"[oculta]\",\"rol\":\"admin\"}",
           "bytesEnviados": 116,
-          "hora": "07/10/2026, 16:14:49"
+          "hora": "07/10/2026, 17:13:40"
         }
       ],
       "dialogos": [],
@@ -96,7 +102,7 @@
       "esperado": "RRN01: tras 3 intentos incorrectos el acceso se bloquea 5 minutos; el cuarto intento se rechaza aunque la clave sea correcta.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:14:49",
+      "fecha": "07/10/2026, 17:13:40",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Fallido",
       "real": "Los tres intentos con «Incorrecta123» respondieron 401, 401, 401. El cuarto, con la clave correcta, respondió 200 y abrió «Mi Panel»: no hubo bloqueo.",
@@ -105,15 +111,19 @@
         "EV-CP013-C2-01.png",
         "EV-CP013-C2-02.png"
       ],
+      "descripciones": {
+        "EV-CP013-C2-01.png": "Tercer intento fallido con prueba.bloqueo2.c2@amigo.edu.co: 401, 401, 401",
+        "EV-CP013-C2-02.png": "Cuarto intento con la clave correcta → 200 · entra al panel"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/registro",
           "estado": 201,
-          "respuesta": "{\"mensaje\":\"Cuenta creada. Completa tu perfil.\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsImNvcnJlbyI6InBydWViYS5ibG9xdWVvMi5jMkBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDA3NjkxLCJleHAiOjE3OTE0MzY0OTEsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.ZPYznSDr_Mj4TfIClm-RCFv5Wfc1l9KonT3mBL4ktow\",\"usuario\":{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"mensaje\":\"Cuenta creada. Completa tu perfil.\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsImNvcnJlbyI6InBydWViYS5ibG9xdWVvMi5jMkBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDExMjIzLCJleHAiOjE3OTE0NDAwMjMsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.bJJbKpObub3dlsBs72HbICrA_UVAJjgBA20GZmL7Ulo\",\"usuario\":{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"contrasena\":\"[oculta]\",\"rol\":\"estudiante\"}",
           "bytesEnviados": 130,
-          "hora": "07/10/2026, 16:14:51"
+          "hora": "07/10/2026, 17:13:43"
         },
         {
           "metodo": "GET",
@@ -122,7 +132,7 @@
           "respuesta": "[]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:14:51"
+          "hora": "07/10/2026, 17:13:43"
         },
         {
           "metodo": "POST",
@@ -131,7 +141,7 @@
           "respuesta": "{\"error\":\"Correo o contraseña incorrectos\"}",
           "enviado": "{\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 73,
-          "hora": "07/10/2026, 16:14:54"
+          "hora": "07/10/2026, 17:13:45"
         },
         {
           "metodo": "POST",
@@ -140,7 +150,7 @@
           "respuesta": "{\"error\":\"Correo o contraseña incorrectos\"}",
           "enviado": "{\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 73,
-          "hora": "07/10/2026, 16:14:56"
+          "hora": "07/10/2026, 17:13:47"
         },
         {
           "metodo": "POST",
@@ -149,16 +159,16 @@
           "respuesta": "{\"error\":\"Correo o contraseña incorrectos\"}",
           "enviado": "{\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 73,
-          "hora": "07/10/2026, 16:14:58"
+          "hora": "07/10/2026, 17:13:49"
         },
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsImNvcnJlbyI6InBydWViYS5ibG9xdWVvMi5jMkBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDA3NzAwLCJleHAiOjE3OTE0MzY1MDAsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.yweguAWpw5nCQ6A3kr9jGbVpXDvEjyYTqham_bln02s\",\"usuario\":{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsImNvcnJlbyI6InBydWViYS5ibG9xdWVvMi5jMkBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDExMjMyLCJleHAiOjE3OTE0NDAwMzIsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.IZX3aXbZK4V1AioYbf8sKThwIIX181Ps93soe6OcTNc\",\"usuario\":{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 70,
-          "hora": "07/10/2026, 16:15:00"
+          "hora": "07/10/2026, 17:13:52"
         },
         {
           "metodo": "GET",
@@ -167,7 +177,7 @@
           "respuesta": "[]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:00"
+          "hora": "07/10/2026, 17:13:52"
         },
         {
           "metodo": "GET",
@@ -176,16 +186,16 @@
           "respuesta": "[]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:00"
+          "hora": "07/10/2026, 17:13:52"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:14:51\",\"perfil\":null,\"fotos\":{}}",
+          "respuesta": "{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:13:43\",\"perfil\":null,\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:00"
+          "hora": "07/10/2026, 17:13:52"
         },
         {
           "metodo": "GET",
@@ -194,12 +204,12 @@
           "respuesta": "[]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:00"
+          "hora": "07/10/2026, 17:13:52"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 12.4
+      "duracionSeg": 12.2
     },
     {
       "id": "CP-016",
@@ -212,7 +222,7 @@
       "esperado": "Guarda el perfil y muestra en pantalla «Perfil guardado».",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:01",
+      "fecha": "07/10/2026, 17:13:53",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Fallido",
       "real": "POST /api/perfil/estudiante → 200; pasa a «Mi Panel». En pantalla no se ve ningún mensaje: el elemento #tostada tiene el texto «Perfil guardado correctamente» y las clases «tostada tostada--visible», con opacidad calculada 0.",
@@ -220,15 +230,18 @@
       "evidencias": [
         "EV-CP016-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP016-C2-01.png": "Perfil guardado → 200. el elemento #tostada tiene el texto «Perfil guardado correctamente» y las clases «tostada tostada--visible», con opacidad calculada 0"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/registro",
           "estado": 201,
-          "respuesta": "{\"mensaje\":\"Cuenta creada. Completa tu perfil.\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzIsImNvcnJlbyI6InBlcmZpbC5jMkBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDA3NzA0LCJleHAiOjE3OTE0MzY1MDQsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.DCKyqtr1sZfsNScaW7aHQOgE5l78FiYgLAY3GYOHzuc\",\"usuario\":{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"mensaje\":\"Cuenta creada. Completa tu perfil.\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzIsImNvcnJlbyI6InBlcmZpbC5jMkBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDExMjM1LCJleHAiOjE3OTE0NDAwMzUsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.s2_QYSCz4PSx2zc3Zb6P5N-CzFKfsRW_EpyeQRXPZOM\",\"usuario\":{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"contrasena\":\"[oculta]\",\"rol\":\"estudiante\"}",
           "bytesEnviados": 122,
-          "hora": "07/10/2026, 16:15:04"
+          "hora": "07/10/2026, 17:13:55"
         },
         {
           "metodo": "GET",
@@ -237,7 +250,7 @@
           "respuesta": "[]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:04"
+          "hora": "07/10/2026, 17:13:55"
         },
         {
           "metodo": "POST",
@@ -246,25 +259,16 @@
           "respuesta": "{\"mensaje\":\"Perfil guardado\"}",
           "enviado": "{\"documento\":\"1098765432\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"telefono\":\"3001234567\",\"promedio\":0}",
           "bytesEnviados": 114,
-          "hora": "07/10/2026, 16:15:05"
-        },
-        {
-          "metodo": "GET",
-          "ruta": "/api/tutorias",
-          "estado": 200,
-          "respuesta": "[]",
-          "enviado": "",
-          "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:05"
+          "hora": "07/10/2026, 17:13:56"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:15:04\",\"perfil\":{\"id\":12,\"usuario_id\":32,\"codigo\":\"1098765432\",\"documento\":\"1098765432\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"telefono\":\"3001234567\",\"promedio\":\"0\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:13:55\",\"perfil\":{\"id\":12,\"usuario_id\":32,\"codigo\":\"1098765432\",\"documento\":\"1098765432\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"telefono\":\"3001234567\",\"promedio\":\"0\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:05"
+          "hora": "07/10/2026, 17:13:56"
         },
         {
           "metodo": "GET",
@@ -273,7 +277,16 @@
           "respuesta": "[]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:05"
+          "hora": "07/10/2026, 17:13:56"
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/tutorias",
+          "estado": 200,
+          "respuesta": "[]",
+          "enviado": "",
+          "bytesEnviados": 0,
+          "hora": "07/10/2026, 17:13:56"
         }
       ],
       "dialogos": [],
@@ -291,7 +304,7 @@
       "esperado": "Rechaza la imagen e informa que el tamaño máximo permitido es 2 MB.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:06",
+      "fecha": "07/10/2026, 17:13:57",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Fallido",
       "real": "La interfaz envió la foto: POST /api/perfil/foto → 200 {\"mensaje\":\"Foto guardada\"}. Lo enviado pesa unos 48 KB (la original pesa 2.50 MB): se redujo antes de enviarla. La foto no aparece en el perfil y no se muestra ningún aviso del límite de 2 MB (el elemento #tostada tiene el texto «✅ Foto de perfil actualizada» y las clases «tostada tostada--visible», con opacidad calculada 0).",
@@ -299,51 +312,54 @@
       "evidencias": [
         "EV-CP017-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP017-C2-01.png": "Archivo foto_2-5MB.jpg (2621440 bytes) → 200"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImNvcnJlbyI6ImNyaW9zQGFtaWdvLmVkdS5jbyIsInJvbCI6ImVzdHVkaWFudGUiLCJpYXQiOjE3OTE0MDc3MDcsImV4cCI6MTc5MTQzNjUwNywiYXVkIjoiY29uZWN0YXByb2ZlLWFwcCIsImlzcyI6ImNvbmVjdGFwcm9mZSJ9.37YTF7EZdB-Mn9arvqLsYIeH6waWzNQaVMuS64nLAvg\",\"usuario\":{\"id\":14,\"nombres\":\"Camilo\",\"apellidos\":\"Ríos Zapata\",\"correo\":\"crios@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImNvcnJlbyI6ImNyaW9zQGFtaWdvLmVkdS5jbyIsInJvbCI6ImVzdHVkaWFudGUiLCJpYXQiOjE3OTE0MTEyMzgsImV4cCI6MTc5MTQ0MDAzOCwiYXVkIjoiY29uZWN0YXByb2ZlLWFwcCIsImlzcyI6ImNvbmVjdGFwcm9mZSJ9.4MHLNyvJxaKIRiwfaqgEOdTSDb7PKzZy3984bQS5adA\",\"usuario\":{\"id\":14,\"nombres\":\"Camilo\",\"apellidos\":\"Ríos Zapata\",\"correo\":\"crios@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"crios@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 53,
-          "hora": "07/10/2026, 16:15:07"
+          "hora": "07/10/2026, 17:13:58"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":18,\"usuario_id\":14,\"icono\":\"📅\",\"titulo\":\"Asesoría programada: Fundamentos de Mercadeo\",\"descripcion\":\"El administrador programó una sesión con Sandra Ríos Montoya el 2026-10-07 a las 18:11. Modalidad: Virtual. \",\"leida\":0,\"creada_en\":\"2026-10-07T21:14:06\"}]",
+          "respuesta": "[{\"id\":18,\"usuario_id\":14,\"icono\":\"📅\",\"titulo\":\"Asesoría programada: Fundamentos de Mercadeo\",\"descripcion\":\"El administrador programó una sesión con Sandra Ríos Montoya el 2026-10-07 a las 19:10. Modalidad: Virtual. \",\"leida\":0,\"creada_en\":\"2026-10-07T22:13:15\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:07"
-        },
-        {
-          "metodo": "GET",
-          "ruta": "/api/tutorias",
-          "estado": 200,
-          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
-          "enviado": "",
-          "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:07"
+          "hora": "07/10/2026, 17:13:58"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":14,\"nombres\":\"Camilo\",\"apellidos\":\"Ríos Zapata\",\"correo\":\"crios@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":3,\"usuario_id\":14,\"codigo\":\"1098765003\",\"documento\":\"1098765003\",\"programa\":\"Derecho\",\"semestre\":\"6\",\"telefono\":\"3001234567\",\"promedio\":\"3.2\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":14,\"nombres\":\"Camilo\",\"apellidos\":\"Ríos Zapata\",\"correo\":\"crios@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":3,\"usuario_id\":14,\"codigo\":\"1098765003\",\"documento\":\"1098765003\",\"programa\":\"Derecho\",\"semestre\":\"6\",\"telefono\":\"3001234567\",\"promedio\":\"3.2\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:07"
+          "hora": "07/10/2026, 17:13:58"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:07"
+          "hora": "07/10/2026, 17:13:58"
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/tutorias",
+          "estado": 200,
+          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
+          "enviado": "",
+          "bytesEnviados": 0,
+          "hora": "07/10/2026, 17:13:58"
         },
         {
           "metodo": "POST",
@@ -352,12 +368,12 @@
           "respuesta": "{\"mensaje\":\"Foto guardada\"}",
           "enviado": "{\"foto_base64\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAA… (65441 caracteres)",
           "bytesEnviados": 65441,
-          "hora": "07/10/2026, 16:15:09"
+          "hora": "07/10/2026, 17:14:00"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 4.2
+      "duracionSeg": 4.7
     },
     {
       "id": "CP-018",
@@ -370,7 +386,7 @@
       "esperado": "HTTP 403 y no se crea ningún perfil de docente.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:10",
+      "fecha": "07/10/2026, 17:14:02",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Aprobado",
       "real": "Respuesta 403 {\"error\":\"No tienes permiso para esto\"}.",
@@ -378,51 +394,54 @@
       "evidencias": [
         "EV-CP018-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP018-C2-01.png": "Consola F12: Sesión de sgarcia@amigo.edu.co (estudiante)"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQwNzcxMSwiZXhwIjoxNzkxNDM2NTExLCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.s2mc9SQbsx5cwgIvWfvO0OHgmJeSCutsuGZcCsMvFeA\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQxMTI0MywiZXhwIjoxNzkxNDQwMDQzLCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.Ka5IXumEXgEyjtNhOkhSIy9Vpa4ymGAL66-qtQUuucQ\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"sgarcia@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 55,
-          "hora": "07/10/2026, 16:15:11"
+          "hora": "07/10/2026, 17:14:03"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:00\"}]",
+          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:05\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:11"
+          "hora": "07/10/2026, 17:14:03"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:11"
+          "hora": "07/10/2026, 17:14:03"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:11"
+          "hora": "07/10/2026, 17:14:03"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:11"
+          "hora": "07/10/2026, 17:14:03"
         },
         {
           "metodo": "POST",
@@ -431,7 +450,7 @@
           "respuesta": "{\"error\":\"No tienes permiso para esto\"}",
           "enviado": "{\"cedula\":\"12345\",\"facultad\":\"Ingenierías\"}",
           "bytesEnviados": 43,
-          "hora": "07/10/2026, 16:15:12"
+          "hora": "07/10/2026, 17:14:04"
         }
       ],
       "dialogos": [],
@@ -449,7 +468,7 @@
       "esperado": "Rechaza la programación: la fecha debe ser a partir de mañana.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:12",
+      "fecha": "07/10/2026, 17:14:04",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Aprobado",
       "real": "Con la fecha 07/10/2026 y la hora 23:00, bajo la fecha aparece «La fecha debe ser a partir de mañana (RN06)» y no se envía nada al servidor.",
@@ -457,60 +476,54 @@
       "evidencias": [
         "EV-CP019-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP019-C2-01.png": "Fecha 07/10/2026 23:00: «La fecha debe ser a partir de mañana (RN06)»"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQwNzcxMywiZXhwIjoxNzkxNDM2NTEzLCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.KtYFKOTOX7NSoIEiKCe_VvVqeN1ncyw_ov9iPxGc7lE\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQxMTI0NSwiZXhwIjoxNzkxNDQwMDQ1LCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.g6C4J6L94neRVjE7uROidg6HnmuM3gV00gfA3g6vCio\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"sgarcia@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 55,
-          "hora": "07/10/2026, 16:15:13"
+          "hora": "07/10/2026, 17:14:05"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:00\"}]",
+          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:05\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:13"
+          "hora": "07/10/2026, 17:14:05"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:13"
+          "hora": "07/10/2026, 17:14:05"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:13"
+          "hora": "07/10/2026, 17:14:05"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:13"
-        },
-        {
-          "metodo": "GET",
-          "ruta": "/api/tutorias/docentes-disponibles",
-          "estado": 200,
-          "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
-          "enviado": "",
-          "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:14"
+          "hora": "07/10/2026, 17:14:05"
         },
         {
           "metodo": "GET",
@@ -519,12 +532,21 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:14"
+          "hora": "07/10/2026, 17:14:06"
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/tutorias/docentes-disponibles",
+          "estado": 200,
+          "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
+          "enviado": "",
+          "bytesEnviados": 0,
+          "hora": "07/10/2026, 17:14:06"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 8.2
+      "duracionSeg": 8.9
     },
     {
       "id": "CP-020",
@@ -537,7 +559,7 @@
       "esperado": "El formulario no envía nada y muestra «La fecha debe ser a partir de mañana (RN06)».",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:20",
+      "fecha": "07/10/2026, 17:14:13",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Aprobado",
       "real": "Con la fecha 06/10/2026 y la hora 10:00, bajo la fecha aparece «La fecha debe ser a partir de mañana (RN06)» y no se envía nada al servidor.",
@@ -545,51 +567,54 @@
       "evidencias": [
         "EV-CP020-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP020-C2-01.png": "Fecha 06/10/2026 10:00: «La fecha debe ser a partir de mañana (RN06)»"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQwNzcyMSwiZXhwIjoxNzkxNDM2NTIxLCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.t44md30Jq7_xUKgtib5csMWezaLAOEpjQOoU6JkUxXY\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQxMTI1NCwiZXhwIjoxNzkxNDQwMDU0LCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.Y2Hx4EXAyOaAdqJ6_SB4cOaa0lJjzLcQwBpEh7H73LU\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"sgarcia@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 55,
-          "hora": "07/10/2026, 16:15:22"
+          "hora": "07/10/2026, 17:14:14"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:00\"}]",
+          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:05\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:22"
+          "hora": "07/10/2026, 17:14:14"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:22"
+          "hora": "07/10/2026, 17:14:14"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:22"
+          "hora": "07/10/2026, 17:14:14"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:22"
+          "hora": "07/10/2026, 17:14:14"
         },
         {
           "metodo": "GET",
@@ -598,7 +623,7 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:22"
+          "hora": "07/10/2026, 17:14:15"
         },
         {
           "metodo": "GET",
@@ -607,12 +632,12 @@
           "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:22"
+          "hora": "07/10/2026, 17:14:15"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 8.1
+      "duracionSeg": 8.8
     },
     {
       "id": "CP-021",
@@ -625,59 +650,64 @@
       "esperado": "HTTP 404 «Docente no encontrado o inactivo» sin error 500; el sistema sigue arriba.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:28",
+      "fecha": "07/10/2026, 17:14:22",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Aprobado",
       "real": "Respuesta 404 {\"error\":\"Docente no encontrado o inactivo\"}; al recargar, la página carga normal y el servidor sigue arriba.",
       "defecto": null,
       "evidencias": [
-        "EV-CP021-C2-01.png"
+        "EV-CP021-C2-01.png",
+        "EV-CP021-C2-02.png"
       ],
+      "descripciones": {
+        "EV-CP021-C2-01.png": "Consola F12: Sesión de sgarcia@amigo.edu.co (estudiante)",
+        "EV-CP021-C2-02.png": "docente_id 999999 → 404; después de recargar el panel carga normal"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQwNzczMCwiZXhwIjoxNzkxNDM2NTMwLCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.q1bMEm_87-q7UKAKDEj0W3LuJwzfKUk50aeIY3oSPjc\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQxMTI2MywiZXhwIjoxNzkxNDQwMDYzLCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.h7aZt6mJthNcQHMytKED0M-JUrDcec3HlzPFdZkank4\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"sgarcia@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 55,
-          "hora": "07/10/2026, 16:15:30"
+          "hora": "07/10/2026, 17:14:23"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:00\"}]",
+          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:05\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:30"
+          "hora": "07/10/2026, 17:14:23"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:30"
+          "hora": "07/10/2026, 17:14:23"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:30"
+          "hora": "07/10/2026, 17:14:23"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:30"
+          "hora": "07/10/2026, 17:14:23"
         },
         {
           "metodo": "POST",
@@ -686,48 +716,48 @@
           "respuesta": "{\"error\":\"Docente no encontrado o inactivo\"}",
           "enviado": "{\"docente_id\":999999,\"asignatura\":\"Cálculo Diferencial\",\"modalidad\":\"Virtual\",\"fecha\":\"2027-02-15\",\"hora\":\"10:00\"}",
           "bytesEnviados": 114,
-          "hora": "07/10/2026, 16:15:31"
+          "hora": "07/10/2026, 17:14:24"
         },
         {
           "metodo": "GET",
           "ruta": "/api/auth/yo",
           "estado": 200,
-          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\"}",
+          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\"}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:31"
+          "hora": "07/10/2026, 17:14:24"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:00\"}]",
+          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:05\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:31"
+          "hora": "07/10/2026, 17:14:24"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:31"
+          "hora": "07/10/2026, 17:14:24"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:31"
+          "hora": "07/10/2026, 17:14:24"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 4
+      "duracionSeg": 4.1
     },
     {
       "id": "CP-022",
@@ -740,7 +770,7 @@
       "esperado": "HTTP 409 «El docente ya tiene una tutoría a esa hora» y no se crea la segunda tutoría.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:32",
+      "fecha": "07/10/2026, 17:14:26",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Aprobado",
       "real": "Preparación: sgarcia programó con Carlos Peña Ochoa el 11/03/2027 a las 10:00 (201). Con crios, la misma franja respondió 409 {\"error\":\"El docente ya tiene una tutoría a esa hora\"} y en el panel no aparece una tutoría nueva. En pantalla no sale ningún mensaje (el elemento #tostada tiene el texto «El docente ya tiene una tutoría a esa hora» y las clases «tostada tostada--visible tostada--error», con opacidad calculada 0).",
@@ -748,51 +778,54 @@
       "evidencias": [
         "EV-CP022-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP022-C2-01.png": "crios programa con Carlos Peña el 11/03/2027 10:00 → 409"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQwNzczNCwiZXhwIjoxNzkxNDM2NTM0LCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.E_P1KGzYJVazSWty864aD-d20d7u8wmYRAKTGOZThC0\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQxMTI2NywiZXhwIjoxNzkxNDQwMDY3LCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.SdD5xWh-ATiYh_fjK1GHZbOppLUW1vmuszNZ_yQyXPQ\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"sgarcia@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 55,
-          "hora": "07/10/2026, 16:15:34"
+          "hora": "07/10/2026, 17:14:27"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:00\"}]",
+          "respuesta": "[{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:05\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:34"
+          "hora": "07/10/2026, 17:14:27"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:34"
+          "hora": "07/10/2026, 17:14:27"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:34"
+          "hora": "07/10/2026, 17:14:27"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:00\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:05\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:34"
+          "hora": "07/10/2026, 17:14:27"
         },
         {
           "metodo": "GET",
@@ -801,7 +834,7 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:35"
+          "hora": "07/10/2026, 17:14:28"
         },
         {
           "metodo": "GET",
@@ -810,7 +843,7 @@
           "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:35"
+          "hora": "07/10/2026, 17:14:28"
         },
         {
           "metodo": "POST",
@@ -819,70 +852,70 @@
           "respuesta": "{\"mensaje\":\"Tutoría programada\",\"id\":9}",
           "enviado": "{\"docente_id\":3,\"estudiante_id\":null,\"asignatura\":\"Fundamentos de Mercadeo\",\"modalidad\":\"Virtual\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"observaciones\":\"\"}",
           "bytesEnviados": 153,
-          "hora": "07/10/2026, 16:15:36"
+          "hora": "07/10/2026, 17:14:29"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:15:36\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:0",
+          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:14:29\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:0",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:36"
+          "hora": "07/10/2026, 17:14:29"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:15:36\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:0",
+          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:14:29\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:0",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:36"
+          "hora": "07/10/2026, 17:14:29"
         },
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImNvcnJlbyI6ImNyaW9zQGFtaWdvLmVkdS5jbyIsInJvbCI6ImVzdHVkaWFudGUiLCJpYXQiOjE3OTE0MDc3MzksImV4cCI6MTc5MTQzNjUzOSwiYXVkIjoiY29uZWN0YXByb2ZlLWFwcCIsImlzcyI6ImNvbmVjdGFwcm9mZSJ9.R2zwPo3ijLPXsVPVpFSHxOABWj5lgVTwa-n9HvQY5Z4\",\"usuario\":{\"id\":14,\"nombres\":\"Camilo\",\"apellidos\":\"Ríos Zapata\",\"correo\":\"crios@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImNvcnJlbyI6ImNyaW9zQGFtaWdvLmVkdS5jbyIsInJvbCI6ImVzdHVkaWFudGUiLCJpYXQiOjE3OTE0MTEyNzIsImV4cCI6MTc5MTQ0MDA3MiwiYXVkIjoiY29uZWN0YXByb2ZlLWFwcCIsImlzcyI6ImNvbmVjdGFwcm9mZSJ9.aFPJKV7hzUEiiNfmtWU79d_Wnz2i7pm2wblJ3WQqoCE\",\"usuario\":{\"id\":14,\"nombres\":\"Camilo\",\"apellidos\":\"Ríos Zapata\",\"correo\":\"crios@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"crios@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 53,
-          "hora": "07/10/2026, 16:15:39"
+          "hora": "07/10/2026, 17:14:32"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":18,\"usuario_id\":14,\"icono\":\"📅\",\"titulo\":\"Asesoría programada: Fundamentos de Mercadeo\",\"descripcion\":\"El administrador programó una sesión con Sandra Ríos Montoya el 2026-10-07 a las 18:11. Modalidad: Virtual. \",\"leida\":0,\"creada_en\":\"2026-10-07T21:14:06\"}]",
+          "respuesta": "[{\"id\":18,\"usuario_id\":14,\"icono\":\"📅\",\"titulo\":\"Asesoría programada: Fundamentos de Mercadeo\",\"descripcion\":\"El administrador programó una sesión con Sandra Ríos Montoya el 2026-10-07 a las 19:10. Modalidad: Virtual. \",\"leida\":0,\"creada_en\":\"2026-10-07T22:13:15\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:39"
-        },
-        {
-          "metodo": "GET",
-          "ruta": "/api/tutorias",
-          "estado": 200,
-          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
-          "enviado": "",
-          "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:39"
+          "hora": "07/10/2026, 17:14:32"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":14,\"nombres\":\"Camilo\",\"apellidos\":\"Ríos Zapata\",\"correo\":\"crios@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":3,\"usuario_id\":14,\"codigo\":\"1098765003\",\"documento\":\"1098765003\",\"programa\":\"Derecho\",\"semestre\":\"6\",\"telefono\":\"3001234567\",\"promedio\":\"3.2\"},\"fotos\":{\"foto_perfil\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAA",
+          "respuesta": "{\"id\":14,\"nombres\":\"Camilo\",\"apellidos\":\"Ríos Zapata\",\"correo\":\"crios@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":3,\"usuario_id\":14,\"codigo\":\"1098765003\",\"documento\":\"1098765003\",\"programa\":\"Derecho\",\"semestre\":\"6\",\"telefono\":\"3001234567\",\"promedio\":\"3.2\"},\"fotos\":{\"foto_perfil\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAA",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:39"
+          "hora": "07/10/2026, 17:14:32"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:39"
+          "hora": "07/10/2026, 17:14:32"
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/tutorias",
+          "estado": 200,
+          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
+          "enviado": "",
+          "bytesEnviados": 0,
+          "hora": "07/10/2026, 17:14:32"
         },
         {
           "metodo": "GET",
@@ -891,7 +924,7 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:40"
+          "hora": "07/10/2026, 17:14:33"
         },
         {
           "metodo": "GET",
@@ -900,7 +933,7 @@
           "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:40"
+          "hora": "07/10/2026, 17:14:33"
         },
         {
           "metodo": "POST",
@@ -909,30 +942,30 @@
           "respuesta": "{\"error\":\"El docente ya tiene una tutoría a esa hora\"}",
           "enviado": "{\"docente_id\":3,\"estudiante_id\":null,\"asignatura\":\"Fundamentos de Mercadeo\",\"modalidad\":\"Virtual\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"observaciones\":\"\"}",
           "bytesEnviados": 153,
-          "hora": "07/10/2026, 16:15:41"
+          "hora": "07/10/2026, 17:14:34"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:42"
+          "hora": "07/10/2026, 17:14:35"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
+          "respuesta": "[{\"id\":6,\"estudiante_id\":14,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"estado\":\"confirmada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"correo_docente\":\"srios@amigo.edu.co\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:42"
+          "hora": "07/10/2026, 17:14:35"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 10.2
+      "duracionSeg": 10.5
     },
     {
       "id": "CP-024",
@@ -945,59 +978,62 @@
       "esperado": "Rechaza la cancelación e indica en pantalla que se requieren 24 h de antelación.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:43",
+      "fecha": "07/10/2026, 17:14:36",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Fallido",
-      "real": "Preparación: tutoría con Juan Salazar Bedoya el 08/10/2026 a las 04:15 (201); al pulsar «Cancelar» faltaban 12.0 h reales. PATCH → 400 {\"error\":\"Faltan 7h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.\"}; la tarjeta queda «Pendiente». En pantalla: el elemento #tostada tiene el texto «Faltan 7h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.» y las clases «tostada tostada--visible tostada--error», con opacidad calculada 0.",
+      "real": "Preparación: tutoría con Juan Salazar Bedoya el 08/10/2026 a las 05:14 (201); al pulsar «Cancelar» faltaban 12.0 h reales. PATCH → 400 {\"error\":\"Faltan 7h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.\"}; la tarjeta queda «Pendiente». En pantalla: el elemento #tostada tiene el texto «Faltan 7h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.» y las clases «tostada tostada--visible tostada--error», con opacidad calculada 0.",
       "defecto": "DEF-13",
       "evidencias": [
         "EV-CP024-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP024-C2-01.png": "Tutoría 08/10/2026 05:14 con Juan Salazar Bedoya (margen real 12.0 h) → PATCH 400 · «Pendiente». el elemento #tostada tiene el texto «Faltan 7h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.» y las clases «tostada tostada--visible tostada--error», con opacidad calculada 0"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImNvcnJlbyI6ImpwZXJlekBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDA3NzQ0LCJleHAiOjE3OTE0MzY1NDQsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.0w-iskyBt-4cBkJEDplbL9XTgC_V5vka_6wbOvoGnfc\",\"usuario\":{\"id\":16,\"nombres\":\"Juan\",\"apellidos\":\"Pérez Salazar\",\"correo\":\"jperez@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImNvcnJlbyI6ImpwZXJlekBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDExMjc3LCJleHAiOjE3OTE0NDAwNzcsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.rfuYn0UAfbzQFjmLvTX3DUrubISGot-BVqIuoeoYME4\",\"usuario\":{\"id\":16,\"nombres\":\"Juan\",\"apellidos\":\"Pérez Salazar\",\"correo\":\"jperez@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"jperez@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 54,
-          "hora": "07/10/2026, 16:15:44"
+          "hora": "07/10/2026, 17:14:37"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":9,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 07:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:30\"},{\"id\":7,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 18:13\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:24\"},{\"id\":5,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 04:13\",\"leida\":0,",
+          "respuesta": "[{\"id\":9,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 07:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:37\"},{\"id\":7,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 19:12\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:30\"},{\"id\":5,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 05:12\",\"leida\":0,",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:44"
+          "hora": "07/10/2026, 17:14:37"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:13\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:12\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:44"
+          "hora": "07/10/2026, 17:14:37"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":16,\"nombres\":\"Juan\",\"apellidos\":\"Pérez Salazar\",\"correo\":\"jperez@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":5,\"usuario_id\":16,\"codigo\":\"1098765005\",\"documento\":\"1098765005\",\"programa\":\"Sistemas\",\"semestre\":\"5\",\"telefono\":\"3001234567\",\"promedio\":\"3.5\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":16,\"nombres\":\"Juan\",\"apellidos\":\"Pérez Salazar\",\"correo\":\"jperez@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":5,\"usuario_id\":16,\"codigo\":\"1098765005\",\"documento\":\"1098765005\",\"programa\":\"Sistemas\",\"semestre\":\"5\",\"telefono\":\"3001234567\",\"promedio\":\"3.5\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:44"
+          "hora": "07/10/2026, 17:14:37"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:13\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:12\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:44"
+          "hora": "07/10/2026, 17:14:38"
         },
         {
           "metodo": "GET",
@@ -1006,7 +1042,7 @@
           "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:45"
+          "hora": "07/10/2026, 17:14:38"
         },
         {
           "metodo": "GET",
@@ -1015,52 +1051,52 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:45"
+          "hora": "07/10/2026, 17:14:38"
         },
         {
           "metodo": "POST",
           "ruta": "/api/tutorias",
           "estado": 201,
           "respuesta": "{\"mensaje\":\"Tutoría programada\",\"id\":10}",
-          "enviado": "{\"docente_id\":5,\"estudiante_id\":null,\"asignatura\":\"Fundamentos de Mercadeo\",\"modalidad\":\"Virtual\",\"fecha\":\"2026-10-08\",\"hora\":\"04:15\",\"observaciones\":\"\"}",
+          "enviado": "{\"docente_id\":5,\"estudiante_id\":null,\"asignatura\":\"Fundamentos de Mercadeo\",\"modalidad\":\"Virtual\",\"fecha\":\"2026-10-08\",\"hora\":\"05:14\",\"observaciones\":\"\"}",
           "bytesEnviados": 153,
-          "hora": "07/10/2026, 16:15:46"
+          "hora": "07/10/2026, 17:14:39"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:13\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:12\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:46"
+          "hora": "07/10/2026, 17:14:40"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:13\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:12\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:46"
+          "hora": "07/10/2026, 17:14:40"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:13\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:12\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:47"
+          "hora": "07/10/2026, 17:14:40"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:13\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:12\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:47"
+          "hora": "07/10/2026, 17:14:40"
         },
         {
           "metodo": "PATCH",
@@ -1069,18 +1105,18 @@
           "respuesta": "{\"error\":\"Faltan 7h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.\"}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:48"
+          "hora": "07/10/2026, 17:14:41"
         }
       ],
       "dialogos": [
         {
           "tipo": "confirm",
           "mensaje": "¿Cancelar esta tutoría?",
-          "hora": "07/10/2026, 16:15:48"
+          "hora": "07/10/2026, 17:14:41"
         }
       ],
       "erroresPagina": [],
-      "duracionSeg": 6.5
+      "duracionSeg": 7.2
     },
     {
       "id": "CP-025",
@@ -1093,59 +1129,62 @@
       "esperado": "Con 24 h o más de margen, cancela la tutoría.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:49",
+      "fecha": "07/10/2026, 17:14:43",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Fallido",
-      "real": "Preparación: tutoría con Laura Vargas Suárez el 08/10/2026 a las 18:15 (201); al pulsar «Cancelar» faltaban 26.0 h reales. PATCH → 400 {\"error\":\"Faltan 21h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.\"}; la tarjeta queda «Pendiente». En pantalla: el elemento #tostada tiene el texto «Faltan 21h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.» y las clases «tostada tostada--visible tostada--error», con opacidad calculada 0.",
+      "real": "Preparación: tutoría con Laura Vargas Suárez el 08/10/2026 a las 19:14 (201); al pulsar «Cancelar» faltaban 26.0 h reales. PATCH → 400 {\"error\":\"Faltan 21h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.\"}; la tarjeta queda «Pendiente». En pantalla: el elemento #tostada tiene el texto «Faltan 21h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.» y las clases «tostada tostada--visible tostada--error», con opacidad calculada 0.",
       "defecto": "DEF-08",
       "evidencias": [
         "EV-CP025-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP025-C2-01.png": "Tutoría 08/10/2026 19:14 con Laura Vargas Suárez (margen real 26.0 h) → PATCH 400 · «Pendiente». el elemento #tostada tiene el texto «Faltan 21h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.» y las clases «tostada tostada--visible tostada--error», con opacidad calculada 0"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImNvcnJlbyI6ImpwZXJlekBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDA3NzUxLCJleHAiOjE3OTE0MzY1NTEsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.O4PH3MxQWlZLLeJiUJ1adzKGyUuaA3RJkMiuA5tCr9A\",\"usuario\":{\"id\":16,\"nombres\":\"Juan\",\"apellidos\":\"Pérez Salazar\",\"correo\":\"jperez@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImNvcnJlbyI6ImpwZXJlekBhbWlnby5lZHUuY28iLCJyb2wiOiJlc3R1ZGlhbnRlIiwiaWF0IjoxNzkxNDExMjg1LCJleHAiOjE3OTE0NDAwODUsImF1ZCI6ImNvbmVjdGFwcm9mZS1hcHAiLCJpc3MiOiJjb25lY3RhcHJvZmUifQ.cvWbgjVwSrJ1hhwuyYdDI_EjjQCldtrXCvP1x8P8ozw\",\"usuario\":{\"id\":16,\"nombres\":\"Juan\",\"apellidos\":\"Pérez Salazar\",\"correo\":\"jperez@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"jperez@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 54,
-          "hora": "07/10/2026, 16:15:51"
+          "hora": "07/10/2026, 17:14:45"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":25,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 04:15\",\"leida\":0,\"creada_en\":\"2026-10-07T21:15:46\"},{\"id\":9,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 07:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:30\"},{\"id\":7,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 18:13\",\"leida\":0",
+          "respuesta": "[{\"id\":25,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 05:14\",\"leida\":0,\"creada_en\":\"2026-10-07T22:14:39\"},{\"id\":9,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 07:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:37\"},{\"id\":7,\"usuario_id\":16,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2026-10-08 a las 19:12\",\"leida\":0",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:51"
-        },
-        {
-          "metodo": "GET",
-          "ruta": "/api/tutorias",
-          "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:13\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
-          "enviado": "",
-          "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:51"
+          "hora": "07/10/2026, 17:14:45"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":16,\"nombres\":\"Juan\",\"apellidos\":\"Pérez Salazar\",\"correo\":\"jperez@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":5,\"usuario_id\":16,\"codigo\":\"1098765005\",\"documento\":\"1098765005\",\"programa\":\"Sistemas\",\"semestre\":\"5\",\"telefono\":\"3001234567\",\"promedio\":\"3.5\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":16,\"nombres\":\"Juan\",\"apellidos\":\"Pérez Salazar\",\"correo\":\"jperez@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":5,\"usuario_id\":16,\"codigo\":\"1098765005\",\"documento\":\"1098765005\",\"programa\":\"Sistemas\",\"semestre\":\"5\",\"telefono\":\"3001234567\",\"promedio\":\"3.5\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:51"
+          "hora": "07/10/2026, 17:14:45"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:13\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:12\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:51"
+          "hora": "07/10/2026, 17:14:45"
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/tutorias",
+          "estado": 200,
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":4,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:12\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "enviado": "",
+          "bytesEnviados": 0,
+          "hora": "07/10/2026, 17:14:45"
         },
         {
           "metodo": "GET",
@@ -1154,7 +1193,7 @@
           "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:52"
+          "hora": "07/10/2026, 17:14:46"
         },
         {
           "metodo": "GET",
@@ -1163,52 +1202,52 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:52"
+          "hora": "07/10/2026, 17:14:46"
         },
         {
           "metodo": "POST",
           "ruta": "/api/tutorias",
           "estado": 201,
           "respuesta": "{\"mensaje\":\"Tutoría programada\",\"id\":11}",
-          "enviado": "{\"docente_id\":6,\"estudiante_id\":null,\"asignatura\":\"Fundamentos de Mercadeo\",\"modalidad\":\"Virtual\",\"fecha\":\"2026-10-08\",\"hora\":\"18:15\",\"observaciones\":\"\"}",
+          "enviado": "{\"docente_id\":6,\"estudiante_id\":null,\"asignatura\":\"Fundamentos de Mercadeo\",\"modalidad\":\"Virtual\",\"fecha\":\"2026-10-08\",\"hora\":\"19:14\",\"observaciones\":\"\"}",
           "bytesEnviados": 153,
-          "hora": "07/10/2026, 16:15:53"
+          "hora": "07/10/2026, 17:14:47"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":11,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:15\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":11,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:14\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:53"
+          "hora": "07/10/2026, 17:14:47"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":11,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:15\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":11,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:14\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:53"
+          "hora": "07/10/2026, 17:14:47"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":11,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:15\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":11,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:14\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:54"
+          "hora": "07/10/2026, 17:14:48"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:10\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":11,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"18:15\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T",
+          "respuesta": "[{\"id\":2,\"estudiante_id\":16,\"docente_id\":4,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-12\",\"hora\":\"15:00\",\"modalidad\":\"Virtual\",\"estado\":\"cancelada\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:15\",\"nombre_docente\":\"Diego Herrera Zapata\",\"correo_docente\":\"dherrera@amigo.edu.co\"},{\"id\":11,\"estudiante_id\":16,\"docente_id\":6,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-08\",\"hora\":\"19:14\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:54"
+          "hora": "07/10/2026, 17:14:48"
         },
         {
           "metodo": "PATCH",
@@ -1217,18 +1256,18 @@
           "respuesta": "{\"error\":\"Faltan 21h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente.\"}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:54"
+          "hora": "07/10/2026, 17:14:49"
         }
       ],
       "dialogos": [
         {
           "tipo": "confirm",
           "mensaje": "¿Cancelar esta tutoría?",
-          "hora": "07/10/2026, 16:15:54"
+          "hora": "07/10/2026, 17:14:49"
         }
       ],
       "erroresPagina": [],
-      "duracionSeg": 6.7
+      "duracionSeg": 7.5
     },
     {
       "id": "CP-031",
@@ -1241,7 +1280,7 @@
       "esperado": "En cada combinación la tabla muestra solo los usuarios que cumplen los tres criterios y el contador coincide con las filas visibles.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:15:56",
+      "fecha": "07/10/2026, 17:14:51",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Fallido",
       "real": "Preparación: se desactivó a Valentina Osorio. Estudiantes + Activos + «»: 13 filas visibles de 18 esperadas; sobran vosorio@amigo.edu.co; faltan perfil.c2@amigo.edu.co, perfil.c1@amigo.edu.co, lcano@amigo.edu.co, dmontoya@amigo.edu.co, malvarez@amigo.edu.co, lramirez@amigo.edu.co; contador «Mostrando 13 usuario(s)». Docentes + Inactivos + «Peña»: 0 filas visibles de 0 esperadas; contador «Mostrando 0 usuario(s)». Administradores + Activos + «zzz»: 0 filas visibles de 0 esperadas; contador «Mostrando 0 usuario(s)». Al final se reactivó la cuenta.",
@@ -1251,15 +1290,20 @@
         "EV-CP031-C2-02.png",
         "EV-CP031-C2-03.png"
       ],
+      "descripciones": {
+        "EV-CP031-C2-01.png": "Estudiantes + Activos + «»: 13 visibles, 18 esperados. Sobran: vosorio@amigo.edu.co. Faltan: perfil.c2@amigo.edu.co, perfil.c1@amigo.edu.co, lcano@amigo.edu.co, dmontoya@amigo.edu.co, malvarez@amigo.edu.co, lramirez@amigo.edu.co.",
+        "EV-CP031-C2-02.png": "Docentes + Inactivos + «Peña»: 0 visibles, 0 esperados. ",
+        "EV-CP031-C2-03.png": "Administradores + Activos + «zzz»: 0 visibles, 0 esperados. "
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiY29ycmVvIjoiYWRtaW4uZXF1aXBvZkBhbWlnby5lZHUuY28iLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MTQwNzc1NywiZXhwIjoxNzkxNDM2NTU3LCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.OZdJeHeh5nq-zwyBD10dwlI8xEIK8Ifs2eqsAa9IBIs\",\"usuario\":{\"id\":1,\"nombres\":\"Administrador\",\"apellidos\":\"del Sistema\",\"correo\":\"admin.equipof@amigo.edu.co\",\"rol\":\"admin\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiY29ycmVvIjoiYWRtaW4uZXF1aXBvZkBhbWlnby5lZHUuY28iLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MTQxMTI5MiwiZXhwIjoxNzkxNDQwMDkyLCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.oQ7mPiHkrMQkUf31ph1_EjovtMmGt2lhak6FRcI9P0Y\",\"usuario\":{\"id\":1,\"nombres\":\"Administrador\",\"apellidos\":\"del Sistema\",\"correo\":\"admin.equipof@amigo.edu.co\",\"rol\":\"admin\"}}",
           "enviado": "{\"correo\":\"admin.equipof@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 71,
-          "hora": "07/10/2026, 16:15:57"
+          "hora": "07/10/2026, 17:14:52"
         },
         {
           "metodo": "GET",
@@ -1268,16 +1312,16 @@
           "respuesta": "[]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:57"
+          "hora": "07/10/2026, 17:14:52"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/usuarios",
           "estado": 200,
-          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:15:04\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:14:51\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
+          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:55\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:43\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:57"
+          "hora": "07/10/2026, 17:14:52"
         },
         {
           "metodo": "GET",
@@ -1286,25 +1330,25 @@
           "respuesta": "{\"total_usuarios\":31,\"alertas_activas\":7,\"tutorias_este_mes\":6,\"total_tutorias\":11,\"perfiles_completos\":22,\"total_asignaciones\":1,\"notificaciones_pendientes\":28,\"tasa_recuperacion\":\"9%\"}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:57"
+          "hora": "07/10/2026, 17:14:52"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/clases-programadas",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programado_por_nombre\":\"Administrador del Sistema\"}]",
+          "respuesta": "[{\"id\":1,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programado_por_nombre\":\"Administrador del Sistema\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:57"
+          "hora": "07/10/2026, 17:14:52"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/usuarios",
           "estado": 200,
-          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:15:04\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:14:51\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
+          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:55\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:43\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:15:58"
+          "hora": "07/10/2026, 17:14:53"
         },
         {
           "metodo": "PATCH",
@@ -1313,23 +1357,23 @@
           "respuesta": "{\"mensaje\":\"Usuario desactivado\"}",
           "enviado": "{\"activo\":false}",
           "bytesEnviados": 16,
-          "hora": "07/10/2026, 16:16:00"
+          "hora": "07/10/2026, 17:14:55"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/usuarios",
           "estado": 200,
-          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:15:04\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:14:51\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
+          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:55\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:43\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:00"
+          "hora": "07/10/2026, 17:14:55"
         }
       ],
       "dialogos": [
         {
           "tipo": "confirm",
           "mensaje": "¿Desactivar la cuenta de Valentina Osorio Mejía?",
-          "hora": "07/10/2026, 16:16:00"
+          "hora": "07/10/2026, 17:14:55"
         }
       ],
       "erroresPagina": [],
@@ -1346,23 +1390,26 @@
       "esperado": "RRN06: no se puede programar para el mismo día; el sistema rechaza la asesoría.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:16:02",
+      "fecha": "07/10/2026, 17:14:57",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Fallido",
-      "real": "La asesoría con fecha de hoy (07/10/2026 18:14) se crea: POST → 200 {\"mensaje\":\"Asesoría creada. Se notificó a Sandra Ríos Montoya y a Camilo Ríos Zapata.\",\"tutoria_id\":12}. Aparece en «Sesiones Programadas».",
+      "real": "La asesoría con fecha de hoy (07/10/2026 19:13) se crea: POST → 200 {\"mensaje\":\"Asesoría creada. Se notificó a Sandra Ríos Montoya y a Camilo Ríos Zapata.\",\"tutoria_id\":12}. Aparece en «Sesiones Programadas».",
       "defecto": "DEF-02",
       "evidencias": [
         "EV-CP032-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP032-C2-01.png": "Asesoría Sandra Ríos + Camilo Ríos, 07/10/2026 19:13 → 200"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiY29ycmVvIjoiYWRtaW4uZXF1aXBvZkBhbWlnby5lZHUuY28iLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MTQwNzc2MywiZXhwIjoxNzkxNDM2NTYzLCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.n3M6hzHGHOa8sfk1SvGBudGxiT0Mfob35eGYSTX2K60\",\"usuario\":{\"id\":1,\"nombres\":\"Administrador\",\"apellidos\":\"del Sistema\",\"correo\":\"admin.equipof@amigo.edu.co\",\"rol\":\"admin\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiY29ycmVvIjoiYWRtaW4uZXF1aXBvZkBhbWlnby5lZHUuY28iLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MTQxMTI5OCwiZXhwIjoxNzkxNDQwMDk4LCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.V8WaTl8XP6YLBzbGifCgrcJE_9FHa_O5W-M-gmbl8F4\",\"usuario\":{\"id\":1,\"nombres\":\"Administrador\",\"apellidos\":\"del Sistema\",\"correo\":\"admin.equipof@amigo.edu.co\",\"rol\":\"admin\"}}",
           "enviado": "{\"correo\":\"admin.equipof@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 71,
-          "hora": "07/10/2026, 16:16:03"
+          "hora": "07/10/2026, 17:14:58"
         },
         {
           "metodo": "GET",
@@ -1371,25 +1418,25 @@
           "respuesta": "[]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:03"
-        },
-        {
-          "metodo": "GET",
-          "ruta": "/api/admin/clases-programadas",
-          "estado": 200,
-          "respuesta": "[{\"id\":1,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programado_por_nombre\":\"Administrador del Sistema\"}]",
-          "enviado": "",
-          "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:03"
+          "hora": "07/10/2026, 17:14:58"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/usuarios",
           "estado": 200,
-          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:15:04\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:14:51\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
+          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:55\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:43\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:03"
+          "hora": "07/10/2026, 17:14:58"
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/admin/clases-programadas",
+          "estado": 200,
+          "respuesta": "[{\"id\":1,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programado_por_nombre\":\"Administrador del Sistema\"}]",
+          "enviado": "",
+          "bytesEnviados": 0,
+          "hora": "07/10/2026, 17:14:58"
         },
         {
           "metodo": "GET",
@@ -1398,25 +1445,25 @@
           "respuesta": "{\"total_usuarios\":31,\"alertas_activas\":7,\"tutorias_este_mes\":6,\"total_tutorias\":11,\"perfiles_completos\":22,\"total_asignaciones\":1,\"notificaciones_pendientes\":28,\"tasa_recuperacion\":\"9%\"}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:03"
+          "hora": "07/10/2026, 17:14:58"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/usuarios",
           "estado": 200,
-          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:15:04\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T21:14:51\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
+          "respuesta": "[{\"id\":32,\"nombres\":\"Valeria\",\"apellidos\":\"Zapata\",\"correo\":\"perfil.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:55\",\"programa\":\"Ingeniería de Sistemas\",\"semestre\":\"5\",\"promedio\":\"0\",\"facultad\":null,\"dependencia\":null},{\"id\":31,\"nombres\":\"Prueba\",\"apellidos\":\"Bloqueo\",\"correo\":\"prueba.bloqueo2.c2@amigo.edu.co\",\"rol\":\"estudiante\",\"activo\":1,\"creado_en\":\"2026-10-07T22:13:43\",\"programa\":null,\"semestre\":null,\"promedio\":null,\"facultad\":null,\"dependencia\":null},{\"id\":30",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:04"
+          "hora": "07/10/2026, 17:14:59"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/asignaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estado\":\"activa\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programa\":\"Derecho\",\"promedio\":\"3.2\",\"nombre_docente\":\"Sandra Ríos Montoya\"}]",
+          "respuesta": "[{\"id\":1,\"estado\":\"activa\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programa\":\"Derecho\",\"promedio\":\"3.2\",\"nombre_docente\":\"Sandra Ríos Montoya\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:04"
+          "hora": "07/10/2026, 17:14:59"
         },
         {
           "metodo": "GET",
@@ -1425,16 +1472,16 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:04"
+          "hora": "07/10/2026, 17:14:59"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/clases-programadas",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programado_por_nombre\":\"Administrador del Sistema\"}]",
+          "respuesta": "[{\"id\":1,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programado_por_nombre\":\"Administrador del Sistema\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:04"
+          "hora": "07/10/2026, 17:14:59"
         },
         {
           "metodo": "GET",
@@ -1443,7 +1490,7 @@
           "respuesta": "[{\"id\":9,\"nombre\":\"Sandra Ríos Montoya\",\"correo\":\"srios@amigo.edu.co\",\"rol\":\"docente\",\"cedula\":\"1023456008\",\"info\":\"Facultad de Derecho\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:05"
+          "hora": "07/10/2026, 17:15:00"
         },
         {
           "metodo": "GET",
@@ -1452,39 +1499,39 @@
           "respuesta": "[{\"id\":14,\"nombre\":\"Camilo Ríos Zapata\",\"correo\":\"crios@amigo.edu.co\",\"rol\":\"estudiante\",\"cedula\":\"1098765003\",\"info\":\"Derecho\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:05"
+          "hora": "07/10/2026, 17:15:00"
         },
         {
           "metodo": "POST",
           "ruta": "/api/admin/programar-clase",
           "estado": 200,
           "respuesta": "{\"mensaje\":\"Asesoría creada. Se notificó a Sandra Ríos Montoya y a Camilo Ríos Zapata.\",\"tutoria_id\":12}",
-          "enviado": "{\"docente_id\":9,\"estudiante_id\":14,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:14\",\"modalidad\":\"Virtual\",\"observaciones\":\"\"}",
+          "enviado": "{\"docente_id\":9,\"estudiante_id\":14,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:13\",\"modalidad\":\"Virtual\",\"observaciones\":\"\"}",
           "bytesEnviados": 151,
-          "hora": "07/10/2026, 16:16:05"
+          "hora": "07/10/2026, 17:15:01"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/clases-programadas",
           "estado": 200,
-          "respuesta": "[{\"id\":2,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:14\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:16:05\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programado_por_nombre\":\"Administrador del Sistema\"},{\"id\":1,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"18:11\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_est",
+          "respuesta": "[{\"id\":2,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:13\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:15:01\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programado_por_nombre\":\"Administrador del Sistema\"},{\"id\":1,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2026-10-07\",\"hora\":\"19:10\",\"modalidad\":\"Virtual\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_docente\":\"Sandra Ríos Montoya\",\"nombre_est",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:05"
+          "hora": "07/10/2026, 17:15:01"
         },
         {
           "metodo": "GET",
           "ruta": "/api/admin/asignaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":1,\"estado\":\"activa\",\"creada_en\":\"2026-10-07T21:14:06\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programa\":\"Derecho\",\"promedio\":\"3.2\",\"nombre_docente\":\"Sandra Ríos Montoya\"}]",
+          "respuesta": "[{\"id\":1,\"estado\":\"activa\",\"creada_en\":\"2026-10-07T22:13:15\",\"nombre_estudiante\":\"Camilo Ríos Zapata\",\"programa\":\"Derecho\",\"promedio\":\"3.2\",\"nombre_docente\":\"Sandra Ríos Montoya\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:05"
+          "hora": "07/10/2026, 17:15:01"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 5.3
+      "duracionSeg": 6
     },
     {
       "id": "CP-033",
@@ -1497,7 +1544,7 @@
       "esperado": "R5 valida el horario de los participantes: rechaza la segunda tutoría.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:16:07",
+      "fecha": "07/10/2026, 17:15:03",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Fallido",
       "real": "Primera (Andrés López Castillo): 201. Segunda (Sandra Ríos Montoya, misma fecha y hora): 201 {\"mensaje\":\"Tutoría programada\",\"id\":14}. En «Mis Tutorías Programadas» hay 2 tarjeta(s) el 02/04/2027 a las 09:00.",
@@ -1505,60 +1552,54 @@
       "evidencias": [
         "EV-CP033-C2-01.png"
       ],
+      "descripciones": {
+        "EV-CP033-C2-01.png": "Dos tutorías el 02/04/2027 09:00: 201 y 201; tarjetas a esa hora: 2"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsImNvcnJlbyI6ImF2YXJnYXNAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQwNzc2OCwiZXhwIjoxNzkxNDM2NTY4LCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.g2wSNnStwe4DLrge34pPU5VM5BftjYlBCSLP3_kBNpk\",\"usuario\":{\"id\":18,\"nombres\":\"Andrés\",\"apellidos\":\"Vargas Pineda\",\"correo\":\"avargas@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsImNvcnJlbyI6ImF2YXJnYXNAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQxMTMwNCwiZXhwIjoxNzkxNDQwMTA0LCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.6wo7wZMrI8-nH1xy__u6djl8xy3NSXNVMCp5xX6FBa0\",\"usuario\":{\"id\":18,\"nombres\":\"Andrés\",\"apellidos\":\"Vargas Pineda\",\"correo\":\"avargas@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"avargas@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 55,
-          "hora": "07/10/2026, 16:16:08"
+          "hora": "07/10/2026, 17:15:04"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":21,\"usuario_id\":18,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-04-01 a las 09:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:14:12\"},{\"id\":19,\"usuario_id\":18,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-04-01 a las 09:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:14:10\"}]",
+          "respuesta": "[{\"id\":21,\"usuario_id\":18,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-04-01 a las 09:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:13:22\"},{\"id\":19,\"usuario_id\":18,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-04-01 a las 09:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:13:20\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:08"
+          "hora": "07/10/2026, 17:15:04"
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/tutorias",
+          "estado": 200,
+          "respuesta": "[{\"id\":7,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:20\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":8,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07",
+          "enviado": "",
+          "bytesEnviados": 0,
+          "hora": "07/10/2026, 17:15:04"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":18,\"nombres\":\"Andrés\",\"apellidos\":\"Vargas Pineda\",\"correo\":\"avargas@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":7,\"usuario_id\":18,\"codigo\":\"1098765007\",\"documento\":\"1098765007\",\"programa\":\"Contaduría\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":18,\"nombres\":\"Andrés\",\"apellidos\":\"Vargas Pineda\",\"correo\":\"avargas@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":7,\"usuario_id\":18,\"codigo\":\"1098765007\",\"documento\":\"1098765007\",\"programa\":\"Contaduría\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:08"
+          "hora": "07/10/2026, 17:15:04"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":7,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:10\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":8,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07",
+          "respuesta": "[{\"id\":7,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:13:20\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":8,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:08"
-        },
-        {
-          "metodo": "GET",
-          "ruta": "/api/tutorias",
-          "estado": 200,
-          "respuesta": "[{\"id\":7,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:14:10\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":8,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07",
-          "enviado": "",
-          "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:08"
-        },
-        {
-          "metodo": "GET",
-          "ruta": "/api/tutorias/docentes-disponibles",
-          "estado": 200,
-          "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
-          "enviado": "",
-          "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:09"
+          "hora": "07/10/2026, 17:15:04"
         },
         {
           "metodo": "GET",
@@ -1567,7 +1608,16 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:09"
+          "hora": "07/10/2026, 17:15:05"
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/tutorias/docentes-disponibles",
+          "estado": 200,
+          "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
+          "enviado": "",
+          "bytesEnviados": 0,
+          "hora": "07/10/2026, 17:15:05"
         },
         {
           "metodo": "POST",
@@ -1576,34 +1626,25 @@
           "respuesta": "{\"mensaje\":\"Tutoría programada\",\"id\":13}",
           "enviado": "{\"docente_id\":8,\"estudiante_id\":null,\"asignatura\":\"Fundamentos de Mercadeo\",\"modalidad\":\"Virtual\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"observaciones\":\"\"}",
           "bytesEnviados": 153,
-          "hora": "07/10/2026, 16:16:10"
+          "hora": "07/10/2026, 17:15:06"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:16:10\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":7,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:15:06\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":7,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:10"
+          "hora": "07/10/2026, 17:15:06"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:16:10\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":7,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
+          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:15:06\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":7,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-01\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T2",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:10"
-        },
-        {
-          "metodo": "GET",
-          "ruta": "/api/tutorias/docentes-disponibles",
-          "estado": 200,
-          "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
-          "enviado": "",
-          "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:11"
+          "hora": "07/10/2026, 17:15:06"
         },
         {
           "metodo": "GET",
@@ -1612,7 +1653,16 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:11"
+          "hora": "07/10/2026, 17:15:07"
+        },
+        {
+          "metodo": "GET",
+          "ruta": "/api/tutorias/docentes-disponibles",
+          "estado": 200,
+          "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
+          "enviado": "",
+          "bytesEnviados": 0,
+          "hora": "07/10/2026, 17:15:07"
         },
         {
           "metodo": "POST",
@@ -1621,48 +1671,48 @@
           "respuesta": "{\"mensaje\":\"Tutoría programada\",\"id\":14}",
           "enviado": "{\"docente_id\":9,\"estudiante_id\":null,\"asignatura\":\"Fundamentos de Mercadeo\",\"modalidad\":\"Presencial\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"observaciones\":\"\"}",
           "bytesEnviados": 156,
-          "hora": "07/10/2026, 16:16:12"
+          "hora": "07/10/2026, 17:15:08"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:16:10\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":14,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-",
+          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:15:06\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":14,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:12"
+          "hora": "07/10/2026, 17:15:08"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:16:10\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":14,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-",
+          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:15:06\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":14,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:12"
+          "hora": "07/10/2026, 17:15:08"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:16:10\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":14,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-",
+          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:15:06\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":14,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:13"
+          "hora": "07/10/2026, 17:15:09"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:16:10\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":14,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-",
+          "respuesta": "[{\"id\":13,\"estudiante_id\":18,\"docente_id\":8,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:15:06\",\"nombre_docente\":\"Andrés López Castillo\",\"correo_docente\":\"alopez@amigo.edu.co\"},{\"id\":14,\"estudiante_id\":18,\"docente_id\":9,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-04-02\",\"hora\":\"09:00\",\"modalidad\":\"Presencial\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:13"
+          "hora": "07/10/2026, 17:15:09"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 7.4
+      "duracionSeg": 7.9
     },
     {
       "id": "CP-034",
@@ -1675,7 +1725,7 @@
       "esperado": "RNF02: a los 15 minutos de inactividad la sesión expira y el sistema lleva al inicio de sesión.",
       "ciclo": 2,
       "entorno": "Chromium 141.0.7390.37 · escritorio 1366 px · 693358a (main)",
-      "fecha": "07/10/2026, 16:16:14",
+      "fecha": "07/10/2026, 17:15:11",
       "ejecutor": "Script E2 (Playwright)",
       "estado": "Fallido",
       "real": "A los 16 minutos sin actividad la sesión sigue abierta (token presente). «Programar Tutoría» abre normalmente y, al recargar, la aplicación vuelve al panel con la sesión activa. El tiempo se simuló adelantando el reloj del navegador.",
@@ -1685,51 +1735,56 @@
         "EV-CP034-C2-02.png",
         "EV-CP034-C2-03.png"
       ],
+      "descripciones": {
+        "EV-CP034-C2-01.png": "Inicio: sesión de sgarcia abierta",
+        "EV-CP034-C2-02.png": "16 min sin actividad: sigue en el panel; token presente",
+        "EV-CP034-C2-03.png": "Después de «Programar Tutoría» y recargar: panel con la sesión activa"
+      },
       "red": [
         {
           "metodo": "POST",
           "ruta": "/api/auth/login",
           "estado": 200,
-          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQwNzc3NiwiZXhwIjoxNzkxNDM2NTc2LCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.pNRc6Zc0S4mWuktopAEQuLkMvsIeC_656-RrChH5NLA\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
+          "respuesta": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImNvcnJlbyI6InNnYXJjaWFAYW1pZ28uZWR1LmNvIiwicm9sIjoiZXN0dWRpYW50ZSIsImlhdCI6MTc5MTQxMTMxMiwiZXhwIjoxNzkxNDQwMTEyLCJhdWQiOiJjb25lY3RhcHJvZmUtYXBwIiwiaXNzIjoiY29uZWN0YXByb2ZlIn0.pXBPfQ0H2Xu9l7RbQoAvPli-XLaEnSRRtytg13jsGa4\",\"usuario\":{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\"}}",
           "enviado": "{\"correo\":\"sgarcia@amigo.edu.co\",\"contrasena\":\"[oculta]\"}",
           "bytesEnviados": 55,
-          "hora": "07/10/2026, 16:16:16"
+          "hora": "07/10/2026, 17:15:12"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":23,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-11 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:15:36\"},{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:00\"}]",
+          "respuesta": "[{\"id\":23,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-11 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:14:29\"},{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:05\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:16"
+          "hora": "07/10/2026, 17:15:12"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:15:36\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:0",
+          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:14:29\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:0",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:16"
+          "hora": "07/10/2026, 17:15:12"
         },
         {
           "metodo": "GET",
           "ruta": "/api/perfil",
           "estado": 200,
-          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
+          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\",\"perfil\":{\"id\":1,\"usuario_id\":12,\"codigo\":\"1098765001\",\"documento\":\"1098765001\",\"programa\":\"Sistemas\",\"semestre\":\"4\",\"telefono\":\"3001234567\",\"promedio\":\"3.8\"},\"fotos\":{}}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:16"
+          "hora": "07/10/2026, 17:15:12"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:15:36\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:0",
+          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:14:29\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:0",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:16"
+          "hora": "07/10/2026, 17:15:12"
         },
         {
           "metodo": "GET",
@@ -1738,7 +1793,7 @@
           "respuesta": "[{\"id\":25,\"nombre\":\"Fundamentos de Mercadeo\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":26,\"nombre\":\"Gerencia Estratégica\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Administración y Negocios\"},{\"id\":27,\"nombre\":\"Contabilidad Financiera\",\"area\":\"Ciencias Administrativas, Económicas y Contables\",\"programa\":\"Contaduría\"},{\"id\":28,\"nombre\":\"Tributaria - Impuestos\",\"area\":\"Ciencias Administrativas, Económicas y C",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:18"
+          "hora": "07/10/2026, 17:15:14"
         },
         {
           "metodo": "GET",
@@ -1747,49 +1802,49 @@
           "respuesta": "[{\"id\":8,\"nombre\":\"Andrés López Castillo\",\"facultad\":\"Facultad de Ciencias Administrativas\",\"asignaturas\":\"Fundamentos de Mercadeo\"},{\"id\":3,\"nombre\":\"Carlos Peña Ochoa\",\"facultad\":\"Facultad de Ciencias Sociales\",\"asignaturas\":\"Introducción a la Psicología\"},{\"id\":4,\"nombre\":\"Diego Herrera Zapata\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Bases de Datos, Ingeniería de Software\"},{\"id\":10,\"nombre\":\"Felipe Giraldo Reyes\",\"facultad\":\"Facultad de Ingenierías\",\"asignaturas\":\"Inteligencia Ar",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:18"
+          "hora": "07/10/2026, 17:15:14"
         },
         {
           "metodo": "GET",
           "ruta": "/api/auth/yo",
           "estado": 200,
-          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T21:11:18.944Z\"}",
+          "respuesta": "{\"id\":12,\"nombres\":\"Sebastián\",\"apellidos\":\"García Torres\",\"correo\":\"sgarcia@amigo.edu.co\",\"rol\":\"estudiante\",\"creado_en\":\"2026-10-07T22:10:27.374Z\"}",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:19"
+          "hora": "07/10/2026, 17:15:15"
         },
         {
           "metodo": "GET",
           "ruta": "/api/notificaciones",
           "estado": 200,
-          "respuesta": "[{\"id\":23,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-11 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:15:36\"},{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T21:13:00\"}]",
+          "respuesta": "[{\"id\":23,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-11 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:14:29\"},{\"id\":1,\"usuario_id\":12,\"icono\":\"📅\",\"titulo\":\"Tutoría programada\",\"descripcion\":\"Fundamentos de Mercadeo el 2027-03-10 a las 10:00\",\"leida\":0,\"creada_en\":\"2026-10-07T22:12:05\"}]",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:19"
+          "hora": "07/10/2026, 17:15:15"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:15:36\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:0",
+          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:14:29\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:0",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:19"
+          "hora": "07/10/2026, 17:15:15"
         },
         {
           "metodo": "GET",
           "ruta": "/api/tutorias",
           "estado": 200,
-          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:15:36\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T21:13:0",
+          "respuesta": "[{\"id\":9,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-11\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:14:29\",\"nombre_docente\":\"Carlos Peña Ochoa\",\"correo_docente\":\"cpena@amigo.edu.co\"},{\"id\":1,\"estudiante_id\":12,\"docente_id\":3,\"asignatura\":\"Fundamentos de Mercadeo\",\"fecha\":\"2027-03-10\",\"hora\":\"10:00\",\"modalidad\":\"Virtual\",\"estado\":\"pendiente\",\"observaciones\":\"\",\"creada_en\":\"2026-10-07T22:12:0",
           "enviado": "",
           "bytesEnviados": 0,
-          "hora": "07/10/2026, 16:16:19"
+          "hora": "07/10/2026, 17:15:15"
         }
       ],
       "dialogos": [],
       "erroresPagina": [],
-      "duracionSeg": 6.4
+      "duracionSeg": 6.8
     }
   ],
-  "fin": "07/10/2026, 16:16:21"
+  "fin": "07/10/2026, 17:15:17"
 }

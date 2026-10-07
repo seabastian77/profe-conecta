@@ -1,11 +1,11 @@
 # Pruebas por consola del navegador (F12) — Equipo F
 
-Estas cinco verificaciones se ejecutan pegando un `fetch()` en la pestaña **Consola**
-de las herramientas del navegador (F12), con el token de la sesión. Prueban la capa
-del servidor directamente, así que son las más cercanas a cómo se tantea una API.
+Estas 6 verificaciones se hacen desde la pestaña **Consola** de las herramientas del navegador (F12). Cinco pegan un `fetch()` con el token de la sesión y prueban la capa del servidor directamente, así que son las más cercanas a cómo se tantea una API. La de DEF-13 no hace ninguna petición: inspecciona un elemento de la página con `document.getElementById()` para ver lo que la pantalla no muestra.
 
 Las rutas son **relativas** (`/api/...`): el mismo comando sirve en `localhost` y en
 el entorno de Railway (http://localhost:3000 se usó para esta corrida).
+
+Debajo de cada comando está la captura de la consola tal como quedó después de pegarlo.
 
 > Si Chrome pide permiso para pegar en la consola, escribe `allow pasting` y Enter.
 
@@ -27,6 +27,8 @@ fetch("/api/auth/registro",{method:"POST",headers:{
 - **Código HTTP:** 400 · **Estado:** Aprobado
 - **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-CP008-CONSOLA.png`
 
+![CP-008 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-CP008-CONSOLA.png)
+
 ## CP-018 · Un estudiante no puede guardar un perfil de docente
 
 **Requisito:** R4 · RRN05  
@@ -44,6 +46,8 @@ fetch("/api/perfil/docente",{method:"POST",headers:{
 - **Resultado real:** La consola muestra {error: 'No tienes permiso para esto'} y la pestaña Red el código 403. El servidor no crea ningún perfil de docente para el estudiante.
 - **Código HTTP:** 403 · **Estado:** Aprobado
 - **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-CP018-CONSOLA.png`
+
+![CP-018 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-CP018-CONSOLA.png)
 
 ## CP-021 · Rechazo de tutoría con docente inexistente
 
@@ -64,19 +68,23 @@ fetch("/api/tutorias",{method:"POST",headers:{
 - **Código HTTP:** 404 · **Estado:** Aprobado
 - **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-CP021-CONSOLA.png`
 
+![CP-021 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-CP021-CONSOLA.png)
+
 ## DEF-06 · Una tutoría cancelada se marca «completada» por la API
 
 **Requisito:** R6  
 Una tutoría ya cancelada no debería admitir nuevas transiciones; por la API se puede marcar «realizada».
 
 ```js
-fetch("/api/tutorias/6/realizada",{method:"PATCH",headers:{Authorization:"Bearer "+localStorage.getItem("cp.token")}}).then(r=>r.json()).then(console.log)
+fetch("/api/tutorias/19/realizada",{method:"PATCH",headers:{Authorization:"Bearer "+localStorage.getItem("cp.token")}}).then(r=>r.json()).then(console.log)
 ```
 
 - **Resultado esperado:** El servidor debería rechazar el cambio (la tutoría está cancelada). En su lugar responde {mensaje: "Tutoría completada"} y la tutoría pasa a «completada»: DEFECTO.
 - **Resultado real:** El servidor respondió 200 {mensaje: 'Tutoría completada'} y la tutoría cancelada pasó a «completada». Debería haberlo rechazado.
 - **Código HTTP:** 200 · **Estado:** Defecto confirmado
 - **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-DEF06-CONSOLA.png`
+
+![DEF-06 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-DEF06-CONSOLA.png)
 
 ## DEF-10 · La API guarda tutorías con fechas y horas que no existen
 
@@ -93,6 +101,26 @@ fetch("/api/tutorias",{method:"POST",headers:{
 ```
 
 - **Resultado esperado:** El servidor debería rechazar la fecha y la hora inválidas. En su lugar responde 201 {mensaje: "Tutoría programada"}: DEFECTO.
-- **Resultado real:** El servidor respondió 201 {mensaje: 'Tutoría programada', id: 7}: acepta la fecha «2027-13-45» y la hora «25:99» sin validar que existan.
+- **Resultado real:** El servidor respondió 201 {mensaje: 'Tutoría programada', id: 20}: acepta la fecha «2027-13-45» y la hora «25:99» sin validar que existan.
 - **Código HTTP:** 201 · **Estado:** Defecto confirmado
 - **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-DEF10-CONSOLA.png`
+
+![DEF-10 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-DEF10-CONSOLA.png)
+
+## DEF-13 · Los mensajes emergentes se generan pero nunca se ven
+
+**Requisito:** RF028 · transversal  
+Justo después de una acción que muestra un mensaje (cancelar una tutoría con menos de 24 horas), se inspecciona el elemento #tostada desde la consola, que es el paso 3 del reporte.
+
+```js
+const t = document.getElementById("tostada");
+console.log(t.textContent, "|", t.className,
+  "| opacidad:", getComputedStyle(t).opacity)
+```
+
+- **Resultado esperado:** RF028: el mensaje emergente se ve en pantalla (opacidad 1) y después desaparece solo.
+- **Resultado real:** La consola imprime «Faltan 7h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente. | tostada tostada--visible tostada--error | opacidad: 0». El elemento tiene el mensaje y la clase «tostada--visible», pero la hoja de estilos solo define «.tostada.visible»; por eso la opacidad se queda en 0 y en pantalla no aparece nada.
+- **Código HTTP:** — (inspección del elemento, sin petición al servidor) · **Estado:** Defecto confirmado
+- **Evidencia:** `pruebas/e2/resultados/consola/evidencias/EV-DEF13-CONSOLA.png`
+
+![DEF-13 en la consola F12](../../pruebas/e2/resultados/consola/evidencias/EV-DEF13-CONSOLA.png)

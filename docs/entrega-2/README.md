@@ -10,10 +10,10 @@ evidencia que la respalda.
 
 | Archivo | Qué es |
 |---|---|
-| `E2_F_Equipo.pdf` / `.docx` | Informe del Entregable 2: resumen ejecutivo, actualización del plan, ejecución de los dos ciclos, 14 defectos, pruebas exploratorias, métricas, evaluación y lecciones. |
-| `IS071_T4_EquipoF.pdf` / `.docx` | Tarea 4: reporte profesional de ocho defectos, con la matriz de reproducción cruzada y el análisis por riesgo. |
+| `E2_F_Equipo.pdf` / `.docx` | Informe del Entregable 2: resumen ejecutivo, actualización del plan, ejecución de los dos ciclos, 14 defectos, pruebas exploratorias, métricas, evaluación y lecciones. Cada reporte de defecto lleva sus capturas debajo, el Anexo D trae las capturas de la consola y el Anexo E todas las capturas de los dos ciclos. |
+| `IS071_T4_EquipoF.pdf` / `.docx` | Tarea 4: reporte profesional de ocho defectos, con la matriz de reproducción cruzada y el análisis por riesgo. El Anexo F trae las pruebas de consola con su captura y el Anexo G las capturas de los ocho defectos, citadas por número de figura en cada reporte. |
 | `E2_Registro_Ejecucion_EquipoF.xlsx` | Registro de ejecución (una fila por corrida), hoja de defectos, reproducción cruzada y métricas con gráfico. |
-| `pruebas-consola.md` | Los cinco comandos `fetch()` que se pegan en la consola (F12), listos para copiar y pegar, con su resultado esperado. Es el Anexo D del informe y el Anexo F de la Tarea 4. |
+| `pruebas-consola.md` | Los comandos que se pegan en la consola (F12), listos para copiar y pegar, con su resultado esperado y la captura de la consola debajo. Es el Anexo D del informe y el Anexo F de la Tarea 4. |
 
 ## Evidencia
 
@@ -26,6 +26,11 @@ Colombia, la versión del navegador y la respuesta del servidor.
 - `pruebas/e2/resultados/ciclo-2/` — los 9 fallidos + 7 de riesgo alto, en una
   instancia independiente de Chromium.
 - `pruebas/e2/resultados/defectos-exploratorios/` — DEF-05, 06, 07, 10 y 14.
+- `pruebas/e2/resultados/consola/` — las pruebas hechas desde la consola F12
+  (CP-008, CP-018, CP-021, DEF-06, DEF-10 y DEF-13), con capturas que muestran
+  el comando pegado y lo que respondió el sistema.
+- Las pruebas de los ciclos que se hacen con código (CP-008, CP-018 y CP-021)
+  también dejan su captura con el aspecto de la consola.
 - Cada carpeta trae su `resultados.json` con el detalle completo por caso
   (estado, resultado real, llamadas a la API, diálogos y evidencia).
 
@@ -64,7 +69,7 @@ ADMIN_CORREO=admin@amigo.edu.co ADMIN_CONTRASENA=... \
 # 4. Defectos de las sesiones exploratorias
 ADMIN_CORREO=admin@amigo.edu.co ADMIN_CONTRASENA=... node pruebas/e2/defectos.js
 
-# 5. Pruebas por consola (F12): CP-008, CP-018, CP-021, DEF-06, DEF-10.
+# 5. Pruebas por consola (F12): CP-008, CP-018, CP-021, DEF-06, DEF-10 y DEF-13.
 #    Dejan la evidencia con el aspecto de la consola del navegador.
 node pruebas/e2/consola.js
 ```
