@@ -5,7 +5,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.chart import BarChart, Reference
 import os
-from datos import EQUIPO, DEFECTOS, M, filas_registro, ciclo1, ciclo2
+from datos import EQUIPO, DEFECTOS, M, filas_registro
 
 TEAL = '0F766E'; TEALCL = 'D7EDEA'; GRIS = 'F3F4F6'
 blanco_negrita = Font(bold=True, color='FFFFFF')

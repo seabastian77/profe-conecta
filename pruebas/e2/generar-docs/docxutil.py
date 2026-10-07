@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Ayudas de formato para armar los documentos del Entregable 2 con python-docx."""
+import os
+from PIL import Image
 from docx import Document
-from docx.shared import Pt, RGBColor, Cm, Inches
+from docx.shared import Pt, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
@@ -13,6 +15,10 @@ TEALCL_HEX = 'D7EDEA'
 GRIS_HEX = 'F3F4F6'
 NARANJA = RGBColor(0xB4, 0x53, 0x09)
 ROJO = RGBColor(0xB9, 0x1C, 0x1C)
+
+# Contador global de figuras: se reinicia con cada documento nuevo.
+_FIG = [0]
+CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_evid')
 
 SEV_HEX = {'Crítica': '7F1D1D', 'Alta': 'DC2626', 'Media': 'F59E0B', 'Baja': '0EA5E9'}
 ESTADO_HEX = {'Aprobado': 'DCFCE7', 'Fallido': 'FEE2E2', 'Bloqueado': 'FEF9C3',
@@ -58,7 +64,17 @@ def nuevo_doc():
         st.font.name = 'Calibri'; st.font.size = Pt(tam); st.font.bold = True
         st.font.color.rgb = TEAL
         st.paragraph_format.space_before = Pt(12); st.paragraph_format.space_after = Pt(4)
+        st.paragraph_format.keep_with_next = True
+    _FIG[0] = 0
     return doc
+
+
+def _no_partir(tabla):
+    """Evita que una fila quede partida entre dos páginas (deja filas en blanco al pie)."""
+    for fila in tabla.rows:
+        trPr = fila._tr.get_or_add_trPr()
+        el = OxmlElement('w:cantSplit'); el.set(qn('w:val'), 'true')
+        trPr.append(el)
 
 
 def _set_cell_bg(cell, hex_color):
@@ -124,6 +140,7 @@ def tabla(doc, filas, anchos=None, cab=True, fuente=9.5, cab_bg=TEAL_HEX):
         for j, w in enumerate(anchos):
             for i in range(len(filas)):
                 t.cell(i, j).width = Cm(w)
+    _no_partir(t)
     return t
 
 
@@ -135,6 +152,7 @@ def ficha(doc, pares, ancho_k=4.2, ancho_v=12.5):
         _celda(t.cell(i, 0), k, bold=True, size=9.5, bg=TEALCL_HEX)
         _celda(t.cell(i, 1), v, size=9.5)
         t.cell(i, 0).width = Cm(ancho_k); t.cell(i, 1).width = Cm(ancho_v)
+    _no_partir(t)
     return t
 
 
@@ -142,6 +160,7 @@ def recuadro(doc, texto, bg=TEALCL_HEX, bold_primero=False):
     t = doc.add_table(rows=1, cols=1)
     _bordes_tabla(t, color=TEAL_HEX, sz=6)
     _celda(t.cell(0, 0), texto, bg=bg, size=10)
+    _no_partir(t)
     return t
 
 
@@ -168,6 +187,7 @@ def codigo(doc, texto):
         r = p.add_run(linea or ' ')
         r.font.name = 'Consolas'; r.font.size = Pt(9)
         r.font.color.rgb = RGBColor(0xE8, 0xEA, 0xED)
+    _no_partir(t)
     return t
 
 
@@ -189,6 +209,41 @@ def numerada(doc, texto):
 def imagen(doc, ruta, ancho_cm=16):
     doc.add_picture(ruta, width=Cm(ancho_cm))
     doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+
+def proxima_figura():
+    """Número que tendrá la siguiente figura (para citarla antes de insertarla)."""
+    return _FIG[0] + 1
+
+
+def _comprimida(ruta, ancho_max=1200, calidad=74):
+    """Copia JPEG reducida de la captura, para que el documento no pese de más."""
+    os.makedirs(CACHE, exist_ok=True)
+    base = os.path.splitext(os.path.basename(ruta))[0]
+    destino = os.path.join(CACHE, f'{base}.jpg')
+    if os.path.exists(destino) and os.path.getmtime(destino) >= os.path.getmtime(ruta):
+        return destino
+    im = Image.open(ruta).convert('RGB')
+    if im.width > ancho_max:
+        im = im.resize((ancho_max, round(im.height * ancho_max / im.width)), Image.LANCZOS)
+    im.save(destino, 'JPEG', quality=calidad, optimize=True)
+    return destino
+
+
+def figura(doc, ruta, pie, ancho_cm=15.5, comprimir=True):
+    """Inserta una imagen centrada con su pie «Figura N. …» y devuelve N."""
+    _FIG[0] += 1
+    fuente = _comprimida(ruta) if comprimir else ruta
+    doc.add_picture(fuente, width=Cm(ancho_cm))
+    p_img = doc.paragraphs[-1]
+    p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_img.paragraph_format.keep_with_next = True
+    p_img.paragraph_format.space_before = Pt(4); p_img.paragraph_format.space_after = Pt(2)
+    p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_after = Pt(10)
+    r = p.add_run(f'Figura {_FIG[0]}. '); r.font.size = Pt(9); r.font.bold = True; r.font.italic = True
+    r = p.add_run(pie); r.font.size = Pt(9); r.font.italic = True
+    return _FIG[0]
 
 
 def salto(doc):

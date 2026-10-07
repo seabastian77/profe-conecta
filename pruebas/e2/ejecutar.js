@@ -140,6 +140,7 @@ async function prepararFoto(navegador, carpeta) {
       real: resultado.real,
       defecto: resultado.defecto || null,
       evidencias: caso.evidencias,
+      descripciones: caso.descripciones,
       red: caso.red().map(r => {
         // Oculta credenciales y datos binarios antes de guardar el cuerpo enviado.
         const limpio = redactar(r.enviado);

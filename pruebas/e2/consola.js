@@ -14,9 +14,13 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
-const { iniciarSesion, marcaColombia, prepararSalida } = require('./apoyo');
+const {
+  iniciarSesion, marcaColombia, prepararSalida, programarTutoria, ir, fechaColombia, instanteColombia,
+  dibujarConsola, fmtRespuesta
+} = require('./apoyo');
 
 const SEMILLA = '123456';
+const dma = (f) => f.split('-').reverse().join('/');
 
 // Los cinco casos/defectos que se verifican por la consola del navegador.
 // `comando` es exactamente lo que se pega en la consola (rutas relativas: sirven
@@ -113,29 +117,52 @@ const PRUEBAS = [
   .then(r=>r.json()).then(console.log)`,
     esperado: 'El servidor debería rechazar la fecha y la hora inválidas. En su lugar responde 201 {mensaje: "Tutoría programada"}: DEFECTO.',
     async correr(p) {
+      // Usa el docente 9 del comando si existe; si no, el primero disponible, y muestra el id real usado.
       const docs = (await ejecutarFetch(p, 'GET', '/api/tutorias/docentes-disponibles', null, true)).body;
-      const docente = docs[0].id;
+      const docente = (docs.find(d => d.id === 9) || docs[0]).id;
       const r = await ejecutarFetch(p, 'POST', '/api/tutorias',
         { docente_id: docente, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', fecha: '2027-13-45', hora: '25:99' }, true);
-      r.comandoReal = null;
+      r.comandoReal = this.comando.replace('docente_id:9', `docente_id:${docente}`);
       return r;
     },
     evaluar: (r) => ({ ok: r.status !== 201,
       real: `El servidor respondió ${r.status} ${fmt(r.body)}: acepta la fecha «2027-13-45» y la hora «25:99» sin validar que existan.` }),
   },
+  {
+    id: 'DEF-13', titulo: 'Los mensajes emergentes se generan pero nunca se ven',
+    requisito: 'RF028 · transversal', sesion: { correo: 'lcano@amigo.edu.co', clave: SEMILLA, rol: 'estudiante' },
+    descripcion: 'Justo después de una acción que muestra un mensaje (cancelar una tutoría con menos de 24 horas), se inspecciona el elemento #tostada desde la consola, que es el paso 3 del reporte.',
+    tipo: 'inspeccion',
+    comando:
+`const t = document.getElementById("tostada");
+console.log(t.textContent, "|", t.className,
+  "| opacidad:", getComputedStyle(t).opacity)`,
+    esperado: 'RF028: el mensaje emergente se ve en pantalla (opacidad 1) y después desaparece solo.',
+    async correr(p) {
+      // Prepara una tutoría que empieza en unas 12 horas y la intenta cancelar desde la tarjeta.
+      let { fecha, hora } = instanteColombia(Date.now() + 12 * 3600000);
+      if (fecha === fechaColombia(0)) fecha = fechaColombia(1);
+      await programarTutoria(p, { tutor: 'Paola Martínez Cruz', fecha, hora });
+      await ir(p, 'panel-estudiante');
+      const tarjeta = p.locator('#estListaTutorias .tarjeta-tutoria', { hasText: `${dma(fecha)} · ⏰ ${hora}` }).first();
+      const espera = p.waitForResponse(r => r.url().includes('/cancelar')).catch(() => null);
+      await tarjeta.locator('button:has-text("Cancelar")').click();
+      await espera;
+      // El mensaje dura 3,5 s: se inspecciona dentro de ese tiempo.
+      await p.waitForTimeout(500);
+      const ins = await p.evaluate(() => {
+        const t = document.getElementById('tostada');
+        return { texto: t.textContent, clases: t.className, opacidad: getComputedStyle(t).opacity };
+      });
+      return { tipo: 'inspeccion', status: null, ...ins, opacidad: parseFloat(ins.opacidad),
+        salida: `${ins.texto} | ${ins.clases} | opacidad: ${ins.opacidad}` };
+    },
+    evaluar: (r) => ({ ok: r.opacidad >= 0.9,
+      real: `La consola imprime «${r.salida}». El elemento tiene el mensaje y la clase «tostada--visible», pero la hoja de estilos solo define «.tostada.visible»; por eso la opacidad se queda en 0 y en pantalla no aparece nada.` }),
+  },
 ];
 
-// Formatea un objeto de respuesta como lo imprime la consola.
-function fmt(body) {
-  if (body == null) return 'null';
-  if (Array.isArray(body)) return `Array(${body.length})`;
-  if (typeof body === 'object') {
-    const partes = Object.entries(body).slice(0, 3).map(([k, v]) =>
-      `${k}: ${typeof v === 'string' ? `'${v}'` : JSON.stringify(v)}`);
-    return `{${partes.join(', ')}}`;
-  }
-  return String(body);
-}
+const fmt = fmtRespuesta;
 
 // Ejecuta el fetch dentro de la página y devuelve {status, statusText, body}.
 async function ejecutarFetch(p, metodo, ruta, cuerpo, conToken) {
@@ -148,70 +175,6 @@ async function ejecutarFetch(p, metodo, ruta, cuerpo, conToken) {
     try { body = await r.json(); } catch { body = null; }
     return { status: r.status, statusText: r.statusText, body, metodo, ruta };
   }, { metodo, ruta, cuerpo, conToken });
-}
-
-// Dibuja sobre la página una vista de la consola del navegador (F12) con el
-// comando, el Promise pendiente, la línea del método con su código y la respuesta.
-async function evidenciaConsola(p, { id, comando, metodo, ruta, status, statusText, body, base }) {
-  const esError = status >= 400;
-  await p.evaluate(({ id, comando, metodo, ruta, status, statusText, cuerpo, esError, base, host }) => {
-    document.getElementById('__consolaE2')?.remove();
-    const panel = document.createElement('div');
-    panel.id = '__consolaE2';
-    panel.setAttribute('style',
-      'position:fixed;inset:0;z-index:2147483647;display:flex;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace');
-
-    // Columna izquierda: la consola. Derecha: deja ver la app.
-    const consola = document.createElement('div');
-    consola.setAttribute('style',
-      'width:63%;height:100%;background:#1e1e1f;color:#e8eaed;overflow:hidden;' +
-      'border-right:2px solid #3c4043;display:flex;flex-direction:column');
-
-    const barra = `<div style="background:#292a2d;color:#9aa0a6;font-size:12px;padding:7px 12px;border-bottom:1px solid #3c4043">
-      <span style="color:#e8eaed;font-weight:600">Console</span> &nbsp; Elements &nbsp; Network &nbsp; Sources &nbsp;
-      <span style="float:right">${host}</span></div>`;
-
-    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    // Colorea las cadenas entre comillas del comando.
-    const cmdColor = esc(comando).replace(/(&quot;|&#39;|")(.*?)(\1)/g, '<span style="color:#f28b82">$1$2$3</span>')
-      .replace(/\b(fetch|method|headers|body|then)\b/g, '<span style="color:#8ab4f8">$1</span>');
-
-    const circulo = esError
-      ? '<span style="color:#f28b82;font-weight:700">⊘</span>'
-      : '<span style="color:#81c995;font-weight:700">›</span>';
-    const lineaRed = esError
-      ? `<div style="background:#3a2323;color:#f28b82;padding:4px 12px;border-top:1px solid #3c4043;border-bottom:1px solid #3c4043">
-           ⊘ <span style="text-decoration:underline">${metodo} ${base}${ruta}</span> <b>${status} (${statusText || ''})</b></div>`
-      : `<div style="color:#9aa0a6;padding:4px 12px">${metodo} ${base}${ruta} <b style="color:#e8eaed">${status}</b></div>`;
-
-    const cuerpoColor = cuerpo.replace(/([a-zA-Z_]+):/g, '<span style="color:#c58af9">$1</span>:')
-      .replace(/('[^']*')/g, '<span style="color:#f28b82">$1</span>');
-
-    consola.innerHTML = barra +
-      `<div style="padding:10px 12px;font-size:13px;line-height:1.6;overflow:auto;flex:1">
-        <div style="color:#8ab4f8">&gt;</div>
-        <pre style="margin:0 0 6px 14px;white-space:pre-wrap;color:#e8eaed">${cmdColor}</pre>
-        <div style="color:#9aa0a6;margin-left:14px">&lt; Promise {&lt;pending&gt;}</div>
-        ${lineaRed}
-        <div style="margin-left:14px;margin-top:6px">${circulo} ▶ <span>{ ${cuerpoColor} }</span></div>
-        <div style="color:#8ab4f8;margin-top:8px">&gt;</div>
-      </div>`;
-    panel.appendChild(consola);
-    // Franja de rótulo sobre la app (derecha).
-    const rotulo = document.createElement('div');
-    rotulo.setAttribute('style', 'flex:1;position:relative');
-    rotulo.innerHTML = `<div style="position:absolute;bottom:10px;left:10px;right:10px;background:rgba(17,24,39,.9);
-      color:#f9fafb;font-size:11px;padding:6px 9px;border-radius:6px;white-space:pre-wrap">${id} · consola F12 · ${host}</div>`;
-    panel.appendChild(rotulo);
-    document.documentElement.appendChild(panel);
-  }, { id, comando, metodo, ruta, status, statusText, cuerpo: fmtPlano(body), esError, base,
-       host: new URL(base).host });
-}
-
-// Igual que fmt pero sin llaves exteriores (para el cuerpo coloreado).
-function fmtPlano(body) {
-  const t = fmt(body);
-  return t.startsWith('{') && t.endsWith('}') ? t.slice(1, -1).trim() : t;
 }
 
 (async () => {
@@ -230,6 +193,8 @@ function fmtPlano(body) {
   for (const prueba of PRUEBAS.filter(x => !filtro || filtro.includes(x.id))) {
     const ctx = await navegador.newContext({ baseURL: base, timezoneId: 'America/Bogota', locale: 'es-CO', viewport: { width: 1366, height: 768 } });
     const p = await ctx.newPage();
+    // Acepta los cuadros de confirmación (p. ej. «¿Cancelar esta tutoría?»), como haría quien ejecuta.
+    p.on('dialog', (d) => d.accept().catch(() => {}));
     let r, veredicto, ctxExtra = {};
     try {
       // Carga la app y, si el caso lo pide, inicia sesión.
@@ -242,8 +207,13 @@ function fmtPlano(body) {
       r = await prueba.correr(p, ctxExtra);
       veredicto = prueba.evaluar(r);
       const comandoMostrado = r.comandoReal || prueba.comando;
-      await evidenciaConsola(p, { id: prueba.id, comando: comandoMostrado, metodo: r.metodo || 'POST',
-        ruta: r.ruta || '', status: r.status, statusText: r.statusText, body: r.body, base });
+      const host = new URL(base).host;
+      const entrada = r.tipo === 'inspeccion'
+        ? { comando: comandoMostrado, salidaLog: r.salida }
+        : { comando: comandoMostrado, metodo: r.metodo || 'POST', url: base + (r.ruta || ''),
+            status: r.status, statusText: r.statusText, body: r.body };
+      await dibujarConsola(p, { entradas: [entrada], host,
+        rotulo: `${prueba.id} · consola F12 · ${host}\n{AHORA} hora de Colombia · ${versionNavegador}` });
       const nombre = `EV-${prueba.id.replace('-', '')}-CONSOLA.png`;
       await p.screenshot({ path: path.join(salida, 'evidencias', nombre) });
       prueba._evidencia = nombre;
@@ -255,9 +225,9 @@ function fmtPlano(body) {
       descripcion: prueba.descripcion, comando: (r && r.comandoReal) || prueba.comando,
       esperado: prueba.esperado, estado: veredicto.ok ? 'Aprobado' : (prueba.id.startsWith('DEF') ? 'Defecto confirmado' : 'Fallido'),
       resultadoReal: veredicto.real, evidencia: prueba._evidencia || '—',
-      httpStatus: r ? r.status : null,
+      httpStatus: r ? r.status : null, tipo: prueba.tipo || 'peticion',
     });
-    console.log(`${prueba.id}  ${veredicto.ok ? 'OK' : (prueba.id.startsWith('DEF') ? 'DEFECTO' : 'FALLA')}  HTTP ${r ? r.status : '—'}`);
+    console.log(`${prueba.id}  ${veredicto.ok ? 'OK' : (prueba.id.startsWith('DEF') ? 'DEFECTO' : 'FALLA')}  ${r && r.status ? 'HTTP ' + r.status : 'inspección'}`);
     await ctx.close();
   }
 

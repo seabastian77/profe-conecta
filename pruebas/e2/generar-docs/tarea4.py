@@ -3,11 +3,10 @@
 Selecciona ocho de los catorce defectos del Entregable 2, con el formato completo,
 la matriz de reproducción cruzada y el análisis por riesgo."""
 import os
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, vineta, numerada, codigo,
-                      imagen, salto, titulo_portada, pie_de_pagina, TEAL)
-from datos import EQUIPO, DEFECTOS, M, consola
-import informe_e2 as E2  # reutiliza los textos de pasos, precondición, etc.
+from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, codigo,
+                      figura, proxima_figura, salto, titulo_portada, pie_de_pagina, TEAL)
+from datos import EQUIPO, DEFECTOS, consola, ruta_evidencia, desc_evidencia, ENTORNO_DEF
+from textos import PASOS, PRECOND, ESPERADO, SEV_JUST, PRIO_JUST
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
 GRAFICO = os.path.join(BUILD, 'grafico_defectos.png')
@@ -19,6 +18,40 @@ SELECCION = ['DEF-01', 'DEF-02', 'DEF-06', 'DEF-07', 'DEF-08', 'DEF-11', 'DEF-13
 por_id = {d['id']: d for d in DEFECTOS}
 elegidos = [por_id[i] for i in SELECCION]
 BLOQUEANTES = ['DEF-01', 'DEF-08', 'DEF-13']
+
+
+def es_consola(nombre):
+    return nombre.endswith('-CONSOLA.png')
+
+
+# Numeración de figuras calculada antes de escribir: figura 1 es el gráfico,
+# luego el Anexo F (capturas de la consola) y después el Anexo G (capturas de
+# los ocho defectos). Así cada reporte cita la figura exacta de su evidencia.
+_n = 2
+FIG_CONSOLA = {}
+for pr in consola.get('pruebas', []):
+    if pr.get('evidencia') and ruta_evidencia(pr['evidencia']):
+        FIG_CONSOLA[pr['evidencia']] = _n
+        _n += 1
+FIG_DEF = {}
+for d in elegidos:
+    for e in d['evidencias']:
+        if not es_consola(e):
+            FIG_DEF[e] = _n
+            _n += 1
+
+
+def texto_evidencia(d):
+    propias = [e for e in d['evidencias'] if not es_consola(e)]
+    partes = []
+    if propias:
+        a, b = FIG_DEF[propias[0]], FIG_DEF[propias[-1]]
+        rango = f'figura {a}' if a == b else f'figuras {a} a {b}'
+        partes.append(f"{', '.join(propias)} (Anexo G, {rango})")
+    for e in d['evidencias']:
+        if es_consola(e):
+            partes.append(f'{e} (Anexo F, figura {FIG_CONSOLA[e]}, consola F12)')
+    return '; '.join(partes) or '—'
 
 doc = nuevo_doc()
 pie_de_pagina(doc, 'ConectaProfe · Tarea 4 · Equipo F')
@@ -102,9 +135,8 @@ salto(doc)
 # ===== 3. Análisis por riesgo =====
 doc.add_heading('3. Análisis de los defectos', level=1)
 parrafo(doc, 'Distribución por requisito y severidad', bold=True, space=2)
-imagen(doc, GRAFICO, ancho_cm=15.5)
-parrafo(doc, 'Figura 1. Defectos por requisito y severidad (los catorce del Entregable 2). Fuente: registro '
-             'de defectos del equipo.', size=9, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+figura(doc, GRAFICO, 'Defectos por requisito y severidad (los catorce del Entregable 2). Fuente: registro '
+       'de defectos del equipo.', ancho_cm=15.5, comprimir=False)
 parrafo(doc, 'Comparación con la matriz de riesgos del Entregable 1', bold=True, space=2)
 parrafo(doc,
     'El análisis de riesgos del Entregable 1 apuntó donde debía: R5 era el riesgo más alto de la matriz '
@@ -140,22 +172,23 @@ salto(doc)
 
 # ===== 4. Reportes completos =====
 doc.add_heading('4. Reportes completos de los ocho defectos', level=1)
-parrafo(doc, 'Entorno común: Chromium 141 · ConectaProfe en Railway/local, commit 693358a · ejecución '
-             'automatizada con Playwright. Cuentas de semilla con contraseña «123456».', size=10, italic=True)
+parrafo(doc, f'Entorno común: {ENTORNO_DEF}. Cuentas de semilla con contraseña «123456». Las capturas de '
+             'cada reporte están en el Anexo G (y las de consola en el Anexo F), con el número de figura que '
+             'se cita en el campo «Evidencia».', size=10, italic=True)
 for d in elegidos:
     doc.add_heading(f"{d['id']} · {d['titulo']}", level=3)
-    ev = ', '.join(d['evidencias']) if d['evidencias'] else '—'
+    ev = texto_evidencia(d)
     ficha(doc, [
         ('Identificador', d['id']),
         ('Título', d['titulo']),
-        ('Entorno y versión', 'Chromium 141 · Linux · Railway/local, commit 693358a'),
-        ('Precondición', E2.PRECOND[d['id']]),
-        ('Pasos', E2.PASOS[d['id']]),
-        ('Resultado esperado', E2.ESPERADO[d['id']]),
+        ('Entorno y versión', ENTORNO_DEF),
+        ('Precondición', PRECOND[d['id']]),
+        ('Pasos', PASOS[d['id']]),
+        ('Resultado esperado', ESPERADO[d['id']]),
         ('Resultado real', d['resultado_real'] or '—'),
         ('Frecuencia', d['frecuencia']),
-        ('Severidad', E2.SEV_JUST[d['id']]),
-        ('Prioridad', E2.PRIO_JUST[d['id']]),
+        ('Severidad', SEV_JUST[d['id']]),
+        ('Prioridad', PRIO_JUST[d['id']]),
         ('Evidencia', ev),
         ('Origen', d['origen']),
         ('Reportado por', f"{d['reporta']} · reproducido por {d['reproduce']}"),
@@ -207,26 +240,53 @@ tabla(doc, [
 if consola.get('pruebas'):
     doc.add_heading('Anexo F. Pruebas por consola del navegador (F12)', level=1)
     parrafo(doc,
-        'Estas son las verificaciones que se hacen pegando un fetch() en la consola del navegador, con el '
-        'token de la sesión. Prueban la capa del servidor directamente —control de acceso por rol, datos '
-        'inexistentes y validaciones que el formulario no deja disparar— y son las más cercanas a cómo se '
-        'tantea una API. Van con el comando exacto para copiar y pegar; las rutas son relativas, así que '
-        'sirven igual en localhost y en Railway. En la sustentación, cualquiera del equipo puede reproducirlas '
-        'en vivo.')
+        'Estas son las verificaciones que se hacen desde la consola del navegador (F12). Casi todas pegan un '
+        'fetch() con el token de la sesión y prueban la capa del servidor directamente —control de acceso por '
+        'rol, datos inexistentes y validaciones que el formulario no deja disparar—; la de DEF-13 inspecciona '
+        'el elemento del mensaje emergente para ver lo que la pantalla no muestra. Van con el comando exacto '
+        'para copiar y pegar y, debajo, la captura de la consola tal como quedó. Las rutas son relativas, así '
+        'que sirven igual en localhost y en Railway; en la sustentación cualquiera del equipo puede '
+        'reproducirlas en vivo.')
     for pr in consola['pruebas']:
         doc.add_heading(f"{pr['id']} · {pr['titulo']}", level=3)
         parrafo(doc, pr['descripcion'], size=10.5, space=3)
         parrafo(doc, 'Comando (pestaña Consola de F12):', size=9.5, bold=True, space=2)
         codigo(doc, pr['comando'])
+        n = FIG_CONSOLA.get(pr['evidencia'])
         ficha(doc, [
             ('Requisito', pr['requisito']),
             ('Resultado esperado', pr['esperado']),
             ('Resultado real', pr['resultadoReal']),
-            ('Código HTTP', str(pr['httpStatus'])),
+            ('Código HTTP', str(pr['httpStatus']) if pr.get('httpStatus') is not None
+             else '— (inspección del elemento, sin petición al servidor)'),
             ('Estado', pr['estado']),
-            ('Evidencia', pr['evidencia']),
+            ('Evidencia', f"{pr['evidencia']} (figura {n}, debajo)" if n else pr['evidencia']),
         ])
+        if n:
+            assert proxima_figura() == n, 'la numeración de figuras se desfasó'
+            figura(doc, ruta_evidencia(pr['evidencia']),
+                   f"{pr['id']} · {pr['evidencia']}. Consola F12 con el comando ejecutado y la respuesta: "
+                   f"{pr['titulo'].lower()}.")
         doc.add_paragraph()
+
+# ===== Anexo G: capturas de los ocho defectos =====
+salto(doc)
+doc.add_heading('Anexo G. Evidencia de los ocho defectos', level=1)
+_con_consola = [d['id'] for d in elegidos if any(es_consola(e) for e in d['evidencias'])]
+_nota_consola = (f"Las capturas de consola de {' y '.join(_con_consola)} están en el Anexo F."
+                 if _con_consola else '')
+parrafo(doc, 'Las capturas que cita el campo «Evidencia» de cada reporte, en el mismo orden de la sección 4. '
+             'Cada una lleva estampado el caso o defecto, el ciclo, la URL, la hora de Colombia y el navegador. '
+             + _nota_consola, size=10.5)
+for d in elegidos:
+    propias = [e for e in d['evidencias'] if not es_consola(e)]
+    if not propias:
+        continue
+    doc.add_heading(f"{d['id']} · {d['titulo']}", level=3)
+    for e in propias:
+        assert proxima_figura() == FIG_DEF[e], 'la numeración de figuras se desfasó'
+        desc = desc_evidencia(e)
+        figura(doc, ruta_evidencia(e), f"{d['id']} · {e}" + (f'. {desc}' if desc else ''))
 
 salida = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'docs', 'entrega-2', 'IS071_T4_EquipoF.docx')
 doc.save(salida)

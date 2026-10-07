@@ -1,15 +1,34 @@
 # -*- coding: utf-8 -*-
 """Genera el informe del Entregable 2 (E2_F_Equipo.docx)."""
 import os
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, vineta, numerada,
-                      codigo, imagen, salto, titulo_portada, pie_de_pagina, TEAL, NARANJA)
-from datos import EQUIPO, DEFECTOS, M, ciclo1, ciclo2, consola
+from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, numerada,
+                      codigo, figura, proxima_figura, salto, titulo_portada, pie_de_pagina, TEAL)
+from datos import (EQUIPO, DEFECTOS, M, ciclo1, ciclo2, consola,
+                   ruta_evidencia, desc_evidencia, ENTORNO_DEF)
+from textos import PASOS, PRECOND, ESPERADO, SEV_JUST, PRIO_JUST
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
 GRAFICO = os.path.join(BUILD, 'grafico_defectos.png')
 doc = nuevo_doc()
 pie_de_pagina(doc, 'ConectaProfe · Entregable 2 · Equipo F')
+
+
+def es_consola(nombre):
+    return nombre.endswith('-CONSOLA.png')
+
+
+# Numeración de figuras calculada antes de escribir, para poder citarlas.
+# Figura 1: gráfico de la sección 6. Luego, en orden: Anexo C (capturas de cada
+# defecto), Anexo D (capturas de la consola) y Anexo E (capturas de los ciclos).
+_n = 2
+for d in DEFECTOS:
+    _n += sum(1 for e in d['evidencias'] if not es_consola(e))
+FIG_CONSOLA = {}
+for pr in consola.get('pruebas', []):
+    if pr.get('evidencia') and ruta_evidencia(pr['evidencia']):
+        FIG_CONSOLA[pr['evidencia']] = _n
+        _n += 1
+MOSTRADAS = {}   # captura -> número de figura ya insertada
 
 # ======================= PORTADA =======================
 for _ in range(2): doc.add_paragraph()
@@ -173,7 +192,9 @@ parrafo(doc,
 
 parrafo(doc, 'Extracto del registro de ejecución', bold=True, space=2)
 parrafo(doc, 'El registro completo, con una fila por ejecución, está en la hoja de cálculo enlazada en la '
-             'portada. Aquí van las filas que mejor muestran cómo se llevó.', size=10.5)
+             'portada. Aquí van las filas que mejor muestran cómo se llevó. Todas las capturas de los dos '
+             'ciclos, una por una y con su pie, están en el Anexo E; las de los casos fallidos aparecen '
+             'también debajo del reporte de su defecto, en el Anexo C.', size=10.5)
 # Extracto: elegimos casos representativos reales del ciclo 1.
 repr_ids = ['CP-001', 'CP-013', 'CP-016', 'CP-017', 'CP-022', 'CP-025', 'CP-029', 'CP-032', 'CP-034']
 por_id = {c['id']: c for c in ciclo1['casos']}
@@ -293,9 +314,8 @@ tabla(doc, [
     ['Evidencia registrada', 'Ejecuciones con evidencia ÷ ejecutadas', '100 %', '100 %'],
 ], anchos=[4.5, 6.5, 3.2, 3.4], fuente=8.6)
 doc.add_paragraph()
-imagen(doc, GRAFICO, ancho_cm=15.5)
-parrafo(doc, 'Figura 1. Defectos por requisito y severidad. Fuente: registro de defectos del equipo.',
-        size=9, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+figura(doc, GRAFICO, 'Defectos por requisito y severidad. Fuente: registro de defectos del equipo.',
+       ancho_cm=15.5, comprimir=False)
 parrafo(doc, 'La lectura.', bold=True, space=2)
 parrafo(doc,
     f'El {tasa1} % de aprobación del ciclo 1 parece aceptable, pero hay que mirar qué falló: de los {M["fall1"]} '
@@ -391,12 +411,12 @@ chk = [
     ['2', 'El resumen ejecutivo cabe en una página e incluye la recomendación.', 'Sí', 'Sección 1'],
     ['3', 'Los cambios a la suite del Entregable 1 están listados con su razón.', 'Sí', 'Sección 2, ocho filas'],
     ['4', 'El ciclo 1 cubre toda la suite; el ciclo 2, lo fallido y el riesgo alto (ver nota de Firefox).', 'Sí', 'Sección 3'],
-    ['5', 'Cada ejecución tiene estado, entorno, versión, fecha y ejecutor.', 'Sí', 'Hoja de registro (xlsx)'],
+    ['5', 'Cada ejecución tiene estado, entorno, versión, fecha, ejecutor y evidencia.', 'Sí', 'Hoja de registro (xlsx) y Anexo E'],
     ['6', 'Ningún caso bloqueado está registrado como fallido.', 'Sí', 'CP-014 y CP-015 como «Bloqueado»'],
     ['7', 'Cada integrante ejecutó al menos seis casos.', 'Sí', 'Tabla de reparto (17 y 17)'],
     ['8', 'Hay diez defectos o más, con todos los campos.', 'Sí', 'Sección 4 y Anexo C (14 defectos)'],
     ['9', 'Cada integrante reportó al menos dos defectos.', 'Sí', 'Tabla de reparto'],
-    ['10', 'Cada defecto enlaza con su caso o sesión y tiene evidencia propia.', 'Sí', 'Columna «Origen» y Anexo C'],
+    ['10', 'Cada defecto enlaza con su caso o sesión y tiene evidencia propia.', 'Sí', 'Columna «Origen»; capturas debajo de cada reporte (Anexo C)'],
     ['11', 'Hay una hoja de sesión exploratoria por integrante.', 'Sí', 'Sección 5: SE-01 y SE-02, completas'],
     ['12', 'Las métricas están bien calculadas, por ciclo, y hay al menos un gráfico.', 'Sí', 'Sección 6, Figura 1'],
     ['13', 'Los criterios de salida se revisan uno por uno.', 'Sí', 'Sección 7, tres criterios'],
@@ -408,101 +428,35 @@ salto(doc)
 
 # ======================= ANEXO C =======================
 doc.add_heading('Anexo C. Reportes completos de defectos', level=1)
-parrafo(doc, 'Entorno común salvo que se diga otra cosa: Chromium 141 · ConectaProfe en Railway, commit '
-             '693358a · ejecución automatizada con Playwright. Las cuentas de semilla usan la contraseña '
-             '«123456»; el administrador es la cuenta de pruebas del equipo. Cuando un paso dice «consola», es '
-             'la de las herramientas del navegador (F12), donde se pega el fetch con el token de la sesión.',
+parrafo(doc, f'Entorno común salvo que se diga otra cosa: {ENTORNO_DEF}. Las cuentas de semilla usan la '
+             'contraseña «123456»; el administrador es la cuenta de pruebas del equipo. Cuando un paso dice '
+             '«consola», es la de las herramientas del navegador (F12), donde se pega el fetch con el token de '
+             'la sesión. Debajo de cada reporte van sus capturas, numeradas como figuras.',
              size=10, italic=True)
 
 # Reportes completos de los 14 defectos, con los 13 campos.
-PASOS = {
- 'DEF-01': '1. Iniciar sesión como sgarcia@amigo.edu.co (contraseña 123456).\n2. Dejar la pestaña sin actividad durante 16 minutos (en la ejecución automatizada se adelanta el reloj del navegador).\n3. Hacer clic en «Programar Tutoría» y recargar la página.',
- 'DEF-02': '1. En «Panel Admin», abrir la tarjeta «Asignación».\n2. En «Nueva Sesión de Asesoría», elegir a Sandra Ríos Montoya y a Camilo Ríos Zapata.\n3. Materia: la primera de la lista. Fecha: la de hoy. Hora: dos horas después de la actual. Modalidad: Virtual.\n4. Presionar «Crear Asesoría (+)».',
- 'DEF-03': '1. Iniciar sesión como un estudiante.\n2. Abrir «Mi Perfil», presionar el ícono de la foto y elegir foto_2-5MB.jpg (2,50 MB).',
- 'DEF-04': '1. Crear la cuenta prueba.bloqueo2@amigo.edu.co y cerrar sesión.\n2. Iniciar sesión con la contraseña incorrecta tres veces seguidas.\n3. Iniciar sesión con la contraseña correcta.',
- 'DEF-05': '1. En «Programar Tutoría», elegir un tutor, la fecha de mañana y la hora 10:00.\n2. En «Observaciones» escribir <img src=x onerror="alert(\'XSS-DEF05\')"> y programar.\n3. En «Mi Panel», abrir el día de mañana del calendario.',
- 'DEF-06': '1. Como estudiante, programar una tutoría y cancelarla; anotar su id (visible en la red).\n2. Iniciar sesión como el docente de esa tutoría y abrir la consola (F12).\n3. Ejecutar fetch("/api/tutorias/ID/realizada",{method:"PATCH",headers:{Authorization:"Bearer "+localStorage.getItem("cp.token")}}).',
- 'DEF-07': '1. Como administrador, abrir «Gestión de Usuarios».\n2. Presionar «+ Nuevo Usuario» y mirar el campo «Contraseña».\n3. Cerrar, editar un usuario y escribir una clave en «Nueva contraseña».',
- 'DEF-08': '1. Como jperez@amigo.edu.co, programar una tutoría para mañana con unas 26 horas de margen.\n2. En «Mi Panel», ubicar la tutoría y presionar «Cancelar».\n3. Mirar la respuesta en la red.',
- 'DEF-09': '1. Como avargas@amigo.edu.co, programar con Andrés López Castillo, fecha futura, 09:00.\n2. Programar con Sandra Ríos Montoya, la misma fecha y la misma hora.\n3. Abrir «Mi Panel».',
- 'DEF-10': '1. Abrir la consola (F12) con sesión de estudiante.\n2. Ejecutar fetch("/api/tutorias",{method:"POST",...,body:JSON.stringify({docente_id:9,asignatura:"Cálculo Diferencial",modalidad:"Virtual",fecha:"2027-13-45",hora:"09:00"})}).\n3. Repetir con fecha "mañana" y hora "25:99". Abrir «Mi Panel».',
- 'DEF-11': '1. Como administrador, desactivar a Valentina Osorio.\n2. Abrir «Gestión de Usuarios».\n3. Elegir «Estudiantes» en rol y «Activos» en estado.',
- 'DEF-12': '1. Iniciar sesión como administrador y anotar la hora real.\n2. Abrir la tarjeta «Auditoría» y mirar la primera fila (evento «Login»).',
- 'DEF-13': '1. Como jperez, con una tutoría que ocurre dentro de menos de 24 horas, presionar «Cancelar».\n2. Mirar la esquina inferior derecha de la pantalla.\n3. Con F12, inspeccionar el elemento #tostada.',
- 'DEF-14': '1. Registrar una cuenta de estudiante y, en «Completar perfil», llenar todo menos «Promedio». Guardar.\n2. Como administrador, enviar una notificación a «Todos los estudiantes en alerta».\n3. Entrar con la cuenta nueva y abrir la campana.',
-}
-PRECOND = {
- 'DEF-01': 'Cuenta sgarcia@amigo.edu.co activa. Ninguna otra pestaña de ConectaProfe abierta.',
- 'DEF-02': 'Sesión de administrador. La docente Sandra Ríos Montoya y el estudiante Camilo Ríos Zapata están activos.',
- 'DEF-03': 'Sesión de un estudiante. Archivo foto_2-5MB.jpg de 2,50 MB.',
- 'DEF-04': 'Cuenta prueba.bloqueo2@amigo.edu.co creada y sin intentos fallidos recientes.',
- 'DEF-05': 'Sesión de un estudiante. Al menos un docente activo.',
- 'DEF-06': 'Una tutoría del estudiante con un docente, programada a futuro y luego cancelada por el estudiante.',
- 'DEF-07': 'Sesión de administrador, en «Gestión de Usuarios».',
- 'DEF-08': 'Sesión de jperez@amigo.edu.co. Una tutoría pendiente programada para mañana con 26 horas de margen.',
- 'DEF-09': 'Sesión de avargas@amigo.edu.co, sin tutorías en la fecha y hora elegidas.',
- 'DEF-10': 'Sesión de un estudiante, con la consola del navegador abierta.',
- 'DEF-11': 'Sesión de administrador. La cuenta vosorio@amigo.edu.co desactivada. Estudiantes de semilla con promedio menor que 3,0 activos.',
- 'DEF-12': 'Sesión de administrador. Un reloj a la vista con la hora de Colombia.',
- 'DEF-13': 'Sesión de jperez@amigo.edu.co, con una tutoría pendiente que ocurre dentro de menos de 24 horas.',
- 'DEF-14': 'Una cuenta nueva de estudiante.',
-}
-ESPERADO = {
- 'DEF-01': 'RNF02: la sesión expira tras 15 minutos de inactividad y el sistema lleva al inicio de sesión.',
- 'DEF-02': 'RRN06: no se puede programar una tutoría para el mismo día; la fecha mínima es el día siguiente. El sistema rechaza la asesoría.',
- 'DEF-03': 'RF036 y CP-017: el sistema rechaza la imagen e informa que el tamaño máximo permitido es 2 MB.',
- 'DEF-04': 'RRN01: después de 3 intentos incorrectos el acceso se bloquea 5 minutos; el cuarto intento se rechaza aunque la clave sea correcta.',
- 'DEF-05': 'Las observaciones se muestran como texto, tal como se escribieron (RNF06).',
- 'DEF-06': 'Ciclo de vida de la tutoría: una tutoría cancelada no admite nuevas transiciones y el servidor rechaza el cambio.',
- 'DEF-07': 'RNF05: las contraseñas no se muestran en texto plano en ningún momento.',
- 'DEF-08': 'Regla de antelación de R6 (CP-025): con 24 horas o más se permite cancelar.',
- 'DEF-09': 'R5 valida el horario de los participantes: el sistema rechaza la segunda tutoría porque el estudiante ya está ocupado a esa hora.',
- 'DEF-10': 'R5: el servidor rechaza una fecha o una hora inválida con un mensaje claro.',
- 'DEF-11': 'RF049 y CP-031: la tabla muestra solo los estudiantes con la cuenta activa y el contador coincide con las filas.',
- 'DEF-12': 'CP-029 y R8: el evento queda con la fecha y la hora en que ocurrió, porque la auditoría es la evidencia ante un incidente.',
- 'DEF-13': 'RF028: el sistema muestra un mensaje emergente al completar cualquier acción, clasificado por tipo y con desaparición automática.',
- 'DEF-14': 'RRN07: solo queda en alerta el estudiante con promedio acumulado inferior a 3,0; quien no ha registrado promedio no tiene uno.',
-}
-SEV_JUST = {
- 'DEF-01': 'Alta. El control de seguridad que exige el requisito no funciona: una cuenta que se deja abierta sigue abierta.',
- 'DEF-02': 'Media. Falla una validación de frontera; la asesoría queda bien creada y el resto del flujo funciona.',
- 'DEF-03': 'Baja. El resultado es distinto del requisito, pero la foto se ve bien y la base no se llena, porque la imagen se reduce.',
- 'DEF-04': 'Baja. El bloqueo existe y funciona; solo el umbral es distinto.',
- 'DEF-05': 'Crítica. Permitía ejecutar código en la sesión de otra persona; el token vive en el navegador y se podía leer.',
- 'DEF-06': 'Media. Deja datos incorrectos en el historial y en las estadísticas; solo se llega por la API.',
- 'DEF-07': 'Media. Deja una credencial a la vista de quien mire la pantalla, y las cuentas creadas sin cambiar ese valor comparten la misma clave inicial.',
- 'DEF-08': 'Alta. Una función principal aplica mal la regla a todos los usuarios; la alternativa es escribirle al docente.',
- 'DEF-09': 'Media. El resultado es incorrecto, aunque el estudiante puede cancelar una de las dos con antelación.',
- 'DEF-10': 'Media. Guarda datos que no existen y que después se muestran mal.',
- 'DEF-11': 'Media. El resultado del filtro es incorrecto; el administrador puede revisar la tabla completa a mano.',
- 'DEF-12': 'Media. El resultado es incorrecto en una función secundaria; el evento sí queda registrado.',
- 'DEF-13': 'Media. Cada acción se acepta o se rechaza bien en el servidor, pero el usuario se queda sin saber qué pasó ni por qué.',
- 'DEF-14': 'Media. El resultado es incorrecto y mete al estudiante en un grupo al que no pertenece.',
-}
-PRIO_JUST = {
- 'DEF-01': 'Alta. En los computadores compartidos de la universidad, la cuenta de un estudiante queda abierta toda la jornada.',
- 'DEF-02': 'Alta. RRN06 es de prioridad alta, y una asesoría para hoy ya no la puede cancelar nadie por la regla de las 24 horas.',
- 'DEF-03': 'Baja. Hay que decidir si RF036 se reescribe para describir la reducción automática o si se muestra el aviso; no bloquea a nadie.',
- 'DEF-04': 'Media. RRN01 es de prioridad alta, pero se corrige con una variable de entorno (MAX_INTENTOS=3) sin tocar el código.',
- 'DEF-05': 'Alta. Era el único defecto que comprometía cuentas ajenas, incluidas las de docentes y administradores.',
- 'DEF-06': 'Media. Falsea los indicadores del docente y del administrador, pero hace falta conocimiento técnico para provocarlo.',
- 'DEF-07': 'Alta. RNF05 es de prioridad alta, el arreglo es cambiar el tipo del campo y es la pantalla que se proyecta en clase.',
- 'DEF-08': 'Alta. Pasa en toda cancelación hecha entre 24 y 29 horas antes de la tutoría.',
- 'DEF-09': 'Media. Le hace perder la cita a un docente; el choque del docente sí se valida, así que la corrección es repetir esa consulta para el estudiante.',
- 'DEF-10': 'Baja. Solo se llega por la API; la interfaz no deja escribir esas fechas.',
- 'DEF-11': 'Media. Justo los estudiantes en alerta son los que el administrador más necesita encontrar.',
- 'DEF-12': 'Media. Tiene la misma causa que DEF-08, así que conviene corregirlos juntos.',
- 'DEF-13': 'Alta. Afecta a todos los usuarios en todas las pantallas y se corrige cambiando el nombre de una clase.',
- 'DEF-14': 'Media. Afecta a todo estudiante nuevo que todavía no tiene promedio, por ejemplo los de primer semestre.',
-}
+
+def texto_evidencia(d):
+    """Nombres de las capturas con la figura donde se ven."""
+    propias = [e for e in d['evidencias'] if not es_consola(e)]
+    partes = []
+    if propias:
+        n = proxima_figura()
+        rango = f'figura {n}' if len(propias) == 1 else f'figuras {n} a {n + len(propias) - 1}'
+        partes.append(f"{', '.join(propias)} ({rango}, debajo de este reporte)")
+    for e in d['evidencias']:
+        if es_consola(e):
+            partes.append(f'{e} (figura {FIG_CONSOLA[e]}, consola F12 en el Anexo D)')
+    return '; '.join(partes) or '—'
+
 
 for d in DEFECTOS:
     doc.add_heading(f"{d['id']} · {d['titulo']}", level=3)
-    ev = ', '.join(d['evidencias']) if d['evidencias'] else '—'
+    ev = texto_evidencia(d)
     ficha(doc, [
         ('Identificador', d['id']),
         ('Título', d['titulo']),
-        ('Entorno y versión', 'Chromium 141 · Linux · Railway/local, commit 693358a'),
+        ('Entorno y versión', ENTORNO_DEF),
         ('Precondición', PRECOND[d['id']]),
         ('Pasos', PASOS[d['id']]),
         ('Resultado esperado', ESPERADO[d['id']]),
@@ -516,19 +470,29 @@ for d in DEFECTOS:
     ])
     if d['notas']:
         parrafo(doc, 'Nota: ' + ' '.join(d['notas']), size=9.5, italic=True, space=4)
+    for e in d['evidencias']:
+        if es_consola(e):
+            continue
+        desc = desc_evidencia(e)
+        MOSTRADAS[e] = figura(doc, ruta_evidencia(e), f"{d['id']} · {e}" + (f'. {desc}' if desc else ''))
     doc.add_paragraph()
 
 # ======================= ANEXO D: PRUEBAS POR CONSOLA =======================
 if consola.get('pruebas'):
     salto(doc)
     doc.add_heading('Anexo D. Pruebas por consola del navegador (F12)', level=1)
+    _fetch = sum(1 for pr in consola['pruebas'] if pr.get('httpStatus') is not None)
+    _insp = len(consola['pruebas']) - _fetch
     parrafo(doc,
-        'Cinco verificaciones se hacen pegando un fetch() en la consola del navegador, con el token de la '
-        'sesión, porque prueban la capa del servidor directamente: el control de acceso por rol, el manejo '
-        'de datos inexistentes y las validaciones que el formulario no deja disparar. Son las pruebas más '
-        'cercanas a cómo se tantea una API, así que las dejamos con el comando exacto para copiar y pegar, '
-        'su resultado esperado y lo que respondió el servidor. Cada una tiene su captura de la consola '
-        '(carpeta pruebas/e2/resultados/consola/).')
+        f'Estas {len(consola["pruebas"])} verificaciones se hicieron desde la consola del navegador. En '
+        f'{_fetch} se pega un fetch() con el token de la sesión, porque prueban la capa del servidor '
+        'directamente: el control de acceso por rol, el manejo de datos inexistentes y las validaciones que '
+        'el formulario no deja disparar.' + (
+        f' En {"la otra" if _insp == 1 else f"las otras {_insp}"} se inspecciona un elemento de la página '
+        'con document.getElementById(), para ver algo que la pantalla no muestra.' if _insp else '') +
+        ' Son las pruebas más cercanas a cómo se tantea una API, así que van con el comando exacto para '
+        'copiar y pegar, el resultado esperado, lo que respondió el sistema y la captura de la consola tal '
+        'como quedó (carpeta pruebas/e2/resultados/consola/).')
     parrafo(doc, 'Las rutas son relativas (/api/...), así que el mismo comando sirve en localhost y en el '
                  'entorno de Railway sin cambiar nada.', size=10, italic=True)
     for pr in consola['pruebas']:
@@ -536,15 +500,51 @@ if consola.get('pruebas'):
         parrafo(doc, pr['descripcion'], size=10.5, space=3)
         parrafo(doc, 'Comando (se pega en la pestaña Consola de F12):', size=9.5, bold=True, space=2)
         codigo(doc, pr['comando'])
+        n = FIG_CONSOLA.get(pr['evidencia'])
         ficha(doc, [
             ('Requisito', pr['requisito']),
             ('Resultado esperado', pr['esperado']),
             ('Resultado real', pr['resultadoReal']),
-            ('Código HTTP', str(pr['httpStatus'])),
+            ('Código HTTP', str(pr['httpStatus']) if pr.get('httpStatus') is not None
+             else '— (inspección del elemento, sin petición al servidor)'),
             ('Estado', pr['estado']),
-            ('Evidencia', pr['evidencia']),
+            ('Evidencia', f"{pr['evidencia']} (figura {n}, debajo)" if n else pr['evidencia']),
         ])
+        if n:
+            assert proxima_figura() == n, 'la numeración de figuras se desfasó'
+            MOSTRADAS[pr['evidencia']] = figura(
+                doc, ruta_evidencia(pr['evidencia']),
+                f"{pr['id']} · {pr['evidencia']}. Consola F12 con el comando ejecutado y la respuesta: {pr['titulo'].lower()}.")
         doc.add_paragraph()
+
+# ======================= ANEXO E: CAPTURAS DE LOS CICLOS =======================
+salto(doc)
+doc.add_heading('Anexo E. Evidencia de cada ejecución (ciclos 1 y 2)', level=1)
+parrafo(doc,
+    'Aquí están todas las capturas de los dos ciclos, en el orden de la suite. Cada una lleva estampado en '
+    'la esquina el caso, el ciclo, la URL, la hora de Colombia y el navegador, y algunas el recuadro con la '
+    'respuesta del servidor. Las de los casos que se probaron desde la consola tienen el aspecto de la '
+    'pestaña Consola de F12. Cuando una captura ya está debajo del reporte de su defecto (Anexo C), aquí '
+    'solo se indica en qué figura verla, para no repetirla.', size=10.5)
+
+
+def capturas_ciclo(ciclo_datos, numero):
+    doc.add_heading(f'E.{numero} Ciclo {numero} · {ciclo_datos["navegador"]}', level=2)
+    for c in ciclo_datos['casos']:
+        for e in c['evidencias']:
+            desc = desc_evidencia(e)
+            pie = (f"{c['id']} · ciclo {numero} · {c['estado']} · {e}. {c['titulo']}"
+                   + (f'. {desc}' if desc else ''))
+            if e in MOSTRADAS:
+                parrafo(doc, f"{e} ({c['id']}, ciclo {numero}, {c['estado']}): se ve en la figura "
+                             f"{MOSTRADAS[e]}, en el reporte de {c['defecto'] or 'su defecto'} (Anexo C).",
+                        size=9.5, italic=True, space=8)
+            else:
+                MOSTRADAS[e] = figura(doc, ruta_evidencia(e), pie, ancho_cm=12.5)
+
+
+capturas_ciclo(ciclo1, 1)
+capturas_ciclo(ciclo2, 2)
 
 salida = os.path.join(BUILD, '..', '..', '..', 'docs', 'entrega-2', 'E2_F_Equipo.docx')
 os.makedirs(os.path.dirname(salida), exist_ok=True)

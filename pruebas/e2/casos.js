@@ -12,6 +12,29 @@ const APROBADO = 'Aprobado';
 const FALLIDO = 'Fallido';
 const BLOQUEADO = 'Bloqueado';
 
+// Comandos que se pegan en la consola (F12), tal cual los trae la guía de ejecución.
+const COMANDOS = {
+  CP008: (correo) =>
+`fetch("/api/auth/registro",{method:"POST",headers:{
+  "Content-Type":"application/json"},
+  body:JSON.stringify({nombres:"Intruso",apellidos:"Prueba",
+  correo:"${correo}",contrasena:"Password123",
+  rol:"admin"})}).then(r=>r.json()).then(console.log)`,
+  CP018:
+`fetch("/api/perfil/docente",{method:"POST",headers:{
+  "Content-Type":"application/json",Authorization:"Bearer "
+  +localStorage.getItem("cp.token")},
+  body:JSON.stringify({cedula:"12345",facultad:"Ingenierías"})})
+  .then(r=>r.json()).then(console.log)`,
+  CP021:
+`fetch("/api/tutorias",{method:"POST",headers:{
+  "Content-Type":"application/json",Authorization:"Bearer "
+  +localStorage.getItem("cp.token")},
+  body:JSON.stringify({docente_id:999999,
+  asignatura:"Cálculo Diferencial",modalidad:"Virtual",
+  fecha:"2027-02-15",hora:"10:00"})}).then(r=>r.json()).then(console.log)`
+};
+
 // Formatea AAAA-MM-DD como DD/MM/AAAA, que es como lo muestra la aplicación.
 const dma = (f) => f.split('-').reverse().join('/');
 
@@ -42,7 +65,7 @@ function casoContrasenaInvalida(local, clave, regla) {
     const error = await textoError(p, 'errorRegContrasena');
     const envios = s.red.filter(r => r.ruta.startsWith('/api/auth/registro'));
     const sigue = await activa(p, 'crear-cuenta');
-    await c.evidencia(s, `Contraseña «${clave}»: mensaje bajo la contraseña «${error || '(vacío)'}»`);
+    await c.evidencia(s, `Contraseña «${clave}»: mensaje bajo la contraseña «${error || '(vacío)'}»`, [], '#regContrasena');
     const ok = regla.test(error) && envios.length === 0 && sigue;
     return {
       estado: ok ? APROBADO : FALLIDO,
@@ -107,7 +130,7 @@ const CASOS = [
       await llenarRegistro(p, { nombres: 'Ana', apellidos: 'Pérez', correo: 'persona@gmail.com', rol: 'estudiante', clave: 'Password123' });
       const error = await textoError(p, 'errorRegCorreo');
       const envios = s.red.filter(r => r.ruta.startsWith('/api/auth/registro'));
-      await c.evidencia(s, `Correo persona@gmail.com: mensaje bajo el correo «${error}»`);
+      await c.evidencia(s, `Correo persona@gmail.com: mensaje bajo el correo «${error}»`, [], '#regCorreo');
       const ok = error.includes('Solo correos @amigo.edu.co') && envios.length === 0;
       return { estado: ok ? APROBADO : FALLIDO, real: `Bajo el correo aparece «${error}» y no se envía la petición de registro.` };
     }
@@ -134,8 +157,10 @@ const CASOS = [
       await abrirAplicacion(p);
       const correo = `admin.${d.sufijo}@amigo.edu.co`;
       const r = await consola(p, 'POST', '/api/auth/registro', { nombres: 'Intruso', apellidos: 'Prueba', correo, contrasena: 'Password123', rol: 'admin' });
-      const lineas = s.red.filter(x => x.ruta.startsWith('/api/auth/registro')).map(lineaRed);
-      await c.evidencia(s, `fetch POST /api/auth/registro con rol «admin» (${correo})`, lineas);
+      await c.evidenciaConsola(s, [{
+        comando: COMANDOS.CP008(correo), metodo: 'POST', url: r.url,
+        status: r.estado, statusText: r.statusText, body: r.datos
+      }], 'Registro forzado con rol «admin» desde la consola, sin sesión');
       const ok = r.estado === 400 && r.datos && r.datos.error === 'Rol inválido';
       return { estado: ok ? APROBADO : FALLIDO, real: `La consola muestra ${JSON.stringify(r.datos)} y la pestaña Red el código ${r.estado}.` };
     }
@@ -150,7 +175,7 @@ const CASOS = [
       await llenarRegistro(p, { nombres: 'Sebastián', apellidos: 'García', correo: 'sgarcia@amigo.edu.co', rol: 'estudiante', clave: 'Password123' });
       const error = await textoError(p, 'errorRegCorreo');
       const reg = ultima(s, 'POST', '/api/auth/registro');
-      await c.evidencia(s, `Correo sgarcia@amigo.edu.co (ya existe): «${error}»`, reg ? [lineaRed(reg)] : []);
+      await c.evidencia(s, `Correo sgarcia@amigo.edu.co (ya existe): «${error}»`, reg ? [lineaRed(reg)] : [], '#regCorreo');
       const ok = reg && reg.estado === 409 && error.includes('Ya existe una cuenta con ese correo');
       return { estado: ok ? APROBADO : FALLIDO, real: `POST /api/auth/registro → ${reg ? reg.estado : '—'}; bajo el correo aparece «${error}».` };
     }
@@ -285,7 +310,7 @@ const CASOS = [
       const envio = ultima(s, 'POST', '/api/perfil/foto');
       const kb = envio ? Math.round(envio.bytesEnviados * 3 / 4 / 1024) : 0;
       const errorCampo = await p.evaluate(() => [...document.querySelectorAll('.campo__mensaje-error, .error-foto')].map(e => e.textContent.trim()).filter(Boolean).join(' | '));
-      await c.evidencia(s, `Archivo ${d.foto.nombre} (${d.foto.bytes} bytes) → ${r ? r.status() : 'no se envió'}`, envio ? [lineaRed({ ...envio, respuesta: envio.respuesta })] : []);
+      await c.evidencia(s, `Archivo ${d.foto.nombre} (${d.foto.bytes} bytes) → ${r ? r.status() : 'no se envió'}`, envio ? [lineaRed({ ...envio, respuesta: envio.respuesta })] : [], '#perfilHeroNombre');
       const rechazada = !r || r.status() === 400 || r.status() === 413;
       const avisa = /2\s?MB/i.test((t.texto || '') + ' ' + errorCampo) && (t.opacidad >= 0.9 || errorCampo);
       const ok = rechazada && avisa;
@@ -307,7 +332,10 @@ const CASOS = [
       const p = s.pagina;
       await iniciarSesion(p, 'sgarcia@amigo.edu.co', SEMILLA);
       const r = await consola(p, 'POST', '/api/perfil/docente', { cedula: '12345', facultad: 'Ingenierías' });
-      await c.evidencia(s, 'Sesión de sgarcia (estudiante): fetch POST /api/perfil/docente', s.red.filter(x => x.ruta === '/api/perfil/docente').map(lineaRed));
+      await c.evidenciaConsola(s, [{
+        comando: COMANDOS.CP018, metodo: 'POST', url: r.url,
+        status: r.estado, statusText: r.statusText, body: r.datos
+      }], 'Sesión de sgarcia@amigo.edu.co (estudiante)');
       const ok = r.estado === 403;
       return { estado: ok ? APROBADO : FALLIDO, real: `Respuesta ${r.estado} ${JSON.stringify(r.datos)}.` };
     }
@@ -333,6 +361,10 @@ const CASOS = [
       const p = s.pagina;
       await iniciarSesion(p, 'sgarcia@amigo.edu.co', SEMILLA);
       const r = await consola(p, 'POST', '/api/tutorias', { docente_id: 999999, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', fecha: '2027-02-15', hora: '10:00' });
+      await c.evidenciaConsola(s, [{
+        comando: COMANDOS.CP021, metodo: 'POST', url: r.url,
+        status: r.estado, statusText: r.statusText, body: r.datos
+      }], 'Sesión de sgarcia@amigo.edu.co (estudiante)');
       await p.reload();
       await p.waitForSelector('#splash', { state: 'hidden' }).catch(() => {});
       await p.waitForTimeout(1200);
@@ -359,7 +391,7 @@ const CASOS = [
       const t = await estadoTostada(p);
       await ir(p, 'panel-estudiante').catch(() => {});
       const tarjetas = await p.locator('#estListaTutorias .tarjeta-tutoria', { hasText: dma(d.choqueDocente) }).count();
-      await c.evidencia(s, `crios programa con Carlos Peña el ${dma(d.choqueDocente)} 10:00 → ${segunda.estado}`, s.red.filter(x => x.metodo === 'POST' && x.ruta === '/api/tutorias').map(lineaRed));
+      await c.evidencia(s, `crios programa con Carlos Peña el ${dma(d.choqueDocente)} 10:00 → ${segunda.estado}`, s.red.filter(x => x.metodo === 'POST' && x.ruta === '/api/tutorias').map(lineaRed), '#estListaTutorias');
       const ok = primera.estado === 201 && segunda.estado === 409 && tarjetas === 0;
       return {
         estado: ok ? APROBADO : FALLIDO,
@@ -386,7 +418,7 @@ const CASOS = [
       const estadoTxt = (await final.locator('.tarjeta-tutoria__estado').textContent()).trim();
       const botones = await final.locator('button').count();
       const cancel = ultima(s, 'PATCH', '/api/tutorias/');
-      await c.evidencia(s, `Tutoría del ${dma(fecha)} 15:00 con Diego Herrera → «${estadoTxt}»`, cancel ? [lineaRed(cancel)] : []);
+      await c.evidencia(s, `Tutoría del ${dma(fecha)} 15:00 con Diego Herrera → «${estadoTxt}»`, cancel ? [lineaRed(cancel)] : [], final);
       const ok = prog.estado === 201 && cancel && cancel.estado === 200 && estadoTxt === 'Cancelada' && botones === 0;
       return { estado: ok ? APROBADO : FALLIDO, real: `Se programó para el ${dma(fecha)} a las 15:00 (${prog.estado}). Al cancelar: PATCH → ${cancel ? cancel.estado : '—'}; la tarjeta pasa a «${estadoTxt}» y ${botones ? 'conserva botones' : 'ya no tiene botón «Cancelar»'}.` };
     }
@@ -430,7 +462,7 @@ const CASOS = [
       const final = p.locator('#docListaTutorias .tarjeta-tutoria', { hasText: dma(manana) }).filter({ hasText: 'Juan' }).first();
       const estadoTxt = (await final.locator('.tarjeta-tutoria__estado').textContent().catch(() => '')).trim();
       const marca = ultima(s, 'PATCH', '/api/tutorias/');
-      await c.evidencia(s, `Docente mgonzalez, reloj en ${manana} 08:00 → «${estadoTxt}»`, marca ? [lineaRed(marca)] : []);
+      await c.evidencia(s, `Docente mgonzalez, reloj en ${manana} 08:00 → «${estadoTxt}»`, marca ? [lineaRed(marca)] : [], final);
       const ok = prog.estado === 201 && marca && marca.estado === 200 && estadoTxt === 'Completada';
       return { estado: ok ? APROBADO : FALLIDO, real: `Preparación: jperez programó con María González Ramos el ${dma(manana)} a las 07:00 (${prog.estado}). Con el reloj del navegador en ese día a las 08:00, la docente ve «Marcar realizada»; al confirmar, PATCH → ${marca ? marca.estado : '—'} y la tarjeta pasa a «${estadoTxt}».` };
     }
@@ -456,7 +488,7 @@ const CASOS = [
       const r = await resp;
       await p.waitForTimeout(1200);
       const fila = await p.locator('#cuerpoTablaUsuarios tr', { hasText: correo }).count();
-      await c.evidencia(s, `Nuevo usuario ${correo} → ${r.status()}`, [lineaRed(ultima(s, 'POST', '/api/admin/usuarios'))]);
+      await c.evidencia(s, `Nuevo usuario ${correo} → ${r.status()}`, [lineaRed(ultima(s, 'POST', '/api/admin/usuarios'))], p.locator('#cuerpoTablaUsuarios tr', { hasText: correo }).first());
       const ok = r.ok() && fila > 0;
       return { estado: ok ? APROBADO : FALLIDO, real: `POST /api/admin/usuarios → ${r.status()} ${ultima(s, 'POST', '/api/admin/usuarios').respuesta}; ${fila ? 'la fila aparece en la tabla' : 'la fila no aparece'}.` };
     }
@@ -502,7 +534,7 @@ const CASOS = [
       await p.waitForSelector('#pagina-admin-auditoria .tabla-datos tbody tr td');
       const celdas = await p.locator('#pagina-admin-auditoria .tabla-datos tbody tr').first().locator('td').allTextContents();
       const [fechaMostrada, usuario, evento] = celdas.map(x => x.trim());
-      await c.evidencia(s, `Primera fila: ${fechaMostrada} · ${usuario} · ${evento}. Hora real del login: ${dma(real.fecha)} ${real.hora}`);
+      await c.evidencia(s, `Primera fila: ${fechaMostrada} · ${usuario} · ${evento}. Hora real del login: ${dma(real.fecha)} ${real.hora}`, [], '#pagina-admin-auditoria .tabla-datos');
       const legible = /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/.test(fechaMostrada);
       const tipo = /login/i.test(evento) && usuario === d.admin.correo;
       const horaMostrada = fechaMostrada.slice(11, 16);
@@ -533,7 +565,7 @@ const CASOS = [
       const r = await resp;
       await p.waitForTimeout(1200);
       const fila = (await p.locator('#pagina-admin-notificaciones .tabla-datos tbody tr').first().innerText()).replace(/\s+/g, ' ').trim();
-      await c.evidencia(s, `Notificación a «Todos los estudiantes en alerta» → ${r.status()}`, [lineaRed(ultima(s, 'POST', '/api/admin/notificaciones'))]);
+      await c.evidencia(s, `Notificación a «Todos los estudiantes en alerta» → ${r.status()}`, [lineaRed(ultima(s, 'POST', '/api/admin/notificaciones'))], '#pagina-admin-notificaciones .tabla-datos');
       const ok = r.ok() && /Todos los estudiantes en alerta \(\d+\)/.test(fila) && /Enviado/.test(fila);
       return { estado: ok ? APROBADO : FALLIDO, real: `POST → ${r.status()} ${ultima(s, 'POST', '/api/admin/notificaciones').respuesta}. La primera fila del historial es «${fila}».` };
     }
@@ -615,7 +647,7 @@ const CASOS = [
       const r = await resp;
       await p.waitForTimeout(1500);
       const filas = await p.locator('#cuerpoClasesProgramadas tr', { hasText: dma(hoy) }).count();
-      await c.evidencia(s, `Asesoría Sandra Ríos + Camilo Ríos, ${dma(hoy)} ${hora} → ${r ? r.status() : 'no se envió'}`, r ? [lineaRed(ultima(s, 'POST', '/api/admin/programar-clase'))] : []);
+      await c.evidencia(s, `Asesoría Sandra Ríos + Camilo Ríos, ${dma(hoy)} ${hora} → ${r ? r.status() : 'no se envió'}`, r ? [lineaRed(ultima(s, 'POST', '/api/admin/programar-clase'))] : [], '#cuerpoClasesProgramadas');
       const creada = r && r.ok();
       return {
         estado: creada ? FALLIDO : APROBADO,
@@ -639,7 +671,7 @@ const CASOS = [
       const b = await programarTutoria(p, { tutor: 'Sandra Ríos Montoya', modalidad: 'Presencial', fecha: f, hora: '09:00' });
       await ir(p, 'panel-estudiante');
       const misma = await p.locator('#estListaTutorias .tarjeta-tutoria', { hasText: `${dma(f)} · ⏰ 09:00` }).count();
-      await c.evidencia(s, `Dos tutorías el ${dma(f)} 09:00: ${a.estado} y ${b.estado}; tarjetas a esa hora: ${misma}`, s.red.filter(x => x.metodo === 'POST' && x.ruta === '/api/tutorias').map(lineaRed));
+      await c.evidencia(s, `Dos tutorías el ${dma(f)} 09:00: ${a.estado} y ${b.estado}; tarjetas a esa hora: ${misma}`, s.red.filter(x => x.metodo === 'POST' && x.ruta === '/api/tutorias').map(lineaRed), '#estListaTutorias');
       const ok = a.estado === 201 && b.estado !== 201 && misma === 1;
       return { estado: ok ? APROBADO : FALLIDO, defecto: ok ? null : 'DEF-09', real: `Primera (Andrés López Castillo): ${a.estado}. Segunda (Sandra Ríos Montoya, misma fecha y hora): ${b.estado}${b.cuerpo ? ' ' + JSON.stringify(b.cuerpo) : ''}. En «Mis Tutorías Programadas» hay ${misma} tarjeta(s) el ${dma(f)} a las 09:00.` };
     }
@@ -710,7 +742,7 @@ function casoFechaInvalida(dias, hora) {
     const fecha = fechaColombia(dias);
     const r = await programarTutoria(p, { tutor: 'Andrés López Castillo', modalidad: 'Virtual', fecha, hora });
     const error = await textoError(p, 'errorTutFecha');
-    await c.evidencia(s, `Fecha ${dma(fecha)} ${hora}: «${error}»`);
+    await c.evidencia(s, `Fecha ${dma(fecha)} ${hora}: «${error}»`, [], '#tutFecha');
     const ok = r.estado === null && /a partir de mañana/.test(error);
     return { estado: ok ? APROBADO : FALLIDO, real: `Con la fecha ${dma(fecha)} y la hora ${hora}, bajo la fecha aparece «${error}» y ${r.estado === null ? 'no se envía nada al servidor' : `se envió la petición (${r.estado})`}.` };
   };
@@ -736,7 +768,7 @@ function casoCancelacion(tutor, margenHoras) {
     await p.waitForTimeout(800);
     const estadoTxt = (await p.locator('#estListaTutorias .tarjeta-tutoria', { hasText: `${dma(fecha)} · ⏰ ${hora}` }).first().locator('.tarjeta-tutoria__estado').textContent()).trim();
     const cancel = ultima(s, 'PATCH', '/api/tutorias/');
-    await c.evidencia(s, `Tutoría ${dma(fecha)} ${hora} con ${tutor} (margen real ${margenReal.toFixed(1)} h) → PATCH ${resp ? resp.status() : '—'} · «${estadoTxt}». ${describirTostada(t)}`, cancel ? [lineaRed(cancel)] : []);
+    await c.evidencia(s, `Tutoría ${dma(fecha)} ${hora} con ${tutor} (margen real ${margenReal.toFixed(1)} h) → PATCH ${resp ? resp.status() : '—'} · «${estadoTxt}». ${describirTostada(t)}`, cancel ? [lineaRed(cancel)] : [], p.locator('#estListaTutorias .tarjeta-tutoria', { hasText: `${dma(fecha)} · ⏰ ${hora}` }).first());
 
     const base = `Preparación: tutoría con ${tutor} el ${dma(fecha)} a las ${hora} (${prog.estado}); al pulsar «Cancelar» faltaban ${margenReal.toFixed(1)} h reales. PATCH → ${cancel ? `${cancel.estado} ${cancel.respuesta}` : '—'}; la tarjeta queda «${estadoTxt}». En pantalla: ${describirTostada(t)}.`;
     if (margenHoras < 24) {

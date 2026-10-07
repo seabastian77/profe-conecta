@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Consolida los resultados de ejecución y define los 14 defectos del Entregable 2."""
-import json, os
+import json, os, re
 
 RAIZ = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'resultados')
 
@@ -34,6 +34,11 @@ EQUIPO = {
     'navegador_c2': ciclo2['navegador'],
     'so': ciclo1['sistemaOperativo'],
 }
+
+# Fecha de la ejecución (dd/mm/aaaa, hora de Colombia) y entorno de los reportes.
+fecha_ejecucion = ciclo1['inicio'][:10]
+ENTORNO_DEF = (f"{ciclo1['navegador']} · Linux · ConectaProfe en copia local del commit 693358a, la misma "
+               f"versión desplegada en Railway · ejecución automatizada con Playwright el {fecha_ejecucion}")
 
 # --- Los 14 defectos (texto del reporte + estado comprobado por ejecución) ---
 # severidad/prioridad/estado se declaran aquí; la columna "comprobado" enlaza
@@ -83,12 +88,42 @@ DEFECTOS = [
        reporta='Esteban Palencia', reproduce='Sebastián González González'),
 ]
 
+# --- Evidencias: ruta en disco y descripción de cada captura -----------------
+_RUTAS = {}
+for carpeta, _, archivos in os.walk(RAIZ):
+    for a in archivos:
+        if a.lower().endswith('.png'):
+            _RUTAS[a] = os.path.join(carpeta, a)
+
+_DESC = {}
+for fuente in (ciclo1['casos'], ciclo2['casos'], defs_expl['defectos']):
+    for item in fuente:
+        _DESC.update(item.get('descripciones') or {})
+for pr in consola.get('pruebas', []):
+    if pr.get('evidencia'):
+        _DESC[pr['evidencia']] = f"Consola F12: {pr['descripcion']}"
+
+
+def ruta_evidencia(nombre):
+    """Ruta de la captura en pruebas/e2/resultados/ (None si no existe)."""
+    return _RUTAS.get(nombre)
+
+
+def desc_evidencia(nombre):
+    """Descripción que se estampó en la captura, lista para un pie de figura."""
+    texto = (_DESC.get(nombre) or '').strip().replace('\n', ' · ').rstrip('. ')
+    # Mayúscula al empezar cada frase («… 200. el elemento» → «… 200. El elemento»).
+    return re.sub(r'(\. )([a-záéíóúñ])', lambda m: m.group(1) + m.group(2).upper(), texto)
+
+
 # Enlaza cada defecto con la evidencia y el resultado observado en la ejecución.
 _expl = {d['id']: d for d in defs_expl['defectos']}
 _caso_por_defecto = {}
+_casos_del_defecto = {}
 for c in ciclo1['casos']:
     if c['defecto']:
         _caso_por_defecto.setdefault(c['defecto'], c)
+        _casos_del_defecto.setdefault(c['defecto'], []).append(c)
 
 for d in DEFECTOS:
     e = _expl.get(d['id'])
@@ -101,7 +136,8 @@ for d in DEFECTOS:
     elif caso:
         d['frecuencia'] = '3 de 3 intentos (resultado estable en los ciclos 1 y 2)'
         d['resultado_real'] = caso['real']
-        d['evidencias'] = caso['evidencias']
+        # Todas las capturas del ciclo 1 de los casos que fallaron por este defecto.
+        d['evidencias'] = [ev for c in _casos_del_defecto[d['id']] for ev in c['evidencias']]
         d['notas'] = []
     else:
         d['frecuencia'] = '—'
@@ -115,6 +151,11 @@ for d in DEFECTOS:
     ev = _ev_consola.get(d['id'])
     if ev and ev != '—' and ev not in d['evidencias']:
         d['evidencias'].append(ev)
+    faltan = [e for e in d['evidencias'] if not ruta_evidencia(e)]
+    if faltan:
+        raise SystemExit(f"{d['id']}: no se encontró la captura {faltan}")
+    if not d['evidencias']:
+        raise SystemExit(f"{d['id']} no tiene evidencia")
 
 # --- Métricas ----------------------------------------------------------------
 def contar(casos, estado):

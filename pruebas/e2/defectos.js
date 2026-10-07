@@ -27,20 +27,34 @@ const DEFECTOS = {
       await iniciarSesion(p, 'sgarcia@amigo.edu.co', SEMILLA);
       const manana = fechaColombia(1);
       const carga = `<img src=x onerror="alert('XSS-DEF05')">`;
-      await programarTutoria(p, { tutor: 'Diego Herrera Zapata', fecha: manana, hora: '10:00', observaciones: carga });
-      await ir(p, 'mi-calendario');
-      // Abre el día de la tutoría en el calendario.
-      await p.evaluate((dia) => { if (typeof seleccionarDia === 'function') seleccionarDia('est', dia); }, parseInt(manana.slice(8, 10), 10));
-      await p.waitForTimeout(900);
-      await c.evidencia(s, `Observación «${carga}» en el calendario del ${dma(manana)}: ${seEjecuto ? 'SE EJECUTA el script' : 'se muestra como texto literal, no se ejecuta'}`);
-      const guardadoCrudo = (await consola(p, 'GET', '/api/tutorias')).datos?.[0]?.observaciones || '';
-      c.nota(`En la base, la observación quedó guardada como «${guardadoCrudo}».`);
+      const prog = await programarTutoria(p, { tutor: 'Diego Herrera Zapata', fecha: manana, hora: '10:00', observaciones: carga });
+
+      // En «Mi Panel» se abre el día de mañana en el calendario, como dicen los pasos.
+      await ir(p, 'panel-estudiante');
+      if (manana.slice(0, 7) !== fechaColombia(0).slice(0, 7)) {
+        await p.locator('.pagina.activa [onclick="calNavegar(1)"]').first().click();
+        await p.waitForTimeout(600);
+      }
+      const dia = parseInt(manana.slice(8, 10), 10);
+      await p.locator(`.pagina.activa [onclick="calClickDia(${dia})"]`).first().click();
+      const detalle = p.locator('.pagina.activa [data-cal="calDetalleDia"]');
+      await detalle.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+      await p.waitForTimeout(800);
+      const textoDetalle = await detalle.innerText().catch(() => '');
+      const seVeLiteral = textoDetalle.includes('onerror');
+      await c.evidencia(s, `Día ${dma(manana)} en el calendario de «Mi Panel»: ${seEjecuto ? 'SE EJECUTA el script' : seVeLiteral ? 'la observación se ve como texto literal y no se ejecuta' : 'no aparece la observación'}`, [], detalle);
+
+      const id = prog.cuerpo && prog.cuerpo.id;
+      const guardado = ((await consola(p, 'GET', '/api/tutorias')).datos || []).find(t => t.id === id)?.observaciones || '';
+      c.nota(`En la base, la observación quedó guardada tal cual: «${guardado}». La protección está al mostrarla, no al guardarla.`);
       return {
-        estado: seEjecuto ? 'Abierto' : 'Verificado',
+        estado: seEjecuto ? 'Abierto' : (seVeLiteral ? 'Verificado' : 'No reproducido'),
         frecuencia: '3 de 3 intentos (comportamiento estable)',
         resultado: seEjecuto
-          ? `Aparece la ventana del navegador con «XSS-DEF05»: el código se ejecuta.`
-          : `Sobre la versión 693358a el texto se ve literal en «Sesiones del día» y no se ejecuta nada (la salida pasa por escaparHtml). Antes de la corrección del 29/09 aparecía la ventana del navegador con «XSS-DEF05».`
+          ? 'Aparece la ventana del navegador con «XSS-DEF05»: el código se ejecuta.'
+          : seVeLiteral
+            ? 'Sobre la versión 693358a no aparece ninguna ventana: en el detalle del día la observación se lee tal cual, «📝 <img src=x onerror=…>», como texto. Antes de la corrección del 29/09 ese mismo paso abría la ventana con «XSS-DEF05».'
+            : 'El detalle del día no mostró la observación; no se pudo confirmar la corrección.'
       };
     }
   },
@@ -70,9 +84,20 @@ const DEFECTOS = {
       const doc = await c.abrir();
       const p = doc.pagina;
       await iniciarSesion(p, 'mgonzalez@amigo.edu.co', SEMILLA);
+      // Antes del cambio, la tarjeta del docente dice «Cancelada».
+      const tarjeta = () => p.locator('#docListaTutorias .tarjeta-tutoria', { hasText: `${dma(manana)} · ⏰ ${hh}:${mm}` }).first();
+      await c.evidencia(doc, `Antes: la tutoría #${id} aparece «Cancelada» en el panel de la docente`, [], tarjeta());
       const r = await consola(p, 'PATCH', `/api/tutorias/${id}/realizada`);
+      await c.evidenciaConsola(doc, [{
+        comando: `fetch("/api/tutorias/${id}/realizada",{method:"PATCH",\n  headers:{Authorization:"Bearer "+localStorage.getItem("cp.token")}})\n  .then(r=>r.json()).then(console.log)`,
+        metodo: 'PATCH', url: r.url, status: r.estado, statusText: r.statusText, body: r.datos
+      }], `Sesión de mgonzalez@amigo.edu.co (docente). La tutoría #${id} estaba cancelada.`);
       const estadoFinal = (await consola(p, 'GET', '/api/tutorias')).datos.find(t => t.id === id)?.estado;
-      await c.evidencia(doc, `Tutoría #${id}: cancelada → PATCH /realizada → «${estadoFinal}». Respuesta ${r.estado} ${JSON.stringify(r.datos)}`);
+      // Se recarga el panel para ver el estado nuevo de la misma tarjeta.
+      await ir(p, 'panel-docente');
+      await p.waitForTimeout(800);
+      await c.evidencia(doc, `Después de PATCH /realizada (${r.estado} ${JSON.stringify(r.datos)}): la misma tutoría #${id} queda «${estadoFinal}»`,
+        [`PATCH /api/tutorias/${id}/realizada → ${r.estado} ${JSON.stringify(r.datos)}`], tarjeta());
       const reproduce = estadoTrasCancelar === 'cancelada' && estadoFinal === 'completada';
       return {
         estado: reproduce ? 'Abierto' : 'No reproducido',
@@ -127,13 +152,24 @@ const DEFECTOS = {
       const doc1 = docentes[0].id, doc2 = docentes[1] ? docentes[1].id : docentes[0].id;
       const r1 = await consola(p, 'POST', '/api/tutorias', { docente_id: doc1, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', fecha: '2027-13-45', hora: '09:00' });
       const r2 = await consola(p, 'POST', '/api/tutorias', { docente_id: doc2, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', fecha: 'mañana', hora: '25:99' });
+      const cmd = (docente, fecha, hora) =>
+        `fetch("/api/tutorias",{method:"POST",headers:{\n  "Content-Type":"application/json",Authorization:"Bearer "\n  +localStorage.getItem("cp.token")},\n  body:JSON.stringify({docente_id:${docente},asignatura:"Cálculo Diferencial",\n  modalidad:"Virtual",fecha:"${fecha}",hora:"${hora}"})})\n  .then(r=>r.json()).then(console.log)`;
+      await c.evidenciaConsola(s, [
+        { comando: cmd(doc1, '2027-13-45', '09:00'), metodo: 'POST', url: r1.url, status: r1.estado, statusText: r1.statusText, body: r1.datos },
+        { comando: cmd(doc2, 'mañana', '25:99'), metodo: 'POST', url: r2.url, status: r2.estado, statusText: r2.statusText, body: r2.datos }
+      ], 'Sesión de dmontoya@amigo.edu.co (estudiante)');
       await ir(p, 'panel-estudiante').catch(() => {});
-      await c.evidencia(s, `POST con fecha «2027-13-45» → ${r1.estado}; POST con fecha «mañana», hora «25:99» → ${r2.estado}`);
+      // Lo que queda guardado se ve en las tarjetas de «Mis Tutorías Programadas».
+      const fechasMostradas = await p.$$eval('#estListaTutorias .tarjeta-tutoria__fecha', els => els.map(e => e.textContent.trim()));
+      await c.evidencia(s, `POST con fecha «2027-13-45» → ${r1.estado}; con fecha «mañana» y hora «25:99» → ${r2.estado}. Tarjetas: ${fechasMostradas.join(' | ')}`,
+        [`POST /api/tutorias (fecha 2027-13-45) → ${r1.estado} ${JSON.stringify(r1.datos)}`,
+         `POST /api/tutorias (fecha mañana, hora 25:99) → ${r2.estado} ${JSON.stringify(r2.datos)}`],
+        '#estListaTutorias');
       const reproduce = r1.estado === 201 && r2.estado === 201;
       return {
         estado: reproduce ? 'Abierto' : 'No reproducido',
         frecuencia: '3 de 3 intentos',
-        resultado: `Las dos peticiones respondieron ${r1.estado} ${JSON.stringify(r1.datos)} y ${r2.estado} ${JSON.stringify(r2.datos)}. El servidor guarda fecha «2027-13-45» y hora «25:99» sin validar que existan; solo se llega por la API.`
+        resultado: `Las dos peticiones respondieron ${r1.estado} ${JSON.stringify(r1.datos)} y ${r2.estado} ${JSON.stringify(r2.datos)}. En «Mis Tutorías Programadas» las tarjetas muestran ${fechasMostradas.map(f => `«${f}»`).join(' y ')}: el servidor guarda fechas y horas que no existen sin validarlas; solo se llega por la API.`
       };
     }
   },
@@ -175,12 +211,18 @@ const DEFECTOS = {
       await adm.pagina.waitForTimeout(1000);
       await cerrarSesion(adm.pagina);
 
-      // El estudiante nuevo revisa su campana.
+      // El estudiante nuevo entra: su panel dice «Sin alertas»...
       const est = await c.abrir();
       await iniciarSesion(est.pagina, correo, 'Password123');
       const notifs = (await consola(est.pagina, 'GET', '/api/notificaciones')).datos || [];
       const recibioAlerta = notifs.some(n => /seguimiento acad/i.test(n.titulo));
-      await c.evidencia(est, `Promedio guardado: ${promedioGuardado}. Panel: «${avisoPanel}». Notificaciones de alerta recibidas: ${recibioAlerta ? 'sí' : 'no'}`);
+      await c.evidencia(est, `Promedio guardado en la base: ${promedioGuardado}. El panel del estudiante dice «${avisoPanel} alertas»`, [], '#estAlertaTarjeta');
+      // ...pero la campana trae la alerta enviada al grupo «en alerta».
+      await est.pagina.click('#botonCampana');
+      await est.pagina.waitForSelector('#notifPanel:not(.oculto)', { timeout: 4000 }).catch(() => {});
+      await est.pagina.waitForTimeout(600);
+      await c.evidencia(est, `Campana abierta: ${recibioAlerta ? 'llega «Seguimiento académico», enviada a «Todos los estudiantes en alerta»' : 'no llega la alerta'}`,
+        [`GET /api/perfil → promedio: ${promedioGuardado}`]);
       const reproduce = Number(promedioGuardado) === 0 && recibioAlerta;
       return {
         estado: reproduce ? 'Abierto' : 'No reproducido',
@@ -205,7 +247,7 @@ const DEFECTOS = {
     let r;
     try { r = await def.correr(caso, datos); }
     catch (e) { r = { estado: 'Error de script', resultado: e.message.split('\n')[0] }; }
-    salidaFinal.defectos.push({ id, ...def, ...r, evidencias: caso.evidencias, notas: caso.notas });
+    salidaFinal.defectos.push({ id, ...def, ...r, evidencias: caso.evidencias, descripciones: caso.descripciones, notas: caso.notas });
     await caso.cerrar();
     console.log(`${id}  ${r.estado}`);
   }

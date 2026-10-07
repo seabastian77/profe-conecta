@@ -42,6 +42,7 @@ class Caso {
     this.entorno = entorno;
     this.sesiones = [];
     this.evidencias = [];
+    this.descripciones = {};
     this.notas = [];
     this.consecutivo = 0;
   }
@@ -90,12 +91,26 @@ class Caso {
   }
 
   // Marca la pantalla con el caso, la URL y la hora, y guarda la captura.
-  async evidencia(sesion, descripcion, extra) {
+  // `enfoque` (selector CSS o Locator) lleva a la vista el elemento que prueba
+  // el resultado, para que la captura muestre el efecto y no solo la cabecera.
+  async evidencia(sesion, descripcion, extra, enfoque) {
     this.consecutivo += 1;
     const n = String(this.consecutivo).padStart(2, '0');
     const nombre = `EV-${this.def.id.replace('-', '')}-C${this.entorno.ciclo}-${n}.png`;
     const ruta = path.join(this.entorno.salida, 'evidencias', nombre);
     const p = sesion.pagina;
+
+    if (enfoque) {
+      if (typeof enfoque === 'string') {
+        await p.evaluate((sel) => {
+          const el = document.querySelector(sel);
+          if (el) el.scrollIntoView({ block: 'center', behavior: 'instant' });
+        }, enfoque).catch(() => {});
+      } else {
+        await enfoque.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' })).catch(() => {});
+      }
+      await p.waitForTimeout(500);
+    }
 
     await p.evaluate(({ caso, ciclo, version, perfil, simulado, texto, lineas }) => {
       const quitar = (id) => document.getElementById(id)?.remove();
@@ -137,6 +152,26 @@ class Caso {
     await p.screenshot({ path: ruta });
     await p.evaluate(() => { document.getElementById('__selloE2')?.remove(); document.getElementById('__redE2')?.remove(); });
     this.evidencias.push(nombre);
+    this.descripciones[nombre] = descripcion;
+    return nombre;
+  }
+
+  // Captura con el aspecto de la consola del navegador (F12): el comando que se
+  // pegó y lo que respondió. `entradas` es una lista de {comando, metodo, url,
+  // status, statusText, body} o {comando, salidaLog} para una inspección.
+  async evidenciaConsola(sesion, entradas, descripcion) {
+    this.consecutivo += 1;
+    const n = String(this.consecutivo).padStart(2, '0');
+    const nombre = `EV-${this.def.id.replace('-', '')}-C${this.entorno.ciclo}-${n}.png`;
+    const ruta = path.join(this.entorno.salida, 'evidencias', nombre);
+    const host = new URL(this.entorno.baseUrl).host;
+    const rotulo = `${this.def.id} · ciclo ${this.entorno.ciclo} · consola F12 · ${host}\n` +
+      `{AHORA} hora de Colombia · ${this.entorno.versionNavegador}` + (descripcion ? `\n${descripcion}` : '');
+    await dibujarConsola(sesion.pagina, { entradas, rotulo, host });
+    await sesion.pagina.screenshot({ path: ruta });
+    await sesion.pagina.evaluate(() => document.getElementById('__consolaE2')?.remove());
+    this.evidencias.push(nombre);
+    this.descripciones[nombre] = `Consola F12: ${descripcion || 'comando y respuesta del servidor'}`;
     return nombre;
   }
 
@@ -218,8 +253,92 @@ async function consola(p, metodo, ruta, cuerpo) {
     const r = await fetch(ruta, opciones);
     let datos = null;
     try { datos = await r.json(); } catch { /* sin JSON */ }
-    return { estado: r.status, datos };
+    return { estado: r.status, statusText: r.statusText, url: r.url, datos };
   }, { metodo, ruta, cuerpo });
+}
+
+// Formatea un objeto de respuesta como lo imprime la consola del navegador.
+function fmtRespuesta(body) {
+  if (body == null) return 'null';
+  if (Array.isArray(body)) return `Array(${body.length})`;
+  if (typeof body === 'object') {
+    const partes = Object.entries(body).slice(0, 3).map(([k, v]) =>
+      `${k}: ${typeof v === 'string' ? `'${v}'` : JSON.stringify(v)}`);
+    return `{${partes.join(', ')}}`;
+  }
+  return String(body);
+}
+
+// Dibuja sobre la página una consola de F12 (columna izquierda) dejando ver la
+// aplicación a la derecha. Cada entrada muestra el comando pegado y, según el
+// caso, la línea de la petición con su código y el objeto que imprime, o la
+// salida de console.log en una inspección.
+async function dibujarConsola(p, { entradas, rotulo, host }) {
+  const preparadas = entradas.map(e => {
+    const t = e.salidaLog ? '' : fmtRespuesta(e.body);
+    return {
+      comando: e.comando,
+      metodo: e.metodo || '',
+      url: e.url || '',
+      status: e.status == null ? null : e.status,
+      statusText: e.statusText || '',
+      cuerpo: t.startsWith('{') && t.endsWith('}') ? t.slice(1, -1).trim() : t,
+      salidaLog: e.salidaLog || null
+    };
+  });
+  await p.evaluate(({ entradas, rotulo, host }) => {
+    document.getElementById('__consolaE2')?.remove();
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const colorComando = (c) => esc(c)
+      .replace(/(")(.*?)(")/g, '<span style="color:#f28b82">$1$2$3</span>')
+      .replace(/\b(fetch|method|headers|body|then|const|console)\b/g, '<span style="color:#8ab4f8">$1</span>');
+    const colorCuerpo = (c) => esc(c)
+      .replace(/([a-zA-Z_]+):/g, '<span style="color:#c58af9">$1</span>:')
+      .replace(/('[^']*')/g, '<span style="color:#f28b82">$1</span>');
+
+    const bloques = entradas.map((e) => {
+      let resultado;
+      if (e.salidaLog) {
+        resultado = `<div style="margin-left:14px;margin-top:4px;color:#e8eaed;white-space:pre-wrap">${esc(e.salidaLog)
+          .replace(/(opacidad: )([\d.]+)/, '$1<b style="color:#f28b82">$2</b>')}</div>
+          <div style="color:#9aa0a6;margin-left:14px">&lt; undefined</div>`;
+      } else {
+        const error = e.status >= 400;
+        const linea = error
+          ? `<div style="background:#3a2323;color:#f28b82;padding:4px 12px;margin:2px -12px;border-top:1px solid #4a2c2c;border-bottom:1px solid #4a2c2c">
+              ⊘ <span style="text-decoration:underline">${esc(e.metodo)} ${esc(e.url)}</span> <b>${e.status} (${esc(e.statusText)})</b></div>`
+          : `<div style="color:#9aa0a6;padding:4px 0">${esc(e.metodo)} ${esc(e.url)} <b style="color:#e8eaed">${e.status}</b></div>`;
+        const marca = error ? '<span style="color:#f28b82;font-weight:700">⊘</span>' : '<span style="color:#81c995">›</span>';
+        resultado = `<div style="color:#9aa0a6;margin-left:14px">&lt; Promise {&lt;pending&gt;}</div>${linea}
+          <div style="margin-left:14px;margin-top:4px">${marca} ▶ { ${colorCuerpo(e.cuerpo)} }</div>`;
+      }
+      return `<div style="color:#8ab4f8;margin-top:6px">&gt;</div>
+        <pre style="margin:0 0 4px 14px;white-space:pre-wrap;color:#e8eaed;font:inherit">${colorComando(e.comando)}</pre>${resultado}`;
+    }).join('');
+
+    const ahora = new Intl.DateTimeFormat('es-CO', {
+      timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }).format(new Date());
+
+    const panel = document.createElement('div');
+    panel.id = '__consolaE2';
+    panel.setAttribute('style', 'position:fixed;inset:0;z-index:2147483647;display:flex;' +
+      'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace');
+    panel.innerHTML =
+      `<div style="width:63%;height:100%;background:#1e1e1f;color:#e8eaed;overflow:hidden;border-right:2px solid #3c4043;display:flex;flex-direction:column">
+         <div style="background:#292a2d;color:#9aa0a6;font-size:12px;padding:7px 12px;border-bottom:1px solid #3c4043">
+           <span style="color:#e8eaed;font-weight:600;border-bottom:2px solid #8ab4f8;padding-bottom:5px">Console</span>
+           &nbsp; Elements &nbsp; Network &nbsp; Sources <span style="float:right">${esc(host)}</span></div>
+         <div style="padding:4px 12px 10px;font-size:13px;line-height:1.55;overflow:hidden;flex:1">${bloques}
+           <div style="color:#8ab4f8;margin-top:8px">&gt;</div></div>
+       </div>
+       <div style="flex:1;position:relative">
+         <div style="position:absolute;bottom:10px;left:10px;right:10px;background:rgba(17,24,39,.92);color:#f9fafb;
+           font-size:11px;line-height:1.4;padding:6px 9px;border-radius:6px;white-space:pre-wrap">${esc(rotulo).replace('{AHORA}', ahora)}</div>
+       </div>`;
+    document.documentElement.appendChild(panel);
+  }, { entradas: preparadas, rotulo, host });
 }
 
 // Lee el texto de un mensaje de error de campo.
@@ -275,5 +394,5 @@ function prepararSalida(dir) {
 module.exports = {
   ZONA, Caso, esperar, fechaColombia, horaColombia, instanteColombia, marcaColombia,
   lineaRed, abrirAplicacion, iniciarSesion, llenarRegistro, cerrarSesion, ir, consola,
-  textoError, estadoTostada, programarTutoria, prepararSalida
+  textoError, estadoTostada, programarTutoria, prepararSalida, dibujarConsola, fmtRespuesta
 };
