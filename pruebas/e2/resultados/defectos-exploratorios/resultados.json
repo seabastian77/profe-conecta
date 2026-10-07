@@ -1,0 +1,94 @@
+{
+  "inicio": "07/10/2026, 16:22:07",
+  "navegador": "Chromium 141.0.7390.37",
+  "defectos": [
+    {
+      "id": "DEF-05",
+      "titulo": "El HTML escrito en las observaciones de una tutoría se ejecutaba al abrir ese día en el calendario",
+      "severidad": "Crítica",
+      "prioridad": "Alta",
+      "requisito": "R5 · RNF06",
+      "origen": "SE-02 (revisión de seguridad del 29/09)",
+      "reporta": "Sebastián González González",
+      "reproduce": "Esteban Palencia",
+      "estado": "Verificado",
+      "frecuencia": "3 de 3 intentos (comportamiento estable)",
+      "resultado": "Sobre la versión 693358a el texto se ve literal en «Sesiones del día» y no se ejecuta nada (la salida pasa por escaparHtml). Antes de la corrección del 29/09 aparecía la ventana del navegador con «XSS-DEF05».",
+      "evidencias": [
+        "EV-DEF05-C1-01.png"
+      ],
+      "notas": [
+        "En la base, la observación quedó guardada como «<img src=x onerror=\"alert('XSS-DEF05')\">»."
+      ]
+    },
+    {
+      "id": "DEF-06",
+      "titulo": "Una tutoría cancelada pasa a «completada» si el docente la marca como realizada por la API",
+      "severidad": "Media",
+      "prioridad": "Media",
+      "requisito": "R6",
+      "origen": "SE-02",
+      "reporta": "Sebastián González González",
+      "reproduce": "Esteban Palencia",
+      "estado": "Abierto",
+      "frecuencia": "3 de 3 intentos",
+      "resultado": "La tutoría #2 se canceló (estado «cancelada»). El docente ejecutó PATCH /api/tutorias/2/realizada: respuesta {\"mensaje\":\"Tutoría completada\"} y la tutoría quedó en «completada». Una tutoría cancelada no debería admitir nuevas transiciones.",
+      "evidencias": [
+        "EV-DEF06-C1-01.png"
+      ],
+      "notas": []
+    },
+    {
+      "id": "DEF-07",
+      "titulo": "Las contraseñas se ven en claro en «Nuevo usuario» y «Editar usuario», y la primera trae «Cambiar123» escrita",
+      "severidad": "Media",
+      "prioridad": "Alta",
+      "requisito": "R7 · RNF05",
+      "origen": "SE-01",
+      "reporta": "Esteban Palencia",
+      "reproduce": "Sebastián González González",
+      "estado": "Abierto",
+      "frecuencia": "3 de 3 intentos",
+      "resultado": "En «Nuevo Usuario» el campo de contraseña es de tipo «text» y trae escrita «Cambiar123», legible a simple vista. En «Editar Usuario», «Prueba1234» se ve tal cual en un campo de tipo «text». Ninguno es un campo de contraseña.",
+      "evidencias": [
+        "EV-DEF07-C1-01.png"
+      ],
+      "notas": []
+    },
+    {
+      "id": "DEF-10",
+      "titulo": "La API guarda tutorías con fechas y horas que no existen («2027-13-45», «mañana», «25:99»)",
+      "severidad": "Media",
+      "prioridad": "Baja",
+      "requisito": "R5",
+      "origen": "SE-02",
+      "reporta": "Sebastián González González",
+      "reproduce": "Esteban Palencia",
+      "estado": "Abierto",
+      "frecuencia": "3 de 3 intentos",
+      "resultado": "Las dos peticiones respondieron 201 {\"mensaje\":\"Tutoría programada\",\"id\":3} y 201 {\"mensaje\":\"Tutoría programada\",\"id\":4}. El servidor guarda fecha «2027-13-45» y hora «25:99» sin validar que existan; solo se llega por la API.",
+      "evidencias": [
+        "EV-DEF10-C1-01.png"
+      ],
+      "notas": []
+    },
+    {
+      "id": "DEF-14",
+      "titulo": "El estudiante que deja vacío el promedio queda con 0 y recibe alertas académicas, aunque su panel dice «Sin alertas»",
+      "severidad": "Media",
+      "prioridad": "Media",
+      "requisito": "R4 · RRN07",
+      "origen": "SE-01",
+      "reporta": "Esteban Palencia",
+      "reproduce": "Sebastián González González",
+      "estado": "Abierto",
+      "frecuencia": "3 de 3 intentos",
+      "resultado": "El estudiante guardó el perfil sin promedio; en la base quedó promedio 0. Su panel muestra «Sin», pero la campana sí trae la alerta enviada al grupo «en alerta», porque el grupo incluye a quien tiene promedio 0.",
+      "evidencias": [
+        "EV-DEF14-C1-01.png"
+      ],
+      "notas": []
+    }
+  ],
+  "fin": "07/10/2026, 16:22:40"
+}
