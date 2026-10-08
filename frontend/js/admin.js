@@ -151,6 +151,7 @@ async function toggleEstadoUsuario(boton) {
 
   try {
     await llamarAPI("/admin/usuarios/" + userId + "/estado", "PATCH", { activo: estaInactivo });
+    fila.dataset.activo = estaInactivo ? "1" : "0";
     if (estaInactivo) {
       insignia.className = "insignia insignia--activo";
       insignia.textContent = "● Activo";
@@ -224,9 +225,10 @@ function abrirEditorUsuario(btn) {
   var apellidos = btn.getAttribute('data-apellidos');
   var correo   = btn.getAttribute('data-correo');
   var rol      = btn.getAttribute('data-rol');
-  editarUsuario(parseInt(id), nombres, apellidos, correo, rol);
+  var promedio = btn.getAttribute('data-promedio');
+  editarUsuario(parseInt(id), nombres, apellidos, correo, rol, promedio);
 }
-async function editarUsuario(id, nombres, apellidos, correo, rol) {
+async function editarUsuario(id, nombres, apellidos, correo, rol, promedio) {
   var existente = document.getElementById("modalEditarUsuario");
   if (existente) existente.remove();
 
@@ -236,14 +238,18 @@ async function editarUsuario(id, nombres, apellidos, correo, rol) {
   modal.innerHTML = '<div class="modal-caja"><div class="modal-cabecera"><h3>✏️ Editar Usuario</h3><button class="modal-cerrar" type="button" onclick="document.getElementById(\'modalEditarUsuario\').remove()">✕</button></div>' +
     '<div class="modal-cuerpo">' +
     '<div class="grilla-dos">' +
-    '<div class="campo"><label class="campo__etiqueta">Nombres</label><input type="text" id="euNombres" class="campo__entrada" value="' + nombres + '"/></div>' +
-    '<div class="campo"><label class="campo__etiqueta">Apellidos</label><input type="text" id="euApellidos" class="campo__entrada" value="' + apellidos + '"/></div>' +
+    '<div class="campo"><label class="campo__etiqueta">Nombres</label><input type="text" id="euNombres" class="campo__entrada" value="' + escaparHtml(nombres) + '"/></div>' +
+    '<div class="campo"><label class="campo__etiqueta">Apellidos</label><input type="text" id="euApellidos" class="campo__entrada" value="' + escaparHtml(apellidos) + '"/></div>' +
     '</div>' +
-    '<div class="campo"><label class="campo__etiqueta">Correo</label><input type="email" id="euCorreo" class="campo__entrada" value="' + correo + '"/></div>' +
+    '<div class="campo"><label class="campo__etiqueta">Correo</label><input type="email" id="euCorreo" class="campo__entrada" value="' + escaparHtml(correo) + '"/></div>' +
     '<div class="grilla-dos">' +
     '<div class="campo"><label class="campo__etiqueta">Rol</label><div class="campo__selector-contenedor"><select id="euRol" class="campo__entrada campo__selector"><option value="estudiante"' + (rol==="estudiante"?" selected":"") + '>🎓 Estudiante</option><option value="docente"' + (rol==="docente"?" selected":"") + '>👩‍🏫 Docente</option><option value="admin"' + (rol==="admin"?" selected":"") + '>⚙️ Admin</option></select><span class="campo__flecha">▾</span></div></div>' +
-    '<div class="campo"><label class="campo__etiqueta">Nueva contraseña <span style="color:#aaa;font-weight:400">(opcional)</span></label><input type="text" id="euContra" class="campo__entrada" placeholder="Dejar vacío para no cambiar"/></div>' +
-    '</div></div>' +
+    '<div class="campo"><label class="campo__etiqueta">Nueva contraseña <span style="color:#aaa;font-weight:400">(opcional)</span></label><input type="password" id="euContra" class="campo__entrada" autocomplete="new-password" placeholder="Dejar vacío para no cambiar"/></div>' +
+    '</div>' +
+    (rol === "estudiante"
+      ? '<div class="campo"><label class="campo__etiqueta">Promedio acumulado <span style="color:#aaa;font-weight:400">(0–5, vacío si aún no tiene)</span></label><input type="number" id="euPromedio" class="campo__entrada" min="0" max="5" step="0.1" value="' + (parseFloat(promedio) > 0 ? escaparHtml(promedio) : '') + '"/></div>'
+      : '') +
+    '</div>' +
     '<div class="modal-pie"><button class="btn-secundario" type="button" onclick="document.getElementById(\'modalEditarUsuario\').remove()">Cancelar</button>' +
     '<button class="btn-primario" type="button" onclick="guardarEdicionUsuario(' + id + ')">💾 Guardar cambios</button></div></div>';
   document.body.appendChild(modal);
@@ -259,6 +265,16 @@ async function guardarEdicionUsuario(id) {
   };
   var contra = document.getElementById("euContra").value.trim();
   if (contra) datos.contrasena = contra;
+
+  // El promedio solo lo registra el admin; vacío lo deja sin registrar.
+  var campoPromedio = document.getElementById("euPromedio");
+  if (campoPromedio) {
+    var valorPromedio = campoPromedio.value.trim();
+    if (valorPromedio !== "" && (isNaN(parseFloat(valorPromedio)) || parseFloat(valorPromedio) < 0 || parseFloat(valorPromedio) > 5)) {
+      mostrarTostada("El promedio debe estar entre 0 y 5", "error"); return;
+    }
+    datos.promedio = valorPromedio === "" ? null : parseFloat(valorPromedio);
+  }
 
   if (!datos.nombres || !datos.apellidos || !datos.correo) {
     mostrarTostada("Todos los campos son obligatorios", "error"); return;
@@ -287,7 +303,7 @@ function abrirModalNuevoUsuario() {
   var modal = document.createElement("div");
   modal.id = "modalNuevoUsuario";
   modal.className = "modal-overlay";
-  modal.innerHTML = '<div class="modal-caja"><div class="modal-cabecera"><h3>➕ Nuevo Usuario</h3><button class="modal-cerrar" type="button" onclick="cerrarModalNuevoUsuario()">✕</button></div><div class="modal-cuerpo"><div class="grilla-dos"><div class="campo"><label class="campo__etiqueta">Nombres</label><input type="text" id="nuNombres" class="campo__entrada" placeholder="María Camila"/></div><div class="campo"><label class="campo__etiqueta">Apellidos</label><input type="text" id="nuApellidos" class="campo__entrada" placeholder="García López"/></div></div><div class="campo"><label class="campo__etiqueta">Correo institucional</label><input type="email" id="nuCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co"/></div><div class="grilla-dos"><div class="campo"><label class="campo__etiqueta">Rol</label><div class="campo__selector-contenedor"><select id="nuRol" class="campo__entrada campo__selector"><option value="">— Selecciona —</option><option value="estudiante">🎓 Estudiante</option><option value="docente">👩‍🏫 Docente</option><option value="admin">⚙️ Admin</option></select><span class="campo__flecha">▾</span></div></div><div class="campo"><label class="campo__etiqueta">Contraseña</label><input type="text" id="nuContra" class="campo__entrada" value="Cambiar123"/></div></div></div><div class="modal-pie"><button class="btn-secundario" type="button" onclick="cerrarModalNuevoUsuario()">Cancelar</button><button class="btn-primario" type="button" onclick="guardarNuevoUsuario()">Crear Usuario</button></div></div>';
+  modal.innerHTML = '<div class="modal-caja"><div class="modal-cabecera"><h3>➕ Nuevo Usuario</h3><button class="modal-cerrar" type="button" onclick="cerrarModalNuevoUsuario()">✕</button></div><div class="modal-cuerpo"><div class="grilla-dos"><div class="campo"><label class="campo__etiqueta">Nombres</label><input type="text" id="nuNombres" class="campo__entrada" placeholder="María Camila"/></div><div class="campo"><label class="campo__etiqueta">Apellidos</label><input type="text" id="nuApellidos" class="campo__entrada" placeholder="García López"/></div></div><div class="campo"><label class="campo__etiqueta">Correo institucional</label><input type="email" id="nuCorreo" class="campo__entrada" placeholder="usuario@amigo.edu.co"/></div><div class="grilla-dos"><div class="campo"><label class="campo__etiqueta">Rol</label><div class="campo__selector-contenedor"><select id="nuRol" class="campo__entrada campo__selector"><option value="">— Selecciona —</option><option value="estudiante">🎓 Estudiante</option><option value="docente">👩‍🏫 Docente</option><option value="admin">⚙️ Admin</option></select><span class="campo__flecha">▾</span></div></div><div class="campo"><label class="campo__etiqueta">Contraseña</label><input type="password" id="nuContra" class="campo__entrada" autocomplete="new-password" placeholder="Mínimo 8, con letras y números"/></div></div></div><div class="modal-pie"><button class="btn-secundario" type="button" onclick="cerrarModalNuevoUsuario()">Cancelar</button><button class="btn-primario" type="button" onclick="guardarNuevoUsuario()">Crear Usuario</button></div></div>';
   document.body.appendChild(modal);
   modal.addEventListener("click", function(e) { if (e.target === modal) cerrarModalNuevoUsuario(); });
 }
@@ -298,11 +314,15 @@ async function guardarNuevoUsuario() {
   var apellidos = document.getElementById("nuApellidos").value.trim();
   var correo = document.getElementById("nuCorreo").value.trim();
   var rol = document.getElementById("nuRol").value;
-  var contrasena = document.getElementById("nuContra").value.trim() || "Cambiar123";
+  var contrasena = document.getElementById("nuContra").value.trim();
 
   if (!nombres || !apellidos) { mostrarTostada("Nombres y apellidos obligatorios", "error"); return; }
   if (!correo || correo.indexOf("@") === -1) { mostrarTostada("Correo inválido", "error"); return; }
   if (!rol) { mostrarTostada("Selecciona un rol", "error"); return; }
+  // Misma regla del servidor: ya no hay una clave por defecto visible (DEF-07).
+  if (contrasena.length < 8 || !/[A-Za-z]/.test(contrasena) || !/[0-9]/.test(contrasena)) {
+    mostrarTostada("La contraseña debe tener mínimo 8 caracteres, con letras y números", "error"); return;
+  }
 
   try {
     await llamarAPI("/admin/usuarios", "POST", { nombres: nombres, apellidos: apellidos, correo: correo, rol: rol, contrasena: contrasena });
@@ -410,14 +430,16 @@ async function cargarTablaUsuarios() {
     tbody.innerHTML = usuarios.map(function(u) {
       var programa = escaparHtml(u.programa || u.facultad || u.dependencia || "—");
       var estadoHTML;
-      if (!u.activo || u.activo == 0) estadoHTML = '<span class="insignia insignia--inactivo">○ Inactivo</span>';
-      else if (parseFloat(u.promedio) < 3.0 && u.promedio) estadoHTML = '<span class="insignia insignia--alerta">⚠ Alerta</span>';
+      var activo = !!(u.activo && u.activo != 0);
+      var enAlerta = u.rol === 'estudiante' && parseFloat(u.promedio) > 0 && parseFloat(u.promedio) < 3.0;
+      if (!activo) estadoHTML = '<span class="insignia insignia--inactivo">○ Inactivo</span>';
+      else if (enAlerta) estadoHTML = '<span class="insignia insignia--alerta">⚠ Alerta</span>';
       else estadoHTML = '<span class="insignia insignia--activo">● Activo</span>';
       var btnToggle = (u.activo && u.activo != 0)
         ? '<button class="btn-accion btn-accion--toggle" title="Desactivar" data-id="' + u.id + '" data-activo="1" onclick="animarYToggle(this)">🔴</button>'
         : '<button class="btn-accion btn-accion--toggle btn-accion--activar" title="Activar" data-id="' + u.id + '" data-activo="0" onclick="animarYToggle(this)">🟢</button>';
       var btnEliminar = '<button class="btn-accion btn-accion--eliminar" title="Eliminar permanente" data-id="' + u.id + '" data-nombre="' + escaparHtml(u.nombres + ' ' + u.apellidos) + '" onclick="animarYEliminar(this)">🗑️</button>';
-      return '<tr data-user-id="' + u.id + '">' +
+      return '<tr data-user-id="' + u.id + '" data-rol="' + escaparHtml(u.rol || '') + '" data-activo="' + (activo ? 1 : 0) + '" data-alerta="' + (enAlerta ? 1 : 0) + '" data-busqueda="' + escaparHtml((u.nombres + ' ' + u.apellidos + ' ' + u.correo).toLowerCase()) + '">' +
         '<td><strong>' + escaparHtml(u.nombres) + ' ' + escaparHtml(u.apellidos) + '</strong></td>' +
         '<td>' + escaparHtml(u.correo) + '</td>' +
         '<td>' + (rolLabels[u.rol] || escaparHtml(u.rol)) + '</td>' +
@@ -431,6 +453,7 @@ async function cargarTablaUsuarios() {
             'data-apellidos="' + escaparHtml(u.apellidos) + '" ' +
             'data-correo="' + escaparHtml(u.correo) + '" ' +
             'data-rol="' + (u.rol||'') + '" ' +
+            'data-promedio="' + (u.promedio === null || u.promedio === undefined ? '' : escaparHtml(u.promedio)) + '" ' +
             'onclick="animarYEditar(this)">✏️</button>' +
           btnToggle + btnEliminar +
         '</td></tr>';
@@ -452,7 +475,7 @@ async function cargarUsuariosRecientes() {
     var rolLabels = { estudiante: "Estudiante", docente: "Docente", admin: "Admin" };
     tbody.innerHTML = usuarios.slice(0, 5).map(function(u) {
       var programa = escaparHtml(u.programa || u.facultad || u.dependencia || "—");
-      var enAlerta = u.rol === 'estudiante' && u.promedio != null && parseFloat(u.promedio) < 3.0;
+      var enAlerta = u.rol === 'estudiante' && parseFloat(u.promedio) > 0 && parseFloat(u.promedio) < 3.0;
       var estadoHTML = !u.activo ? '<span class="insignia insignia--inactivo">○ Inactivo</span>' : enAlerta ? '<span class="insignia insignia--alerta">⚠ Alerta</span>' : '<span class="insignia insignia--activo">● Activo</span>';
       return '<tr><td><strong>' + escaparHtml(u.nombres) + ' ' + escaparHtml(u.apellidos) + '</strong></td><td>' + (rolLabels[u.rol] || escaparHtml(u.rol)) + '</td><td>' + programa + '</td><td>' + estadoHTML + '</td><td>' + (u.creado_en ? new Date(u.creado_en).toLocaleDateString("es-CO") : "—") + '</td></tr>';
     }).join("");

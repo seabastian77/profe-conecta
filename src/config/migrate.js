@@ -32,7 +32,7 @@ async function migrar() {
       programa    TEXT,
       semestre    TEXT,
       telefono    TEXT,
-      promedio    NUMERIC DEFAULT 0
+      promedio    NUMERIC
     );
 
     CREATE TABLE IF NOT EXISTS perfiles_docente (
@@ -189,6 +189,9 @@ async function migrar() {
     CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario
       ON notificaciones (usuario_id, leida);
   `);
+
+  // Sin valor por defecto: un estudiante nuevo queda sin promedio y no en 0, que lo marcaba en alerta (DEF-14).
+  await c.query('ALTER TABLE perfiles_estudiante ALTER COLUMN promedio DROP DEFAULT');
 
   // Purga de intentos viejos para que la tabla no crezca sin control.
   await c.query(`DELETE FROM intentos_login WHERE creado_en < NOW() - INTERVAL '1 day'`);

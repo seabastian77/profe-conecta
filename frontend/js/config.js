@@ -10,10 +10,10 @@ const CONFIG = {
 
   // Reglas de negocio
   PROMEDIO_MINIMO: 3.0,
-  MAX_INTENTOS: 5,
+  MAX_INTENTOS: 3,
   MINUTOS_BLOQUEO: 5,
   HORAS_CANCELACION: 24,
-  MINUTOS_INACTIVIDAD: 120,
+  MINUTOS_INACTIVIDAD: 15,
 
   // Dominio institucional permitido
   DOMINIO_CORREO: "@amigo.edu.co",

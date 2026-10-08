@@ -3,7 +3,8 @@ const { body, validationResult } = require('express-validator');
 const { db } = require('../config/db');
 const { generarToken } = require('../config/jwt');
 
-const MAX_INTENTOS      = parseInt(process.env.MAX_INTENTOS || '5');
+// RRN01 pide bloquear después de 3 intentos fallidos (antes eran 5, DEF-04).
+const MAX_INTENTOS      = parseInt(process.env.MAX_INTENTOS || '3');
 const MINUTOS_BLOQUEO   = parseInt(process.env.MINUTOS_BLOQUEO || '5');
 const DOMINIO_PERMITIDO = process.env.DOMINIO_CORREO || '@amigo.edu.co';
 const { RONDAS_BCRYPT } = require('../config/seguridad');

@@ -47,7 +47,7 @@ Documento de especificación de requisitos del sistema **ConectaProfe**, platafo
 
 | N° | Nombre | Descripción | Prioridad | Rol |
 |---|---|---|---|---|
-| RF035 | Guardar perfil de estudiante | El estudiante debe poder registrar código estudiantil, documento, programa académico, semestre, teléfono y promedio acumulado. | Alta | Estudiante |
+| RF035 | Guardar perfil de estudiante | El estudiante debe poder registrar código estudiantil, documento (solo números), programa académico, semestre y teléfono. El promedio acumulado lo registra el administrador y el estudiante solo lo consulta. | Alta | Estudiante |
 | RF036 | Subir foto de perfil | El sistema debe permitir cargar una foto de perfil desde el dispositivo con un límite de 2 MB, mostrando la imagen de inmediato. | Media | Estudiante |
 | RF037 | Programar tutoría | El sistema debe permitir registrar una tutoría especificando estudiante, tutor, asignatura, modalidad, fecha, hora y observaciones. | Media | Estudiante |
 | RF038 | Mostrar métricas del estudiante | El panel debe mostrar tarjetas con promedio acumulado, semestre actual, total de tutorías y estado de alerta académica. | Baja | Estudiante |

@@ -10,14 +10,24 @@ async function guardarPerfilEstudiante(req, res) {
     return res.status(400).json({ error: 'Faltan datos obligatorios: documento, programa y semestre' });
   }
 
-  // El promedio no lo fija el estudiante: lo administra la institución.
+  // CC y TI son solo números: antes se guardaba cualquier texto, como «: 1098765432».
+  const doc = String(documento).trim();
+  if (!/^\d{6,11}$/.test(doc)) {
+    return res.status(400).json({ error: 'El documento debe tener solo números (entre 6 y 11 dígitos)' });
+  }
+  const tel = String(telefono || '').trim();
+  if (tel && !/^\d{7,10}$/.test(tel)) {
+    return res.status(400).json({ error: 'El teléfono debe tener entre 7 y 10 números' });
+  }
+
+  // El promedio no lo fija el estudiante: lo registra la institución desde la gestión de usuarios.
   await db.prepare(`
     INSERT INTO perfiles_estudiante (usuario_id, codigo, documento, programa, semestre, telefono)
     VALUES (?,?,?,?,?,?)
     ON CONFLICT(usuario_id) DO UPDATE SET
       codigo=excluded.codigo, documento=excluded.documento, programa=excluded.programa,
       semestre=excluded.semestre, telefono=excluded.telefono
-  `).run(usuario_id, documento, documento, programa, semestre, telefono || '');
+  `).run(usuario_id, doc, doc, programa, semestre, tel);
   res.json({ mensaje: 'Perfil guardado' });
 }
 

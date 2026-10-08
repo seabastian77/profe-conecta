@@ -72,7 +72,7 @@ describeSiHayBase('Integración de endpoints', () => {
       const antes = await db.pool.query('SELECT promedio FROM perfiles_estudiante WHERE usuario_id=$1', [estId]);
       const res = await request(app).post('/api/perfil/estudiante')
         .set('Authorization', `Bearer ${estToken}`)
-        .send({ documento: '123', programa: 'Sistemas', semestre: '5', telefono: '3000000000', promedio: 5.0 });
+        .send({ documento: '1098765432', programa: 'Sistemas', semestre: '5', telefono: '3000000000', promedio: 5.0 });
       expect(res.status).toBe(200);
       const despues = await db.pool.query('SELECT promedio FROM perfiles_estudiante WHERE usuario_id=$1', [estId]);
       expect(Number(despues.rows[0].promedio)).not.toBe(5.0);

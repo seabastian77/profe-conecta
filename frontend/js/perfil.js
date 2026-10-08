@@ -26,8 +26,10 @@ function mostrarFormPerfil() {
   document.getElementById("perfilFormDocente").classList.add("oculto");
   document.getElementById("perfilFormAdmin").classList.add("oculto");
 
-  if (rol === "estudiante")
+  if (rol === "estudiante") {
     document.getElementById("perfilFormEstudiante").classList.remove("oculto");
+    rellenarFormEstudiante();
+  }
   if (rol === "docente") {
     document.getElementById("perfilFormDocente").classList.remove("oculto");
     if (typeof inicializarAutocompleteAsignaturas === "function")
@@ -47,7 +49,21 @@ function mostrarFormPerfil() {
     etiquetas[rol] || "";
 }
 
-// Valida y guarda el perfil del estudiante
+// Llena el formulario con el perfil guardado para que «Editar datos» no obligue a escribir todo otra vez.
+async function rellenarFormEstudiante() {
+  try {
+    const perfil = await llamarAPI("/perfil", "GET");
+    const d = perfil?.perfil || {};
+    if (d.documento) document.getElementById("estDocumento").value = d.documento;
+    if (d.programa) document.getElementById("estPrograma").value = d.programa;
+    if (d.semestre) document.getElementById("estSemestre").value = d.semestre;
+    if (d.telefono) document.getElementById("estTelefono").value = d.telefono;
+  } catch (err) {
+    // Sin perfil previo el formulario queda vacío, como en el primer registro.
+  }
+}
+
+// Valida y guarda el perfil del estudiante; el promedio no va porque lo registra la institución.
 async function alEnviarPerfilEstudiante(e) {
   e.preventDefault();
 
@@ -56,12 +72,18 @@ async function alEnviarPerfilEstudiante(e) {
     programa: document.getElementById("estPrograma").value,
     semestre: document.getElementById("estSemestre").value,
     telefono: document.getElementById("estTelefono").value.trim(),
-    promedio: parseFloat(document.getElementById("estPromedio").value) || 0,
   };
 
   let hayError = false;
   if (!datos.documento) {
     ponerError("estDocumento", "El número de documento es requerido");
+    hayError = true;
+  } else if (!/^\d{6,11}$/.test(datos.documento)) {
+    ponerError("estDocumento", "Solo números, entre 6 y 11 dígitos");
+    hayError = true;
+  }
+  if (datos.telefono && !/^\d{7,10}$/.test(datos.telefono)) {
+    ponerError("estTelefono", "Entre 7 y 10 números");
     hayError = true;
   }
   if (!datos.programa) {
@@ -289,6 +311,7 @@ function perfilEstaIncompleto(rol, datos) {
 function perfilEstudianteHTML(p) {
   const d = p.perfil || {};
   const promedio = parseFloat(d.promedio) || 0;
+  const textoPromedio = promedio > 0 ? promedio.toFixed(1) : "Sin registrar";
   const enAlerta = promedio > 0 && promedio < 3.0;
 
   // RF031 — Calcula la barra de progreso de créditos
@@ -308,7 +331,8 @@ function perfilEstudianteHTML(p) {
         <div class="perfil-dato"><span class="perfil-dato__label">Programa</span><span>${escaparHtml(d.programa || "—")}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Semestre</span><span>${d.semestre || "—"}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Promedio</span>
-          <span class="${enAlerta ? "texto-naranja" : ""}">${d.promedio || "—"}${enAlerta ? " ⚠️" : ""}</span>
+          <span class="${enAlerta ? "texto-naranja" : ""}">${textoPromedio}${enAlerta ? " ⚠️" : ""}</span>
+          <small style="display:block;color:#94a3b8;font-size:11px">Lo registra la universidad</small>
         </div>
         <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
       </div>
@@ -473,9 +497,29 @@ function comprimirImagen(archivo, maxAncho, maxKB) {
 }
 
 // Comprime la foto elegida, la previsualiza y la sube al servidor
+// RF036 fija 2 MB; antes la imagen se reducía en silencio y el límite nunca se aplicaba (DEF-03).
+const LIMITE_FOTO_BYTES = 2 * 1024 * 1024;
+
+// Rechaza lo que no es imagen o pesa más de 2 MB; devuelve true si el archivo sirve.
+function fotoAceptable(input, archivo) {
+  if (!archivo.type || !archivo.type.startsWith("image/")) {
+    mostrarTostada("El archivo debe ser una imagen (JPG, PNG o WebP)", "error");
+    input.value = "";
+    return false;
+  }
+  if (archivo.size > LIMITE_FOTO_BYTES) {
+    const mb = (archivo.size / 1048576).toFixed(1).replace(".", ",");
+    mostrarTostada(`La imagen pesa ${mb} MB y el máximo permitido es 2 MB`, "error");
+    input.value = "";
+    return false;
+  }
+  return true;
+}
+
 function subirFotoPerfil(input) {
   const archivo = input.files[0];
   if (!archivo) return;
+  if (!fotoAceptable(input, archivo)) return;
 
   mostrarTostada("⏳ Procesando foto...", "info");
 
@@ -504,6 +548,7 @@ function subirFotoPerfil(input) {
 function subirPortada(input) {
   const archivo = input.files[0];
   if (!archivo) return;
+  if (!fotoAceptable(input, archivo)) return;
 
   mostrarTostada("⏳ Procesando portada...", "info");
 

@@ -427,6 +427,23 @@ function aplicarSesion(usuario) {
   cargarNotificaciones();
 }
 
+// Indica si pasó el tiempo máximo sin actividad que fija RNF02.
+function sesionInactivaVencida() {
+  const ultima = authStorage.getUltimaActividad();
+  return ultima > 0 && (Date.now() - ultima) / 60000 > CONFIG.MINUTOS_INACTIVIDAD;
+}
+
+// Cierra la sesión por inactividad y deja el aviso en el inicio de sesión.
+function cerrarSesionPorInactividad() {
+  perfilStorage.limpiarTodo();
+  academicoStorage.limpiarTodo();
+  authStorage.limpiarTodo();
+  aplicarEstadoInvitado();
+  irAPagina("inicio-sesion");
+  const aviso = document.getElementById("avisoSesionExpirada");
+  if (aviso) aviso.style.display = "block";
+}
+
 // Verifica si hay una sesión válida guardada al cargar la app
 async function verificarSesionGuardada() {
   var token = authStorage.getToken();

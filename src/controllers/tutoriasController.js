@@ -1,6 +1,7 @@
 const { db } = require('../config/db');
 
 const { getConfigNum } = require('../config/config');
+const { errorDatosSesion, instanteColombia } = require('../config/fechas');
 
 // Programa una tutoría validando horario y notificando a ambas partes.
 async function programar(req, res) {
@@ -9,6 +10,13 @@ async function programar(req, res) {
 
   if (!asignatura || !modalidad || !fecha || !hora) {
     return res.status(400).json({ error: 'Faltan datos obligatorios' });
+  }
+
+  // El servidor repite las reglas del formulario: sin esto la API aceptaba fechas imposibles y el mismo día.
+  const errorDatos = errorDatosSesion({ fecha, hora, modalidad });
+  if (errorDatos) return res.status(400).json({ error: errorDatos });
+  if (String(asignatura).length > 120 || String(observaciones || '').length > 500) {
+    return res.status(400).json({ error: 'La asignatura admite 120 caracteres y las observaciones 500' });
   }
 
   const idEstudiante = solicitante.rol === 'estudiante' ? solicitante.id : estudiante_id;
@@ -32,8 +40,12 @@ async function programar(req, res) {
     return res.status(409).json({ error: 'El docente ya tiene una tutoría a esa hora' });
   }
 
-  if (new Date(`${fecha}T${hora}`) < new Date()) {
-    return res.status(400).json({ error: 'La fecha no puede ser en el pasado' });
+  // El estudiante tampoco puede quedar en dos tutorías a la misma hora, igual que en las asesorías del admin.
+  const conflictoEst = await db.prepare(
+    "SELECT id FROM tutorias WHERE estudiante_id=? AND fecha=? AND hora=? AND estado!='cancelada'"
+  ).get(idEstudiante, fecha, hora);
+  if (conflictoEst) {
+    return res.status(409).json({ error: 'Ya tienes una tutoría a esa fecha y hora' });
   }
 
   const resultado = await db.prepare(
@@ -63,7 +75,7 @@ async function listar(req, res) {
   } else if (rol === 'docente') {
     tutorias = await db.prepare(`
       SELECT t.*, u.nombres||' '||u.apellidos AS nombre_estudiante,
-             u.correo AS correo_estudiante, pe.programa, pe.semestre
+             u.correo AS correo_estudiante, pe.programa, pe.semestre, pe.promedio
       FROM tutorias t
       JOIN usuarios u ON u.id=t.estudiante_id
       LEFT JOIN perfiles_estudiante pe ON pe.usuario_id=t.estudiante_id
@@ -101,7 +113,8 @@ async function cancelar(req, res) {
   // Antelación mínima para cancelar, tomada de la configuración.
   const HORAS_CANCELACION = await getConfigNum('RN_HORAS_CANCELACION', 24);
 
-  const horas = (new Date(`${tutoria.fecha}T${tutoria.hora}`) - new Date()) / 3600000;
+  // La hora guardada es de Colombia; leerla en la zona del servidor (UTC en Railway) corría la regla 5 horas.
+  const horas = (instanteColombia(tutoria.fecha, tutoria.hora) - new Date()) / 3600000;
 
   // Una tutoría que ya pasó no se cancela: se marca realizada o no asistida.
   if (horas < 0) {
@@ -134,6 +147,11 @@ async function marcarRealizada(req, res) {
   if (!tutoria) return res.status(404).json({ error: 'No encontrada' });
   if (usuario.rol === 'docente' && tutoria.docente_id !== usuario.id) {
     return res.status(403).json({ error: 'No es tu tutoría' });
+  }
+
+  // Una tutoría cancelada o ya completada no admite más cambios de estado.
+  if (!['pendiente', 'confirmada'].includes(tutoria.estado)) {
+    return res.status(400).json({ error: `Una tutoría ${tutoria.estado} no se puede marcar como realizada` });
   }
 
   await db.prepare("UPDATE tutorias SET estado='completada' WHERE id=?").run(id);

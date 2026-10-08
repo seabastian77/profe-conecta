@@ -112,8 +112,13 @@ function irAPagina(nombre) {
     // Carga las materias en el select de asesoría.
     if (typeof cargarAsignaturasEnSelect === "function")
       cargarAsignaturasEnSelect("claseAsignatura");
+    // Las asesorías del admin también van desde mañana (RN06).
     const fechaEl = document.getElementById("claseFecha");
-    if (fechaEl) fechaEl.min = new Date().toISOString().split("T")[0];
+    if (fechaEl) {
+      const manana = new Date();
+      manana.setDate(manana.getDate() + 1);
+      fechaEl.min = fechaLocalISO(manana);
+    }
   }
   if (
     nombre === "admin-notificaciones" &&
@@ -247,13 +252,18 @@ function alternarContrasena(idInput, boton) {
 }
 
 // Fija la fecha mínima del formulario de tutoría.
+// Formatea una fecha local como AAAA-MM-DD; toISOString usa UTC y en la noche de Colombia corría el día.
+function fechaLocalISO(fecha) {
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`;
+}
+
 function ponerFechaMinima() {
   const campo = document.getElementById("tutFecha");
   if (!campo) return;
 
   const manana = new Date();
   manana.setDate(manana.getDate() + 1);
-  campo.min = manana.toISOString().split("T")[0];
+  campo.min = fechaLocalISO(manana);
 }
 
 // Filtra la tabla de usuarios según los criterios seleccionados.
@@ -269,13 +279,22 @@ function filtrarTablaUsuarios(texto) {
     ""
   ).toLowerCase();
 
+  // Compara contra los datos de cada fila y no contra su texto: «inactivo» contiene «activo» (DEF-11).
   let visible = 0;
   filas.forEach((fila) => {
-    const contenido = fila.textContent.toLowerCase();
+    const datos = fila.dataset;
+    const contenido = (datos.busqueda || fila.textContent).toLowerCase();
+    const estaActivo = datos.activo === "1";
+    const enAlerta = datos.alerta === "1";
+    const cumpleEstado =
+      filtroEstado === "" ||
+      (filtroEstado === "activo" && estaActivo) ||
+      (filtroEstado === "inactivo" && !estaActivo) ||
+      (filtroEstado === "alerta" && estaActivo && enAlerta);
     const mostrar =
       contenido.includes(busqueda) &&
-      (filtroRol === "" || contenido.includes(filtroRol)) &&
-      (filtroEstado === "" || contenido.includes(filtroEstado));
+      (filtroRol === "" || datos.rol === filtroRol) &&
+      cumpleEstado;
 
     fila.style.display = mostrar ? "" : "none";
     if (mostrar) visible++;
@@ -669,16 +688,23 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("formularioRecuperacion")
     ?.addEventListener("submit", alEnviarRecuperacion);
 
-  // Actualiza la marca de actividad al interactuar.
+  // Revisa el vencimiento antes de renovar la marca: un clic después de 15 minutos ya no revive la sesión (DEF-01).
   ["click", "keydown", "scroll"].forEach((evento) => {
     document.addEventListener(
       evento,
       () => {
-        if (sesion.activa) authStorage.setUltimaActividad();
+        if (!sesion.activa) return;
+        if (sesionInactivaVencida()) cerrarSesionPorInactividad();
+        else authStorage.setUltimaActividad();
       },
-      { passive: true },
+      { passive: true, capture: true },
     );
   });
+
+  // Cierra la sesión aunque nadie toque la página, sin esperar a que recarguen.
+  setInterval(() => {
+    if (sesion.activa && sesionInactivaVencida()) cerrarSesionPorInactividad();
+  }, 30000);
 
   activarValidacionBlur();
 });
@@ -720,19 +746,20 @@ function activarValidacionBlur() {
           return;
         }
       }
-      if (id === "estPromedio" && valor) {
-        const n = parseFloat(valor);
-        if (isNaN(n) || n < 0 || n > 5) {
-          ponerError(id, "Debe estar entre 0 y 5");
-          return;
-        }
+      if (id === "estDocumento" && valor && !/^\d{6,11}$/.test(valor)) {
+        ponerError(id, "Solo números, entre 6 y 11 dígitos");
+        return;
+      }
+      if (id === "estTelefono" && valor && !/^\d{7,10}$/.test(valor)) {
+        ponerError(id, "Entre 7 y 10 números");
+        return;
       }
       if (id === "tutFecha" && valor) {
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         const f = new Date(valor + "T00:00");
         if (f <= hoy) {
-          ponerError(id, "La fecha debe ser posterior a hoy (RN06)");
+          ponerError(id, "La fecha debe ser a partir de mañana (RN06)");
           return;
         }
       }

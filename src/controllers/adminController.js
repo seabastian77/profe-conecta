@@ -1,6 +1,10 @@
 const { db } = require('../config/db');
 const bcrypt = require('bcrypt');
 const { RONDAS_BCRYPT, validarContrasena } = require('../config/seguridad');
+const { errorDatosSesion, hoyColombia } = require('../config/fechas');
+
+// Un promedio en 0 viene del valor por defecto viejo, no de notas reales: no cuenta como alerta (DEF-14).
+const FILTRO_ALERTA = 'promedio > 0 AND promedio < 3.0';
 
 // Acepta solo letras, espacios y signos simples en nombres y apellidos.
 const NOMBRE_VALIDO = /^[\p{L}\p{M}\s'.-]{1,80}$/u;
@@ -23,7 +27,7 @@ async function listarUsuarios(req, res) {
     if (rol)                 { sql += ' AND u.rol=?';       params.push(rol); }
     if (estado === 'activo')   sql += ' AND u.activo=1';
     if (estado === 'inactivo') sql += ' AND u.activo=0';
-    if (estado === 'alerta')   sql += ' AND pe.promedio < 3.0';
+    if (estado === 'alerta')   sql += ' AND pe.promedio > 0 AND pe.promedio < 3.0';
     if (q) {
       sql += ' AND (u.nombres ILIKE ? OR u.apellidos ILIKE ? OR u.correo ILIKE ?)';
       const like = '%' + q + '%';
@@ -81,9 +85,9 @@ async function estadisticas(req, res) {
     const row = await db.prepare(sql).get(...params);
     return parseInt(row?.n || row?.count || 0);
   }
-  const mesActual = new Date().toISOString().slice(0, 7);
+  const mesActual = hoyColombia().slice(0, 7);
   const totales     = await cnt("SELECT COUNT(*) AS n FROM usuarios WHERE activo=1");
-  const alertas     = await cnt("SELECT COUNT(*) AS n FROM perfiles_estudiante WHERE promedio < 3.0");
+  const alertas     = await cnt(`SELECT COUNT(*) AS n FROM perfiles_estudiante WHERE ${FILTRO_ALERTA}`);
   const tutMes      = await cnt("SELECT COUNT(*) AS n FROM tutorias WHERE fecha LIKE ? AND estado!='cancelada'", mesActual + '%');
   const totalTut    = await cnt("SELECT COUNT(*) AS n FROM tutorias");
   const realizadas  = await cnt("SELECT COUNT(*) AS n FROM tutorias WHERE estado='completada'");
@@ -110,7 +114,7 @@ async function enviarNotificacion(req, res) {
   if (!asunto || !mensaje) return res.status(400).json({ error: 'Faltan asunto o mensaje' });
   var usuarios = [];
   if (destinatario && destinatario.includes('alerta')) {
-    usuarios = await db.prepare('SELECT usuario_id AS id FROM perfiles_estudiante WHERE promedio < 3.0').all();
+    usuarios = await db.prepare(`SELECT usuario_id AS id FROM perfiles_estudiante WHERE ${FILTRO_ALERTA}`).all();
   } else if (destinatario && destinatario.includes('docente')) {
     usuarios = await db.prepare("SELECT id FROM usuarios WHERE rol='docente' AND activo=1").all();
   } else {
@@ -194,7 +198,7 @@ async function resetearConfiguracion(req, res) {
   await db.prepare("INSERT INTO configuracion (clave, valor) VALUES ('umbral_alerta','3.0') ON CONFLICT (clave) DO UPDATE SET valor='3.0'").run();
   await db.prepare("INSERT INTO configuracion (clave, valor) VALUES ('max_estudiantes_tutor','15') ON CONFLICT (clave) DO UPDATE SET valor='15'").run();
   await db.prepare("INSERT INTO configuracion (clave, valor) VALUES ('horas_cancelacion','24') ON CONFLICT (clave) DO UPDATE SET valor='24'").run();
-  await db.prepare("INSERT INTO configuracion (clave, valor) VALUES ('minutos_sesion','120') ON CONFLICT (clave) DO UPDATE SET valor='120'").run();
+  await db.prepare("INSERT INTO configuracion (clave, valor) VALUES ('minutos_sesion','15') ON CONFLICT (clave) DO UPDATE SET valor='15'").run();
   await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(req.usuario.id, 'CONFIG_RESET', 'Valores restaurados');
   res.json({ mensaje: 'Configuración reseteada' });
 }
@@ -295,10 +299,19 @@ async function eliminarUsuario(req, res) {
 async function actualizarUsuario(req, res) {
   try {
     const id = parseInt(req.params.id);
-    const { nombres, apellidos, correo, rol, contrasena } = req.body;
+    const { nombres, apellidos, correo, rol, contrasena, promedio } = req.body;
 
     if (!nombres || !apellidos || !correo || !rol) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+
+    // El promedio lo registra la institución desde aquí; vacío lo deja sin registrar (RF035).
+    let nuevoPromedio;
+    if (promedio !== undefined && rol === 'estudiante') {
+      nuevoPromedio = (promedio === null || promedio === '') ? null : Number(promedio);
+      if (nuevoPromedio !== null && (!Number.isFinite(nuevoPromedio) || nuevoPromedio < 0 || nuevoPromedio > 5)) {
+        return res.status(400).json({ error: 'El promedio debe estar entre 0 y 5' });
+      }
     }
 
     if (!NOMBRE_VALIDO.test(nombres) || !NOMBRE_VALIDO.test(apellidos)) {
@@ -320,6 +333,12 @@ async function actualizarUsuario(req, res) {
       await db.prepare('UPDATE usuarios SET nombres=?, apellidos=?, correo=?, rol=? WHERE id=?').run(nombres, apellidos, correo, rol, id);
     }
 
+    if (nuevoPromedio !== undefined) {
+      await db.prepare(
+        'INSERT INTO perfiles_estudiante (usuario_id, promedio) VALUES (?,?) ON CONFLICT (usuario_id) DO UPDATE SET promedio=excluded.promedio'
+      ).run(id, nuevoPromedio);
+    }
+
     try {
       await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)').run(
         req.usuario.id, 'EDITAR_USUARIO', 'Usuario #' + id + ' actualizado por admin'
@@ -339,6 +358,13 @@ async function programarClase(req, res) {
 
   if (!docente_id || !estudiante_id || !asignatura || !fecha || !hora) {
     return res.status(400).json({ error: 'Faltan datos obligatorios: docente, estudiante, materia, fecha y hora' });
+  }
+
+  // RRN06 también aplica a las asesorías del admin: antes se creaban para hoy y hasta para fechas pasadas.
+  const errorDatos = errorDatosSesion({ fecha, hora, modalidad });
+  if (errorDatos) return res.status(400).json({ error: errorDatos });
+  if (String(asignatura).length > 120 || String(observaciones || '').length > 500) {
+    return res.status(400).json({ error: 'La materia admite 120 caracteres y las observaciones 500' });
   }
 
   // Comprueba que docente y estudiante existan y estén activos.

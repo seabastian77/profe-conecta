@@ -156,8 +156,8 @@ function obtenerEstudiantesEnAlerta(tutorias) {
         sesiones: 0,
         ultima: null,
         asignaturas: new Set(),
-        // Simula el promedio a partir del id.
-        promedio: 2.0 + ((t.estudiante_id * 7) % 15) / 10,
+        // Usa el promedio real del perfil; antes se inventaba a partir del id del estudiante.
+        promedio: t.promedio === null || t.promedio === undefined ? null : parseFloat(t.promedio),
       };
     }
     porEstudiante[t.estudiante_id].sesiones++;
@@ -171,7 +171,7 @@ function obtenerEstudiantesEnAlerta(tutorias) {
   });
 
   return Object.values(porEstudiante)
-    .filter((e) => e.promedio < CONFIG.PROMEDIO_MINIMO)
+    .filter((e) => e.promedio > 0 && e.promedio < CONFIG.PROMEDIO_MINIMO)
     .sort((a, b) => a.promedio - b.promedio);
 }
 
@@ -606,15 +606,15 @@ async function marcarTodasLeidas() {
 function mostrarTostada(mensaje, tipo) {
   const tostada = document.getElementById("tostada");
   tostada.textContent = mensaje;
-  tostada.className = "tostada tostada--visible";
 
-  if (tipo === "error") tostada.classList.add("tostada--error");
-  if (tipo === "alerta") tostada.classList.add("tostada--alerta");
+  // Usa las clases que define estilos.css; las de estilo «tostada--» no existían y el mensaje nunca se veía (DEF-13).
+  const claseTipo = { exito: "exito", error: "error", alerta: "advertencia", advertencia: "advertencia" }[tipo];
+  tostada.className = "tostada visible" + (claseTipo ? " " + claseTipo : "");
 
   clearTimeout(window._tostadaTimer);
   window._tostadaTimer = setTimeout(
-    () => tostada.classList.remove("tostada--visible"),
-    3500,
+    () => tostada.classList.remove("visible"),
+    tipo === "error" ? 6000 : 3500,
   );
 }
 
