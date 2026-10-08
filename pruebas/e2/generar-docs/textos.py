@@ -1,0 +1,158 @@
+# -*- coding: utf-8 -*-
+"""Textos de los reportes de defecto: pasos, precondición, resultado esperado y
+justificación de severidad y prioridad. Los comparten el informe E2 y la Tarea 4."""
+
+PASOS = {
+ 'DEF-01': '1. Iniciar sesión como sgarcia@amigo.edu.co (contraseña 123456).\n2. Dejar la pestaña sin actividad durante 16 minutos, con cronómetro.\n3. Hacer clic en «Programar Tutoría» y recargar la página.',
+ 'DEF-02': '1. En «Panel Admin», abrir la tarjeta «Asignación».\n2. En «Nueva Sesión de Asesoría», elegir a Sandra Ríos Montoya y a Camilo Ríos Zapata.\n3. Materia: la primera de la lista. Fecha: la de hoy. Hora: dos horas después de la actual. Modalidad: Virtual.\n4. Presionar «Crear Asesoría (+)».',
+ 'DEF-03': '1. Iniciar sesión como un estudiante.\n2. Abrir «Mi Perfil», presionar el ícono de la foto y elegir foto_2-5MB.jpg (2,50 MB).',
+ 'DEF-04': '1. Crear la cuenta prueba.bloqueo2@amigo.edu.co y cerrar sesión.\n2. Iniciar sesión con la contraseña incorrecta tres veces seguidas.\n3. Iniciar sesión con la contraseña correcta.',
+ 'DEF-05': '1. En «Programar Tutoría», elegir un tutor, la fecha de mañana y la hora 10:00.\n2. En «Observaciones» escribir <img src=x onerror="alert(\'XSS-DEF05\')"> y programar.\n3. En «Mi Panel», abrir el día de mañana del calendario.',
+ 'DEF-06': '1. Como sgarcia@amigo.edu.co, programar con María González Ramos una tutoría para dentro de una semana a las 10:00 y cancelarla. En la pestaña Red de F12, anotar el id de la tutoría (respuesta de GET /api/tutorias).\n2. Cerrar sesión y entrar como mgonzalez@amigo.edu.co (contraseña 123456). Abrir la consola (F12).\n3. Pegar fetch("/api/tutorias/ID/realizada",{method:"PATCH",headers:{Authorization:"Bearer "+localStorage.getItem("cp.token")}}).then(r=>r.json()).then(console.log), cambiando ID por el número anotado.',
+ 'DEF-07': '1. Como administrador, abrir «Gestión de Usuarios».\n2. Presionar «+ Nuevo Usuario» y mirar el campo «Contraseña».\n3. Cerrar, editar un usuario y escribir una clave en «Nueva contraseña».',
+ 'DEF-08': '1. Como jperez@amigo.edu.co (contraseña 123456), a las 8:00 p. m., programar con Laura Vargas Suárez una tutoría para mañana a las 10:00 p. m. (26 horas de margen).\n2. En «Mi Panel», ubicar esa tutoría y presionar «Cancelar».\n3. En la pestaña Red de F12, abrir la petición PATCH …/cancelar y leer la respuesta.',
+ 'DEF-09': '1. Como avargas@amigo.edu.co, programar con Andrés López Castillo, fecha futura, 09:00.\n2. Programar con Sandra Ríos Montoya, la misma fecha y la misma hora.\n3. Abrir «Mi Panel».',
+ 'DEF-10': '1. Entrar como dmontoya@amigo.edu.co (contraseña 123456) y abrir «Programar Tutoría». En la pestaña Red, en la respuesta de GET /api/tutorias/docentes-disponibles, anotar el id de un docente.\n2. En la consola (F12), pegar el comando de DEF-10 de pruebas-consola.md con ese docente_id, fecha «2027-13-45» y hora «09:00».\n3. Repetirlo con fecha «mañana» y hora «25:99», y abrir «Mi Panel».',
+ 'DEF-11': '1. Como administrador, desactivar a Valentina Osorio.\n2. Abrir «Gestión de Usuarios».\n3. Elegir «Estudiantes» en rol y «Activos» en estado.',
+ 'DEF-12': '1. Iniciar sesión como administrador y anotar la hora real.\n2. Abrir la tarjeta «Auditoría» y mirar la primera fila (evento «Login»).',
+ 'DEF-13': '1. Como jperez, con una tutoría que ocurre dentro de menos de 24 horas, presionar «Cancelar».\n2. Mirar la esquina inferior derecha de la pantalla.\n3. Con F12, inspeccionar el elemento #tostada.',
+ 'DEF-14': '1. Registrar la cuenta sin.promedio1@amigo.edu.co (nombres «Sin», apellidos «Promedio», contraseña Password123, rol estudiante). En «Completar perfil» poner documento 1091234567, Ingeniería de Sistemas, semestre 1 y teléfono 3001234567, dejar vacío «Promedio» y guardar.\n2. Como administrador, en «Notificaciones», enviar a «Todos los estudiantes en alerta» el asunto «Seguimiento académico» con el mensaje «Acércate a tu tutor».\n3. Entrar con sin.promedio1@amigo.edu.co, mirar el recuadro «Alertas» del panel y abrir la campana (haciendo clic en el borde del ícono, no sobre el número rojo).',
+}
+PRECOND = {
+ 'DEF-01': 'Cuenta sgarcia@amigo.edu.co activa. Ninguna otra pestaña de ConectaProfe abierta.',
+ 'DEF-02': 'Sesión de administrador. La docente Sandra Ríos Montoya y el estudiante Camilo Ríos Zapata están activos.',
+ 'DEF-03': 'Sesión de un estudiante. Archivo foto_2-5MB.jpg de 2,50 MB.',
+ 'DEF-04': 'Cuenta prueba.bloqueo2@amigo.edu.co creada y sin intentos fallidos recientes.',
+ 'DEF-05': 'Sesión de un estudiante. Al menos un docente activo. El defecto se encontró antes de la corrección del 29/09 (commit 938bc53); en Railway (693358a) lo que se hace es verificar que ya no ocurre.',
+ 'DEF-06': 'Una tutoría del estudiante con un docente, programada a futuro y luego cancelada por el estudiante.',
+ 'DEF-07': 'Sesión de administrador, en «Gestión de Usuarios».',
+ 'DEF-08': 'Sesión de jperez@amigo.edu.co. Una tutoría pendiente programada para mañana con 26 horas de margen.',
+ 'DEF-09': 'Sesión de avargas@amigo.edu.co, sin tutorías en la fecha y hora elegidas.',
+ 'DEF-10': 'Sesión de un estudiante, con la consola del navegador abierta.',
+ 'DEF-11': 'Sesión de administrador. La cuenta vosorio@amigo.edu.co desactivada. Estudiantes de semilla con promedio menor que 3,0 activos.',
+ 'DEF-12': 'Sesión de administrador. Un reloj a la vista con la hora de Colombia.',
+ 'DEF-13': 'Sesión de jperez@amigo.edu.co, con una tutoría pendiente que ocurre dentro de menos de 24 horas.',
+ 'DEF-14': 'Una cuenta nueva de estudiante.',
+}
+ESPERADO = {
+ 'DEF-01': 'RNF02: la sesión expira tras 15 minutos de inactividad y el sistema lleva al inicio de sesión.',
+ 'DEF-02': 'RRN06: no se puede programar una tutoría para el mismo día; la fecha mínima es el día siguiente. El sistema rechaza la asesoría.',
+ 'DEF-03': 'RF036 y CP-017: el sistema rechaza la imagen e informa que el tamaño máximo permitido es 2 MB.',
+ 'DEF-04': 'RRN01: después de 3 intentos incorrectos el acceso se bloquea 5 minutos; el cuarto intento se rechaza aunque la clave sea correcta.',
+ 'DEF-05': 'Las observaciones se muestran como texto, tal como se escribieron (RNF06).',
+ 'DEF-06': 'R6 (ciclo de vida de la tutoría): una tutoría cancelada no admite nuevas transiciones; el servidor rechaza el cambio y la tutoría sigue «cancelada».',
+ 'DEF-07': 'RNF05: las contraseñas no se muestran en texto plano en ningún momento.',
+ 'DEF-08': 'Regla de antelación de R6 (CP-025): con 24 horas o más se permite cancelar.',
+ 'DEF-09': 'R5 valida el horario de los participantes: el sistema rechaza la segunda tutoría porque el estudiante ya está ocupado a esa hora.',
+ 'DEF-10': 'R5: el servidor rechaza una fecha o una hora inválida con un mensaje claro.',
+ 'DEF-11': 'RF049 y CP-031: la tabla muestra solo los estudiantes con la cuenta activa y el contador coincide con las filas.',
+ 'DEF-12': 'CP-029 y R8: el evento queda con la fecha y la hora en que ocurrió, porque la auditoría es la evidencia ante un incidente.',
+ 'DEF-13': 'RF028: el sistema muestra un mensaje emergente al completar cualquier acción, clasificado por tipo y con desaparición automática.',
+ 'DEF-14': 'RRN07: solo queda en alerta el estudiante con promedio acumulado inferior a 3,0; quien no ha registrado promedio no tiene uno.',
+}
+SEV_JUST = {
+ 'DEF-01': 'Alta. El control de seguridad que exige el requisito no funciona: una cuenta que se deja abierta sigue abierta.',
+ 'DEF-02': 'Media. Falla una validación de frontera; la asesoría queda bien creada y el resto del flujo funciona.',
+ 'DEF-03': 'Baja. El resultado es distinto del requisito, pero la foto se ve bien y la base no se llena, porque la imagen se reduce.',
+ 'DEF-04': 'Baja. El bloqueo existe y funciona; solo el umbral es distinto.',
+ 'DEF-05': 'Crítica. Permitía ejecutar código en la sesión de otra persona; el token vive en el navegador y se podía leer.',
+ 'DEF-06': 'Media. Deja datos incorrectos en el historial y en las estadísticas; solo se llega por la API.',
+ 'DEF-07': 'Media. Deja una credencial a la vista de quien mire la pantalla, y las cuentas creadas sin cambiar ese valor comparten la misma clave inicial.',
+ 'DEF-08': 'Alta. Una función principal aplica mal la regla a todos los usuarios; la alternativa es escribirle al docente.',
+ 'DEF-09': 'Media. El resultado es incorrecto, aunque el estudiante puede cancelar una de las dos con antelación.',
+ 'DEF-10': 'Media. Guarda datos que no existen y que después se muestran mal.',
+ 'DEF-11': 'Media. El resultado del filtro es incorrecto; el administrador puede revisar la tabla completa a mano.',
+ 'DEF-12': 'Media. El resultado es incorrecto en una función secundaria; el evento sí queda registrado.',
+ 'DEF-13': 'Media. Cada acción se acepta o se rechaza bien en el servidor, pero el usuario se queda sin saber qué pasó ni por qué.',
+ 'DEF-14': 'Media. El resultado es incorrecto y mete al estudiante en un grupo al que no pertenece.',
+}
+PRIO_JUST = {
+ 'DEF-01': 'Alta. En los computadores compartidos de la universidad, la cuenta de un estudiante queda abierta toda la jornada.',
+ 'DEF-02': 'Alta. RRN06 es de prioridad alta, y una asesoría para hoy ya no la puede cancelar nadie por la regla de las 24 horas.',
+ 'DEF-03': 'Baja. Hay que decidir si RF036 se reescribe para describir la reducción automática o si se muestra el aviso; no bloquea a nadie.',
+ 'DEF-04': 'Media. RRN01 es de prioridad alta, pero se corrige con una variable de entorno (MAX_INTENTOS=3) sin tocar el código.',
+ 'DEF-05': 'Alta. Era el único defecto que comprometía cuentas ajenas, incluidas las de docentes y administradores.',
+ 'DEF-06': 'Media. Falsea los indicadores del docente y del administrador, pero hace falta conocimiento técnico para provocarlo.',
+ 'DEF-07': 'Alta. RNF05 es de prioridad alta, el arreglo es cambiar el tipo del campo y es la pantalla que se proyecta en clase.',
+ 'DEF-08': 'Alta. Pasa en toda cancelación hecha entre 24 y 29 horas antes de la tutoría.',
+ 'DEF-09': 'Media. Le hace perder la cita a un docente; el choque del docente sí se valida, así que la corrección es repetir esa consulta para el estudiante.',
+ 'DEF-10': 'Baja. Solo se llega por la API; la interfaz no deja escribir esas fechas.',
+ 'DEF-11': 'Media. Justo los estudiantes en alerta son los que el administrador más necesita encontrar.',
+ 'DEF-12': 'Media. Tiene la misma causa que DEF-08, así que conviene corregirlos juntos.',
+ 'DEF-13': 'Alta. Afecta a todos los usuarios en todas las pantallas y se corrige cambiando el nombre de una clase.',
+ 'DEF-14': 'Media. Afecta a todo estudiante nuevo que todavía no tiene promedio, por ejemplo los de primer semestre.',
+}
+
+
+# --- Los 14 defectos (lo que el equipo ya decidió: título, clasificación y quién reporta) ---
+DEFECTOS_BASE = [
+  dict(id='DEF-01', titulo='La sesión sigue abierta después de 16 minutos sin actividad; solo se cierra a las 2 horas, y únicamente al recargar',
+       requisito='RNF02', severidad='Alta', prioridad='Alta', origen='SE-01 · CP-034', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-02', titulo='El administrador programa una asesoría con fecha de hoy, y por la API también con fechas pasadas',
+       requisito='R5 · RRN06', severidad='Media', prioridad='Alta', origen='CP-032', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-03', titulo='La foto de 2,5 MB no se rechaza: la interfaz la reduce y la guarda sin avisar del límite de 2 MB',
+       requisito='R4 · RF036', severidad='Baja', prioridad='Baja', origen='CP-017', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-04', titulo='El acceso se bloquea después de cinco intentos fallidos y no después de tres',
+       requisito='R2 · RRN01', severidad='Baja', prioridad='Media', origen='CP-013', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-05', titulo='El HTML escrito en las observaciones de una tutoría se ejecutaba al abrir ese día en el calendario',
+       requisito='R5 · RNF06', severidad='Crítica', prioridad='Alta', origen='SE-02', estado='Verificado',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-06', titulo='Una tutoría cancelada pasa a «completada» si el docente la marca como realizada por la API',
+       requisito='R6', severidad='Media', prioridad='Media', origen='SE-02', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-07', titulo='Las contraseñas se ven en claro en «Nuevo usuario» y «Editar usuario», y la primera trae «Cambiar123» escrita',
+       requisito='R7 · RNF05', severidad='Media', prioridad='Alta', origen='SE-01', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-08', titulo='La regla de 24 horas para cancelar se calcula con 5 horas de diferencia: con 26 h de margen dice que faltan 21',
+       requisito='R6', severidad='Alta', prioridad='Alta', origen='CP-025', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-09', titulo='Un estudiante queda con dos tutorías a la misma fecha y hora con docentes distintos',
+       requisito='R5', severidad='Media', prioridad='Media', origen='CP-033', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+  dict(id='DEF-10', titulo='La API guarda tutorías con fechas y horas que no existen («2027-13-45», «mañana», «25:99»)',
+       requisito='R5', severidad='Media', prioridad='Baja', origen='SE-02', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-11', titulo='El filtro «Activos» muestra cuentas inactivas y oculta a los estudiantes activos que están en alerta',
+       requisito='R7 · RF049', severidad='Media', prioridad='Media', origen='CP-031', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-12', titulo='La auditoría y el historial de notificaciones muestran la hora 5 horas adelantada',
+       requisito='R8', severidad='Media', prioridad='Media', origen='CP-029', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-13', titulo='Los mensajes emergentes se generan pero nunca se ven: el usuario no recibe confirmaciones ni errores',
+       requisito='RF028 · transversal', severidad='Media', prioridad='Alta', origen='CP-016 · CP-024', estado='Abierto',
+       reporta='Sebastián González González', reproduce='Esteban Palencia'),
+  dict(id='DEF-14', titulo='El estudiante que deja vacío el promedio queda con 0 y recibe alertas académicas, aunque su panel dice «Sin alertas»',
+       requisito='R4 · RRN07', severidad='Media', prioridad='Media', origen='SE-01', estado='Abierto',
+       reporta='Esteban Palencia', reproduce='Sebastián González González'),
+]
+
+# Capturas que respaldan cada defecto. Los que salen de un caso usan la captura de ese caso
+# (ciclo 1); los de las sesiones exploratorias tienen su propia captura.
+EVIDENCIA_SUGERIDA = {
+    'DEF-01': ['EV-DEF01-01.png'],
+    'DEF-02': ['EV-CP032-C1-01.png'],
+    'DEF-03': ['EV-CP017-C1-01.png'],
+    'DEF-04': ['EV-CP013-C1-01.png'],
+    'DEF-05': ['EV-DEF05-01.png'],
+    'DEF-06': ['EV-DEF06-01.png'],
+    'DEF-07': ['EV-DEF07-01.png', 'EV-DEF07-02.png'],
+    'DEF-08': ['EV-CP025-C1-01.png'],
+    'DEF-09': ['EV-CP033-C1-01.png'],
+    'DEF-10': ['EV-DEF10-01.png'],
+    'DEF-11': ['EV-CP031-C1-01.png'],
+    'DEF-12': ['EV-CP029-C1-01.png'],
+    'DEF-13': ['EV-CP016-C1-01.png', 'EV-CP024-C1-01.png'],
+    'DEF-14': ['EV-DEF14-01.png', 'EV-DEF14-02.png'],
+}
+
+MISIONES = {
+    'SE-01': ('Recorrer los requisitos y reglas de prioridad alta (RNF02, RNF05, RRN07) para descubrir dónde '
+              'la aplicación hace algo distinto de lo que promete el documento de requisitos.'),
+    'SE-02': ('Explorar lo que la interfaz no deja hacer, enviando las mismas peticiones desde la consola, y lo '
+              'que se escribe en un campo y después se muestra en otra pantalla, para descubrir validaciones que '
+              'solo existen en el navegador.'),
+}

@@ -39,4 +39,20 @@ module.exports = [
     files: ['tests/**/*.js'],
     languageOptions: { globals: { ...globalesNode, ...globalesJest } },
   },
+  {
+    // Pruebas E2 con Playwright: mezclan Node con código que corre dentro del
+    // navegador (page.evaluate), así que suman los globales del navegador.
+    files: ['pruebas/e2/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globalesNode,
+        document: 'readonly', window: 'readonly', localStorage: 'readonly',
+        location: 'readonly', getComputedStyle: 'readonly', Image: 'readonly',
+        FileReader: 'readonly', Intl: 'readonly',
+        // Funciones del frontend de ConectaProfe invocadas desde page.evaluate.
+        irAPagina: 'readonly', cerrarSesion: 'readonly', seleccionarDia: 'readonly',
+        filtrarTablaUsuarios: 'readonly', cerrarModalNuevoUsuario: 'readonly',
+      },
+    },
+  },
 ];

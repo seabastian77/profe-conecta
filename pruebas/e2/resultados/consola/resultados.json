@@ -1,0 +1,86 @@
+{
+  "inicio": "07/10/2026, 18:24:19",
+  "base": "http://localhost:3000",
+  "navegador": "Chromium 141.0.7390.37",
+  "pruebas": [
+    {
+      "id": "CP-008",
+      "titulo": "Rechazo de registro con rol de administrador",
+      "requisito": "R1 · RRN02",
+      "descripcion": "Un visitante intenta registrarse como administrador enviando la petición a mano.",
+      "comando": "fetch(\"/api/auth/registro\",{method:\"POST\",headers:{\n  \"Content-Type\":\"application/json\"},\n  body:JSON.stringify({nombres:\"Intruso\",apellidos:\"Prueba\",\n  correo:\"admin.consola@amigo.edu.co\",contrasena:\"Password123\",\n  rol:\"admin\"})}).then(r=>r.json()).then(console.log)",
+      "esperado": "La consola muestra {error: \"Rol inválido\"} y la pestaña Red, el código 400. No se crea la cuenta.",
+      "estado": "Aprobado",
+      "resultadoReal": "La consola muestra {error: 'Rol inválido'} y la pestaña Red el código 400. El servidor no crea la cuenta de administrador.",
+      "evidencia": "EV-CP008-CONSOLA.png",
+      "httpStatus": 400,
+      "tipo": "peticion"
+    },
+    {
+      "id": "CP-018",
+      "titulo": "Un estudiante no puede guardar un perfil de docente",
+      "requisito": "R4 · RRN05",
+      "descripcion": "Un estudiante autenticado intenta usar el endpoint de perfil de docente (control de acceso por rol).",
+      "comando": "fetch(\"/api/perfil/docente\",{method:\"POST\",headers:{\n  \"Content-Type\":\"application/json\",Authorization:\"Bearer \"\n  +localStorage.getItem(\"cp.token\")},\n  body:JSON.stringify({cedula:\"12345\",facultad:\"Ingenierías\"})})\n  .then(r=>r.json()).then(console.log)",
+      "esperado": "La consola muestra {error: \"No tienes permiso para esto\"} y la pestaña Red, el código 403. No se crea ningún perfil de docente.",
+      "estado": "Aprobado",
+      "resultadoReal": "La consola muestra {error: 'No tienes permiso para esto'} y la pestaña Red el código 403. El servidor no crea ningún perfil de docente para el estudiante.",
+      "evidencia": "EV-CP018-CONSOLA.png",
+      "httpStatus": 403,
+      "tipo": "peticion"
+    },
+    {
+      "id": "CP-021",
+      "titulo": "Rechazo de tutoría con docente inexistente",
+      "requisito": "R5 · R-03",
+      "descripcion": "Se programa una tutoría con un docente que no existe; el servidor debe responder 404 sin caerse.",
+      "comando": "fetch(\"/api/tutorias\",{method:\"POST\",headers:{\n  \"Content-Type\":\"application/json\",Authorization:\"Bearer \"\n  +localStorage.getItem(\"cp.token\")},\n  body:JSON.stringify({docente_id:999999,\n  asignatura:\"Cálculo Diferencial\",modalidad:\"Virtual\",\n  fecha:\"2027-02-15\",hora:\"10:00\"})}).then(r=>r.json()).then(console.log)",
+      "esperado": "La consola muestra {error: \"Docente no encontrado o inactivo\"} y la pestaña Red, el código 404. Al recargar, la página carga normal: el servidor sigue arriba (no hay error 500).",
+      "estado": "Aprobado",
+      "resultadoReal": "La consola muestra {error: 'Docente no encontrado o inactivo'} y la pestaña Red el código 404. Al recargar, la página carga normal y el servidor sigue arriba (no hay error 500).",
+      "evidencia": "EV-CP021-CONSOLA.png",
+      "httpStatus": 404,
+      "tipo": "peticion"
+    },
+    {
+      "id": "DEF-06",
+      "titulo": "Una tutoría cancelada se marca «completada» por la API",
+      "requisito": "R6",
+      "descripcion": "Una tutoría ya cancelada no debería admitir nuevas transiciones; por la API se puede marcar «realizada».",
+      "comando": "fetch(\"/api/tutorias/19/realizada\",{method:\"PATCH\",headers:{Authorization:\"Bearer \"+localStorage.getItem(\"cp.token\")}}).then(r=>r.json()).then(console.log)",
+      "esperado": "R6: una tutoría cancelada no admite nuevas transiciones. El servidor rechaza el cambio con un error y la tutoría sigue «cancelada».",
+      "estado": "Defecto confirmado",
+      "resultadoReal": "El servidor respondió 200 {mensaje: 'Tutoría completada'} y la tutoría cancelada pasó a «completada». Debería haberlo rechazado.",
+      "evidencia": "EV-DEF06-CONSOLA.png",
+      "httpStatus": 200,
+      "tipo": "peticion"
+    },
+    {
+      "id": "DEF-10",
+      "titulo": "La API guarda tutorías con fechas y horas que no existen",
+      "requisito": "R5",
+      "descripcion": "El servidor no valida que la fecha y la hora existan; acepta «2027-13-45» y «25:99».",
+      "comando": "fetch(\"/api/tutorias\",{method:\"POST\",headers:{\n  \"Content-Type\":\"application/json\",Authorization:\"Bearer \"\n  +localStorage.getItem(\"cp.token\")},\n  body:JSON.stringify({docente_id:9,asignatura:\"Cálculo Diferencial\",\n  modalidad:\"Virtual\",fecha:\"2027-13-45\",hora:\"25:99\"})})\n  .then(r=>r.json()).then(console.log)",
+      "esperado": "R5: el servidor rechaza una fecha o una hora que no existen (código 400 con un mensaje claro) y no guarda la tutoría.",
+      "estado": "Defecto confirmado",
+      "resultadoReal": "El servidor respondió 201 {mensaje: 'Tutoría programada', id: 20}: acepta la fecha «2027-13-45» y la hora «25:99» sin validar que existan.",
+      "evidencia": "EV-DEF10-CONSOLA.png",
+      "httpStatus": 201,
+      "tipo": "peticion"
+    },
+    {
+      "id": "DEF-13",
+      "titulo": "Los mensajes emergentes se generan pero nunca se ven",
+      "requisito": "RF028 · transversal",
+      "descripcion": "Justo después de una acción que muestra un mensaje (cancelar una tutoría con menos de 24 horas), se inspecciona el elemento #tostada desde la consola, que es el paso 3 del reporte.",
+      "comando": "const t = document.getElementById(\"tostada\");\nconsole.log(t.textContent, \"|\", t.className,\n  \"| opacidad:\", getComputedStyle(t).opacity)",
+      "esperado": "RF028: el mensaje emergente se ve en pantalla (opacidad 1) y después desaparece solo.",
+      "estado": "Defecto confirmado",
+      "resultadoReal": "La consola imprime «Faltan 7h para la tutoría y se requieren 24h de anticipación para cancelar (RN03). Escríbele al docente. | tostada tostada--visible tostada--error | opacidad: 0». El elemento tiene el mensaje y la clase «tostada--visible», pero la hoja de estilos solo define «.tostada.visible»; por eso la opacidad se queda en 0 y en pantalla no aparece nada.",
+      "evidencia": "EV-DEF13-CONSOLA.png",
+      "httpStatus": null,
+      "tipo": "inspeccion"
+    }
+  ],
+  "fin": "07/10/2026, 18:24:42"
+}
