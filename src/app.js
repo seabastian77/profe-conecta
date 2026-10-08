@@ -82,6 +82,7 @@ app.use('/api/tutorias',       require('./routes/tutorias.routes'));
 app.use('/api/admin',          require('./routes/admin.routes'));
 app.use('/api/notificaciones', require('./routes/notificaciones.routes'));
 app.use('/api/asignaturas',    require('./routes/asignaturas.routes'));
+app.use('/api/reglas',         require('./routes/reglas.routes'));
 
 // Responde el estado del servidor para el healthcheck.
 app.get('/api/ping', (req, res) => res.json({ estado: 'ok', hora: new Date().toISOString() }));

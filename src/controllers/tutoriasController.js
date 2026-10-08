@@ -2,6 +2,7 @@ const { db } = require('../config/db');
 
 const { getConfigNum } = require('../config/config');
 const { errorDatosSesion, instanteColombia } = require('../config/fechas');
+const { docenteDictaAsignatura } = require('../config/reglasTutoria');
 
 // Programa una tutoría validando horario y notificando a ambas partes.
 async function programar(req, res) {
@@ -31,6 +32,11 @@ async function programar(req, res) {
   if (!docente) return res.status(404).json({ error: 'Docente no encontrado o inactivo' });
   const estudiante = await db.prepare("SELECT id FROM usuarios WHERE id=? AND rol='estudiante' AND activo=1").get(idEstudiante);
   if (!estudiante) return res.status(404).json({ error: 'Estudiante no encontrado o inactivo' });
+
+  // La asignatura debe ser una de las que el tutor registró: antes se podía pedir cualquier materia a cualquier tutor.
+  if (!(await docenteDictaAsignatura(idDocente, asignatura))) {
+    return res.status(400).json({ error: `El tutor elegido no tiene registrada la asignatura ${asignatura}` });
+  }
 
   const conflicto = await db.prepare(
     "SELECT id FROM tutorias WHERE docente_id=? AND fecha=? AND hora=? AND estado!='cancelada'"
@@ -131,6 +137,16 @@ async function cancelar(req, res) {
   }
 
   await db.prepare("UPDATE tutorias SET estado='cancelada' WHERE id=?").run(id);
+
+  // Avisa a la otra parte; si cancela el administrador, a las dos.
+  const avisar = [tutoria.estudiante_id, tutoria.docente_id].filter(uid => uid !== usuario.id);
+  for (const uid of avisar) {
+    await db.prepare('INSERT INTO notificaciones (usuario_id, icono, titulo, descripcion) VALUES (?,?,?,?)').run(
+      uid, '❌', 'Tutoría cancelada: ' + tutoria.asignatura,
+      `La sesión del ${tutoria.fecha} a las ${String(tutoria.hora).slice(0, 5)} fue cancelada.`
+    );
+  }
+
   res.json({ mensaje: 'Tutoría cancelada' });
 }
 
@@ -163,7 +179,7 @@ async function docentesDisponibles(req, res) {
   const docentes = await db.prepare(`
     SELECT u.id, u.nombres, u.apellidos,
            pd.facultad,
-           STRING_AGG(a.nombre, ', ') AS asignaturas
+           ARRAY_REMOVE(ARRAY_AGG(a.nombre ORDER BY a.nombre), NULL) AS materias
     FROM usuarios u
     JOIN perfiles_docente pd ON pd.usuario_id = u.id
     LEFT JOIN docente_asignaturas da ON da.docente_id = pd.id
@@ -173,11 +189,13 @@ async function docentesDisponibles(req, res) {
     ORDER BY u.nombres
   `).all();
 
+  // «materias» llega como lista para que el formulario muestre solo las del tutor elegido.
   res.json(docentes.map(d => ({
     id: d.id,
     nombre: d.nombres + ' ' + d.apellidos,
     facultad: d.facultad || '—',
-    asignaturas: d.asignaturas || '—'
+    asignaturas: d.materias.length ? d.materias.join(', ') : '—',
+    materias: d.materias
   })));
 }
 

@@ -31,7 +31,17 @@ function franjaUnica() {
 
 // Pruebas de las correcciones de los defectos del Entregable 2; cada una falla con el código anterior.
 describeSiHayBase('Correcciones de defectos', () => {
-  let adminToken, doc1, doc2, docToken, est, estToken;
+  let adminToken, doc1, doc2, mat1, mat2, docToken, est, estToken;
+
+  // Devuelve una asignatura que el docente tiene registrada; las tutorías solo se aceptan en sus materias.
+  async function materiaDe(docenteId) {
+    const r = await db.pool.query(
+      `SELECT a.nombre FROM docente_asignaturas da
+       JOIN perfiles_docente pd ON pd.id = da.docente_id
+       JOIN asignaturas a ON a.id = da.asignatura_id
+       WHERE pd.usuario_id = $1 ORDER BY a.nombre LIMIT 1`, [docenteId]);
+    return r.rows[0].nombre;
+  }
 
   // Crea un estudiante nuevo con perfil y devuelve su id y su token.
   async function estudianteNuevo(prefijo) {
@@ -53,9 +63,15 @@ describeSiHayBase('Correcciones de defectos', () => {
        ON CONFLICT (correo) DO UPDATE SET rol='admin', activo=1 RETURNING id`, [hash]);
     adminToken = generarToken({ id: adm.rows[0].id, correo: 'admin.correcciones@amigo.edu.co', rol: 'admin' });
 
-    const docs = await db.pool.query("SELECT id, correo FROM usuarios WHERE rol='docente' AND activo=1 ORDER BY id LIMIT 2");
+    const docs = await db.pool.query(
+      `SELECT DISTINCT u.id, u.correo FROM usuarios u
+       JOIN perfiles_docente pd ON pd.usuario_id = u.id
+       JOIN docente_asignaturas da ON da.docente_id = pd.id
+       WHERE u.rol='docente' AND u.activo=1 ORDER BY u.id LIMIT 2`);
     doc1 = docs.rows[0].id;
     doc2 = docs.rows[1].id;
+    mat1 = await materiaDe(doc1);
+    mat2 = await materiaDe(doc2);
     docToken = generarToken({ id: doc1, correo: docs.rows[0].correo, rol: 'docente' });
 
     const nuevo = await estudianteNuevo('correcciones');
@@ -68,7 +84,7 @@ describeSiHayBase('Correcciones de defectos', () => {
   });
 
   describe('Fechas de tutorías (RRN06, DEF-10)', () => {
-    const base = () => ({ docente_id: doc1, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual' });
+    const base = () => ({ docente_id: doc1, asignatura: mat1, modalidad: 'Virtual' });
 
     test('rechaza una tutoría para hoy', async () => {
       const res = await request(app).post('/api/tutorias').set('Authorization', `Bearer ${estToken}`)
@@ -98,16 +114,16 @@ describeSiHayBase('Correcciones de defectos', () => {
   test('un estudiante no queda con dos tutorías a la misma hora (DEF-09)', async () => {
     const franja = franjaUnica();
     const primera = await request(app).post('/api/tutorias').set('Authorization', `Bearer ${estToken}`)
-      .send({ docente_id: doc1, asignatura: 'Cálculo Diferencial', modalidad: 'Virtual', ...franja });
+      .send({ docente_id: doc1, asignatura: mat1, modalidad: 'Virtual', ...franja });
     expect(primera.status).toBe(201);
     const segunda = await request(app).post('/api/tutorias').set('Authorization', `Bearer ${estToken}`)
-      .send({ docente_id: doc2, asignatura: 'Álgebra Lineal', modalidad: 'Presencial', ...franja });
+      .send({ docente_id: doc2, asignatura: mat2, modalidad: 'Presencial', ...franja });
     expect(segunda.status).toBe(409);
   });
 
   test('el administrador no programa asesorías para hoy (DEF-02)', async () => {
     const res = await request(app).post('/api/admin/programar-clase').set('Authorization', `Bearer ${adminToken}`)
-      .send({ docente_id: doc1, estudiante_id: est, asignatura: 'Cálculo Diferencial', fecha: hoyColombia(), hora: '23:30', modalidad: 'Virtual' });
+      .send({ docente_id: doc1, estudiante_id: est, asignatura: mat1, fecha: hoyColombia(), hora: '23:30', modalidad: 'Virtual' });
     expect(res.status).toBe(400);
   });
 

@@ -27,7 +27,11 @@ describeSiHayBase('Integración de endpoints', () => {
     adminId = adm.rows[0].id;
     adminToken = generarToken({ id: adminId, correo: admCorreo, rol: 'admin' });
 
-    const doc = await db.pool.query("SELECT id, correo FROM usuarios WHERE rol='docente' AND activo=1 LIMIT 1");
+    const doc = await db.pool.query(
+      `SELECT u.id, u.correo FROM usuarios u
+       JOIN perfiles_docente pd ON pd.usuario_id = u.id
+       JOIN docente_asignaturas da ON da.docente_id = pd.id
+       WHERE u.rol='docente' AND u.activo=1 ORDER BY u.id LIMIT 1`);
     const est = await db.pool.query("SELECT id, correo FROM usuarios WHERE rol='estudiante' AND activo=1 LIMIT 1");
     docId = doc.rows[0].id;
     docToken = generarToken({ id: docId, correo: doc.rows[0].correo, rol: 'docente' });
@@ -107,9 +111,14 @@ describeSiHayBase('Integración de endpoints', () => {
       const anio = 2030 + (n % 5);
       const hh = String(6 + (n % 12)).padStart(2, '0');
       const mm = String(n % 60).padStart(2, '0');
+      // Usa una materia que el docente dicta: la API ya no acepta asignaturas ajenas al tutor.
+      const materia = await db.pool.query(
+        `SELECT a.nombre FROM docente_asignaturas da JOIN perfiles_docente pd ON pd.id = da.docente_id
+         JOIN asignaturas a ON a.id = da.asignatura_id WHERE pd.usuario_id = $1 LIMIT 1`, [docId]);
+      const materiaDoc = materia.rows[0].nombre;
       const res = await request(app).post('/api/tutorias')
         .set('Authorization', `Bearer ${estToken}`)
-        .send({ docente_id: docId, asignatura: 'Programación I', modalidad: 'Virtual', fecha: `${anio}-03-15`, hora: `${hh}:${mm}` });
+        .send({ docente_id: docId, asignatura: materiaDoc, modalidad: 'Virtual', fecha: `${anio}-03-15`, hora: `${hh}:${mm}` });
       expect(res.status).toBe(201);
       expect(res.body.id).toBeDefined();
     });

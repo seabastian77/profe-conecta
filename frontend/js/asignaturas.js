@@ -1,6 +1,9 @@
 // Autocomplete de asignaturas con área y programa, y creación dinámica.
 
 let _asignaturasSeleccionadas = [];
+
+// Mismo patrón que valida el servidor para los nombres de materias nuevas: sin < > " ` ni barra invertida.
+const NOMBRE_MATERIA_VALIDO = /^[^<>"`\\\u0000-\u001f]{2,80}$/;
 let _busquedaTimeout = null;
 
 const AREAS_PROGRAMAS = {
@@ -39,7 +42,7 @@ async function buscarAsignatura(q) {
   _busquedaTimeout = setTimeout(async () => {
     try {
       const resultados = await llamarAPI('/asignaturas?q=' + encodeURIComponent(q.trim()), 'GET');
-      const disponibles = resultados.filter(r => !_asignaturasSeleccionadas.some(s => s.id === r.id));
+      const disponibles = resultados.filter(r => !yaSeleccionada(r.id, r.nombre));
 
       // Agrupa los resultados por área y programa.
       const grupos = {};
@@ -90,8 +93,21 @@ async function buscarAsignatura(q) {
   }, 250);
 }
 
+// Indica si la materia ya está entre las etiquetas, por id o por nombre (las precargadas no traen id).
+function yaSeleccionada(id, nombre) {
+  const buscado = String(nombre || '').toLowerCase();
+  return _asignaturasSeleccionadas.some(s => s.id === id || s.nombre.toLowerCase() === buscado);
+}
+
+// Pone como etiquetas las materias que el docente ya tenía guardadas.
+function precargarAsignaturas(nombres) {
+  _asignaturasSeleccionadas = (nombres || []).map((nombre, i) => ({ id: -(i + 1), nombre, area: '', programa: '' }));
+  renderizarTags();
+  actualizarHiddenJSON();
+}
+
 function seleccionarAsignatura(id, nombre, area, programa) {
-  if (_asignaturasSeleccionadas.some(s => s.id === id)) return;
+  if (yaSeleccionada(id, nombre)) return;
   _asignaturasSeleccionadas.push({ id, nombre, area: area || '', programa: programa || '' });
   renderizarTags();
   actualizarHiddenJSON();
@@ -176,6 +192,10 @@ async function confirmarCrearAsignatura() {
   const programa = (document.getElementById('nuevaAsigPrograma') || {}).value;
 
   if (!nombre) { mostrarTostada('Escribe el nombre de la materia', 'error'); return; }
+  if (!NOMBRE_MATERIA_VALIDO.test(nombre)) {
+    mostrarTostada('El nombre debe tener entre 2 y 80 caracteres y no puede llevar < > " ` ni \\', 'error');
+    return;
+  }
 
   try {
     const resultado = await llamarAPI('/asignaturas', 'POST', { nombre, area, programa });
@@ -230,6 +250,38 @@ function manejarTeclaAsignatura(e) {
     const q = (document.getElementById('docAsignaturaInput') || {}).value.trim();
     if (q.length >= 2) abrirModalCrearAsignatura(q);
   }
+}
+
+let _docentesConMaterias = null;
+
+// Trae los tutores con la lista de materias que registró cada uno.
+async function obtenerDocentesConMaterias(forzar) {
+  if (!_docentesConMaterias || forzar) {
+    _docentesConMaterias = await llamarAPI('/tutorias/docentes-disponibles', 'GET');
+  }
+  return _docentesConMaterias;
+}
+
+// Llena el select solo con las materias del tutor elegido; antes salían todas las del catálogo.
+async function cargarMateriasDeDocente(selectId, docenteId, textoSinTutor) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  if (!docenteId) {
+    select.innerHTML = `<option value="">${escaparHtml(textoSinTutor || '— Primero elige el tutor —')}</option>`;
+    return;
+  }
+  let materias = [];
+  try {
+    const docentes = await obtenerDocentesConMaterias();
+    const docente = docentes.find(d => String(d.id) === String(docenteId));
+    materias = (docente && docente.materias) || [];
+  } catch (err) {
+    materias = [];
+  }
+  select.innerHTML = materias.length
+    ? '<option value="">— Selecciona materia —</option>' +
+      materias.map(m => `<option value="${escaparHtml(m)}">${escaparHtml(m)}</option>`).join('')
+    : '<option value="">Este tutor aún no registró materias</option>';
 }
 
 async function cargarAsignaturasEnSelect(selectId) {

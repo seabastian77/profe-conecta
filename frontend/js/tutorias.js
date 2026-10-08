@@ -160,6 +160,7 @@ async function alEnviarTutoria(e) {
 
     mostrarTostada("¡Tutoría programada correctamente!", "exito");
     document.getElementById("formularioTutoria").reset();
+    cargarNotificaciones();
     const panelDestino = sesion.rol === "admin" ? "panel-admin" : sesion.rol === "docente" ? "panel-docente" : "panel-estudiante";
     irAPagina(panelDestino);
   } catch (err) {
@@ -172,16 +173,19 @@ async function prepararFormTutoria() {
   const selectTutor = document.getElementById("tutTutor");
   const campoEstudiante = document.getElementById("tutEstudiante");
 
-  // En modo real, carga los docentes del backend.
+  // En modo real, carga los docentes del backend con sus materias.
   if (!CONFIG.MODO_DEMO && selectTutor) {
     try {
-      const docentes = await llamarAPI("/tutorias/docentes-disponibles", "GET");
+      const docentes = await obtenerDocentesConMaterias(true);
       selectTutor.innerHTML =
         '<option value="">— Selecciona tutor —</option>' +
         docentes.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)} · ${escaparHtml(d.facultad)}</option>`).join("");
     } catch(e) {
       selectTutor.innerHTML = '<option value="">Sin tutores disponibles</option>';
     }
+    // El docente programa en sus propias materias; los demás ven las del tutor que elijan.
+    if (sesion.rol === "docente") cargarMateriasDeDocente("tutAsignatura", sesion.id);
+    else cargarMateriasDeDocente("tutAsignatura", "");
   } else {
     // Modo demo: usa los datos locales.
     let usuarios = [];
@@ -210,6 +214,13 @@ async function prepararFormTutoria() {
     if (contEst) contEst.style.display = "";
     if (contTut) contTut.style.display = "";
   }
+}
+
+// Cambia la lista de asignaturas cuando se elige otro tutor.
+function actualizarMateriasTutoria() {
+  const tutor = document.getElementById("tutTutor");
+  quitarError("tutAsignatura");
+  cargarMateriasDeDocente("tutAsignatura", tutor ? tutor.value : "");
 }
 
 // Carga las tutorías del panel desde la API.
@@ -248,7 +259,7 @@ function tarjetaTutoriaHTML(t, vistaRol) {
       </div>
       <div class="tarjeta-tutoria__cuerpo">
         <div class="tarjeta-tutoria__asig">${escaparHtml(t.asignatura)}</div>
-        <div class="tarjeta-tutoria__meta">${etiqueta}: <strong>${nombre}</strong></div>
+        <div class="tarjeta-tutoria__meta">${etiqueta}: <strong>${escaparHtml(nombre)}</strong></div>
         <div class="tarjeta-tutoria__fecha">📅 ${formatearFecha(t.fecha)} · ⏰ ${t.hora?.slice(0, 5)}</div>
         <div class="tarjeta-tutoria__modo">${iconoModalidad(t.modalidad)} ${escaparHtml(t.modalidad)}</div>
       </div>
@@ -291,10 +302,7 @@ async function cancelarTutoria(id) {
   try {
     await llamarAPI(`/tutorias/${id}/cancelar`, "PATCH");
     mostrarTostada("Tutoría cancelada", "exito");
-
-    // Recarga el panel.
-    if (sesion.rol === "estudiante") cargarPanelEstudiante();
-    else cargarPanelDocente();
+    recargarVistaTutorias();
   } catch (err) {
     mostrarTostada(err.mensaje || "No se pudo cancelar", "error");
   }
@@ -307,12 +315,19 @@ async function marcarTutoriaRealizada(id) {
   try {
     await llamarAPI(`/tutorias/${id}/realizada`, "PATCH");
     mostrarTostada("Tutoría marcada como realizada", "exito");
-
-    if (sesion.rol === "estudiante") cargarPanelEstudiante();
-    else cargarPanelDocente();
+    recargarVistaTutorias();
   } catch (err) {
     mostrarTostada(err.mensaje || "No se pudo marcar", "error");
   }
+}
+
+// Recarga la vista donde estaba el usuario (calendario o su panel) y la campana.
+function recargarVistaTutorias() {
+  const enCalendario = document.getElementById("pagina-mi-calendario")?.classList.contains("activa");
+  if (enCalendario && typeof iniciarCalendario === "function") iniciarCalendario(true);
+  else if (sesion.rol === "estudiante") cargarPanelEstudiante();
+  else if (sesion.rol === "docente") cargarPanelDocente();
+  cargarNotificaciones();
 }
 
 function iconoModalidad(m) {

@@ -91,7 +91,7 @@
       <p class="lateral-seccion__titulo">Docente</p>
       <ul class="lateral-lista">
         <li class="lateral-item" data-pagina="panel-docente" onclick="irAPagina('panel-docente')"><span class="lateral-icono">◎</span><span>Mi Panel</span></li>
-        <li class="lateral-item" data-pagina="programar-tutoria" onclick="irAPagina('programar-tutoria')"><span class="lateral-icono">◐</span><span>Mis Tutorías</span></li>
+        <li class="lateral-item" data-pagina="mi-calendario" onclick="irAPagina('mi-calendario')"><span class="lateral-icono">◐</span><span>Mis Tutorías</span></li>
         <li class="lateral-item" data-pagina="mi-perfil" onclick="irAPagina('mi-perfil')"><span class="lateral-icono">◆</span><span>Mi Perfil</span></li>
       </ul>
     </div>
@@ -101,7 +101,7 @@
       <p class="lateral-seccion__titulo">Administración</p>
       <ul class="lateral-lista">
         <li class="lateral-item" data-pagina="panel-admin" onclick="irAPagina('panel-admin')"><span class="lateral-icono">⬢</span><span>Panel Admin</span></li>
-        <li class="lateral-item" data-pagina="programar-tutoria" onclick="irAPagina('programar-tutoria')"><span class="lateral-icono">◐</span><span>Todas las Tutorías</span><span class="lateral-pastilla">12</span></li>
+        <li class="lateral-item" data-pagina="mi-calendario" onclick="irAPagina('mi-calendario')"><span class="lateral-icono">◐</span><span>Todas las Tutorías</span><span class="lateral-pastilla oculto" id="pastillaTutoriasAdmin" title="Tutorías próximas sin realizar"></span></li>
         <li class="lateral-item" data-pagina="mi-perfil" onclick="irAPagina('mi-perfil')"><span class="lateral-icono">◆</span><span>Mi Perfil</span></li>
       </ul>
     </div>
@@ -942,32 +942,38 @@
         <div class="tarjeta-admin" onclick="irAPagina('admin-usuarios')" role="button" tabindex="0">
           <div class="tarjeta-admin__icono">👥</div>
           <h3>Usuarios</h3><p>Crea, edita y desactiva cuentas.</p>
-          <span class="tarjeta-admin__numero">389</span>
+          <span class="tarjeta-admin__numero" id="admNumUsuarios">—</span>
+          <span class="tarjeta-admin__leyenda">usuarios activos</span>
         </div>
         <div class="tarjeta-admin" onclick="irAPagina('admin-reportes')" role="button" tabindex="0">
           <div class="tarjeta-admin__icono">📊</div>
           <h3>Reportes</h3><p>Estadísticas por período.</p>
-          <span class="tarjeta-admin__numero">12</span>
+          <span class="tarjeta-admin__numero" id="admNumTutorias">—</span>
+          <span class="tarjeta-admin__leyenda">tutorías registradas</span>
         </div>
         <div class="tarjeta-admin" onclick="irAPagina('admin-notificaciones')" role="button" tabindex="0">
           <div class="tarjeta-admin__icono">🔔</div>
           <h3>Notificaciones</h3><p>Alertas automáticas.</p>
-          <span class="tarjeta-admin__numero">28</span>
+          <span class="tarjeta-admin__numero" id="admNumAlertas">—</span>
+          <span class="tarjeta-admin__leyenda">estudiantes en alerta</span>
         </div>
         <div class="tarjeta-admin" onclick="irAPagina('admin-asignacion')" role="button" tabindex="0">
           <div class="tarjeta-admin__icono">🔗</div>
           <h3>Asignación</h3><p>Vincula estudiantes con tutores.</p>
-          <span class="tarjeta-admin__numero">18</span>
+          <span class="tarjeta-admin__numero" id="admNumAsignaciones">—</span>
+          <span class="tarjeta-admin__leyenda">asignaciones activas</span>
         </div>
         <div class="tarjeta-admin" onclick="irAPagina('admin-auditoria')" role="button" tabindex="0">
           <div class="tarjeta-admin__icono">🔐</div>
           <h3>Auditoría</h3><p>Historial de accesos.</p>
-          <span class="tarjeta-admin__numero">∞</span>
+          <span class="tarjeta-admin__numero" id="admNumEventos">—</span>
+          <span class="tarjeta-admin__leyenda">eventos registrados</span>
         </div>
         <div class="tarjeta-admin" onclick="irAPagina('admin-configuracion')" role="button" tabindex="0">
           <div class="tarjeta-admin__icono">⚙️</div>
           <h3>Configuración</h3><p>Parámetros y ciclos.</p>
-          <span class="tarjeta-admin__numero">RN</span>
+          <span class="tarjeta-admin__numero" id="admNumPeriodo">—</span>
+          <span class="tarjeta-admin__leyenda" id="admLeyendaPeriodo">período activo</span>
         </div>
       </div>
 
@@ -979,11 +985,9 @@
         </div>
         <div class="tabla-desplazable">
           <table class="tabla-datos">
-            <thead><tr><th scope="col">Nombre</th><th scope="col">Rol</th><th scope="col">Programa</th><th scope="col">Estado</th><th scope="col">Último Acceso</th></tr></thead>
-            <tbody>
-              <tr><td><strong>Carlos Martínez</strong></td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--alerta">⚠ Alerta</span></td><td>Hace 2h</td></tr>
-              <tr><td><strong>Lina M. Montoya</strong></td><td>Docente</td><td>Fac. Ingeniería</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 30min</td></tr>
-              <tr><td><strong>Laura González</strong></td><td>Estudiante</td><td>Administración</td><td><span class="insignia insignia--alerta">⚠ Seguimiento</span></td><td>Ayer</td></tr>
+            <thead><tr><th scope="col">Nombre</th><th scope="col">Rol</th><th scope="col">Programa</th><th scope="col">Estado</th><th scope="col">Registro</th></tr></thead>
+            <tbody id="cuerpoUsuariosRecientes">
+              <tr><td colspan="5" class="sin-datos">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1036,20 +1040,15 @@
           <table class="tabla-datos" id="tablaUsuarios">
             <thead>
               <tr>
-                <th scope="col">Nombre completo</th><th scope="col">Correo</th><th scope="col">Rol</th><th scope="col">Programa / Facultad</th><th scope="col">Estado</th><th scope="col">Último acceso</th><th scope="col">Acciones</th>
+                <th scope="col">Nombre completo</th><th scope="col">Correo</th><th scope="col">Rol</th><th scope="col">Programa / Facultad</th><th scope="col">Estado</th><th scope="col">Registro</th><th scope="col">Acciones</th>
               </tr>
             </thead>
             <tbody id="cuerpoTablaUsuarios">
-              <tr><td><strong>Carlos A. Martínez</strong></td><td>carlos.martinez@amigo.edu.co</td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--alerta">⚠ Alerta</span></td><td>Hace 2h</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Carlos A. Martínez')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Lina M. Montoya</strong></td><td>lina.montoya@amigo.edu.co</td><td>Docente</td><td>Fac. Ingeniería</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 30min</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Lina M. Montoya')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Laura González</strong></td><td>laura.gonzalez@amigo.edu.co</td><td>Estudiante</td><td>Administración</td><td><span class="insignia insignia--alerta">⚠ Seguimiento</span></td><td>Ayer</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Laura González')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Andrés Felipe Ríos</strong></td><td>andres.rios@amigo.edu.co</td><td>Estudiante</td><td>Psicología</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 1h</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Andrés Felipe Ríos')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Sandra M. Ríos</strong></td><td>sandra.rios@amigo.edu.co</td><td>Docente</td><td>Fac. Ciencias Sociales</td><td><span class="insignia insignia--activo">● Activo</span></td><td>Hace 3h</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Sandra M. Ríos')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle" onclick="toggleEstadoUsuario(this)" title="Desactivar">🔴</button></td></tr>
-              <tr><td><strong>Valentina Osorio</strong></td><td>valentina.osorio@amigo.edu.co</td><td>Estudiante</td><td>Ing. Software</td><td><span class="insignia insignia--inactivo">○ Inactivo</span></td><td>Hace 5 días</td><td class="acciones-celda"><button type="button" class="btn-accion btn-accion--editar" onclick="editarUsuario('Valentina Osorio')" title="Editar">✏️</button><button type="button" class="btn-accion btn-accion--toggle btn-accion--activar" onclick="toggleEstadoUsuario(this)" title="Activar">🟢</button></td></tr>
+              <tr><td colspan="7" class="sin-datos">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
-        <p class="tabla-conteo" id="conteoUsuarios">Mostrando 6 usuarios</p>
+        <p class="tabla-conteo" id="conteoUsuarios">Cargando…</p>
       </div>
     </section>
 
@@ -1069,21 +1068,22 @@
 
       <!-- Filtro de período -->
       <div class="barra-herramientas">
-        <select class="campo__entrada campo__selector" id="filtroPeriodo">
-          <option>2026-1 (Actual)</option><option>2025-2</option><option>2025-1</option>
+        <select class="campo__entrada campo__selector" id="filtroPeriodo" style="max-width:260px" onchange="cargarReportes(this.value)" aria-label="Período del reporte">
+          <option value="">Cargando períodos…</option>
         </select>
-        <button class="btn-primario" type="button" onclick="exportarReportePDF()">📥 Exportar PDF</button>
-        <button class="btn-secundario" type="button" onclick="exportarReporteExcel()">📊 Exportar Excel</button>
+        <button class="btn-primario" type="button" onclick="exportarReportePDF()" title="Abre la vista de impresión; elige «Guardar como PDF»">📥 Exportar PDF</button>
+        <button class="btn-secundario" type="button" onclick="exportarReporteExcel()" title="Descarga un CSV que abre en Excel">📊 Exportar Excel</button>
       </div>
+      <p class="reporte-nota" id="reporteNota">Cargando indicadores…</p>
 
       <!-- Tarjetas de resumen -->
       <div class="grilla-tres">
-        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--teal">📚</div><div><p class="tarjeta-reporte__etiqueta">Total tutorías</p><p class="tarjeta-reporte__valor">284</p><p class="tarjeta-reporte__cambio texto-verde">↑ 18% vs período anterior</p></div></div>
-        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--naranja">⚠️</div><div><p class="tarjeta-reporte__etiqueta">Alertas activas</p><p class="tarjeta-reporte__valor">47</p><p class="tarjeta-reporte__cambio texto-rojo">↑ 3 nuevas esta semana</p></div></div>
-        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--verde">✅</div><div><p class="tarjeta-reporte__etiqueta">Tasa recuperación</p><p class="tarjeta-reporte__valor">83%</p><p class="tarjeta-reporte__cambio texto-verde">↑ 5% vs período anterior</p></div></div>
-        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--teal">👨‍🎓</div><div><p class="tarjeta-reporte__etiqueta">Estudiantes activos</p><p class="tarjeta-reporte__valor">312</p><p class="tarjeta-reporte__cambio texto-gris">Sin cambio</p></div></div>
-        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--naranja">👩‍🏫</div><div><p class="tarjeta-reporte__etiqueta">Docentes tutores</p><p class="tarjeta-reporte__valor">24</p><p class="tarjeta-reporte__cambio texto-verde">↑ 2 nuevos</p></div></div>
-        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--verde">🎯</div><div><p class="tarjeta-reporte__etiqueta">Promedio general</p><p class="tarjeta-reporte__valor">3.6</p><p class="tarjeta-reporte__cambio texto-verde">↑ 0.2 vs 2025-2</p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--teal">📚</div><div><p class="tarjeta-reporte__etiqueta">Total tutorías</p><p class="tarjeta-reporte__valor" id="repTutorias">—</p><p class="tarjeta-reporte__cambio texto-gris" id="repTutoriasDetalle"></p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--naranja">⚠️</div><div><p class="tarjeta-reporte__etiqueta">Alertas activas</p><p class="tarjeta-reporte__valor" id="repAlertas">—</p><p class="tarjeta-reporte__cambio texto-gris" id="repAlertasDetalle"></p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--verde">✅</div><div><p class="tarjeta-reporte__etiqueta">Tasa recuperación</p><p class="tarjeta-reporte__valor" id="repRecuperacion">—</p><p class="tarjeta-reporte__cambio texto-gris" id="repRecuperacionDetalle"></p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--teal">👨‍🎓</div><div><p class="tarjeta-reporte__etiqueta">Estudiantes activos</p><p class="tarjeta-reporte__valor" id="repEstudiantes">—</p><p class="tarjeta-reporte__cambio texto-gris" id="repEstudiantesDetalle"></p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--naranja">👩‍🏫</div><div><p class="tarjeta-reporte__etiqueta">Docentes tutores</p><p class="tarjeta-reporte__valor" id="repDocentes">—</p><p class="tarjeta-reporte__cambio texto-gris">Cuentas activas</p></div></div>
+        <div class="tarjeta-reporte"><div class="tarjeta-reporte__icono tarjeta-reporte__icono--verde">🎯</div><div><p class="tarjeta-reporte__etiqueta">Promedio general</p><p class="tarjeta-reporte__valor" id="repPromedio">—</p><p class="tarjeta-reporte__cambio texto-gris" id="repPromedioDetalle"></p></div></div>
       </div>
 
       <!-- Tabla de programas con más alertas -->
@@ -1092,12 +1092,8 @@
         <div class="tabla-desplazable">
           <table class="tabla-datos">
             <thead><tr><th scope="col">Programa</th><th scope="col">Estudiantes</th><th scope="col">Alertas</th><th scope="col">% Alerta</th><th scope="col">Tutorías realizadas</th><th scope="col">Recuperación</th></tr></thead>
-            <tbody>
-              <tr><td>Ing. de Software</td><td>89</td><td>12</td><td><span class="insignia insignia--alerta">13.5%</span></td><td>56</td><td>78%</td></tr>
-              <tr><td>Administración de Empresas</td><td>74</td><td>9</td><td><span class="insignia insignia--alerta">12.2%</span></td><td>41</td><td>82%</td></tr>
-              <tr><td>Psicología</td><td>63</td><td>7</td><td><span class="insignia insignia--alerta">11.1%</span></td><td>38</td><td>90%</td></tr>
-              <tr><td>Trabajo Social</td><td>48</td><td>4</td><td><span class="insignia insignia--activo">8.3%</span></td><td>22</td><td>95%</td></tr>
-              <tr><td>Derecho</td><td>38</td><td>5</td><td><span class="insignia insignia--alerta">13.2%</span></td><td>29</td><td>80%</td></tr>
+            <tbody id="cuerpoReporteProgramas">
+              <tr><td colspan="6" class="sin-datos">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1125,7 +1121,17 @@
           <div class="grilla-dos u-mb-3">
             <div class="campo">
               <label class="campo__etiqueta" for="notifDestinatario">Destinatario</label>
-              <div class="campo__selector-contenedor"><select id="notifDestinatario" class="campo__entrada campo__selector"><option>Todos los estudiantes en alerta</option><option>Todos los docentes tutores</option><option>Programa: Ing. de Software</option><option>Programa: Psicología</option><option>Usuario específico</option></select><span class="campo__flecha">▾</span></div>
+              <div class="campo__selector-contenedor"><select id="notifDestinatario" class="campo__entrada campo__selector" onchange="cambiarDestinatarioNotif()"><option value="alerta">Todos los estudiantes en alerta</option><option value="docentes">Todos los docentes tutores</option><option value="estudiantes">Todos los estudiantes</option><option value="todos">Todos los usuarios</option><option value="programa">Estudiantes de un programa…</option><option value="usuario">Usuario específico…</option></select><span class="campo__flecha">▾</span></div>
+              <div class="campo oculto" id="notifProgramaCampo" style="margin-top:10px">
+                <label class="campo__etiqueta" for="notifPrograma">Programa</label>
+                <div class="campo__selector-contenedor"><select id="notifPrograma" class="campo__entrada campo__selector"><option value="">Cargando programas…</option></select><span class="campo__flecha">▾</span></div>
+              </div>
+              <div class="campo oculto" id="notifUsuarioCampo" style="margin-top:10px">
+                <label class="campo__etiqueta" for="notifUsuario">Usuario</label>
+                <input type="text" id="notifUsuario" class="campo__entrada" placeholder="Buscar por nombre, correo o documento..." oninput="buscarUsuarioAdmin('notifUsuario','')" autocomplete="off">
+                <input type="hidden" id="notifUsuarioId">
+                <div id="notifUsuarioResults" class="busqueda-dropdown"></div>
+              </div>
             </div>
             <div class="campo">
               <label class="campo__etiqueta" for="notifTipo">Tipo de alerta</label>
@@ -1150,12 +1156,8 @@
         <div class="tabla-desplazable">
           <table class="tabla-datos">
             <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Destinatario</th><th scope="col">Asunto</th><th scope="col">Estado</th></tr></thead>
-            <tbody>
-              <tr><td>10/03/2026 09:15</td><td>⚠️ Alerta</td><td>47 estudiantes</td><td>Promedio por debajo de 3.0 — Semana 8</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
-              <tr><td>08/03/2026 14:30</td><td>📅 Recordatorio</td><td>Todos los tutores</td><td>Tutorías programadas para semana 9</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
-              <tr><td>05/03/2026 08:00</td><td>📋 Reunión</td><td>Docentes Ing. Software</td><td>Reunión obligatoria seguimiento académico</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
-              <tr><td>01/03/2026 10:00</td><td>ℹ️ Info</td><td>Todos los usuarios</td><td>Inicio de período académico 2026-1</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
-              <tr><td>25/02/2026 16:45</td><td>⚠️ Alerta</td><td>12 estudiantes</td><td>Primera alerta académica del período</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
+            <tbody id="cuerpoHistorialNotificaciones">
+              <tr><td colspan="5" class="sin-datos">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1185,7 +1187,7 @@
             <h3 style="color:#fff;font-size:16px;font-weight:600;margin:0">📋 Nueva Sesión de Asesoría</h3>
             <p style="color:#b2e4f0;font-size:12px;margin:4px 0 0">El docente y el estudiante recibirán una notificación automática</p>
           </div>
-          <span style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px">RN04 · máx 15 estudiantes/tutor</span>
+          <span style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;padding:4px 12px;border-radius:20px">RRN09 · máx <span id="cupoMaxTutor">15</span> estudiantes/tutor</span>
         </div>
 
         <div style="padding:24px">
@@ -1229,7 +1231,7 @@
                 <label class="campo__etiqueta">Materia</label>
                 <div class="campo__selector-contenedor">
                   <select id="claseAsignatura" class="campo__entrada campo__selector">
-                    <option value="">— Cargando materias... —</option>
+                    <option value="">— Primero elige el docente —</option>
                   </select>
                   <span class="campo__flecha">▾</span>
                 </div>
@@ -1335,16 +1337,19 @@
 
       <!-- Filtros de auditoría -->
       <div class="barra-herramientas">
-        <select class="campo__entrada campo__selector" id="filtroAuditTipo" onchange="filtrarAuditoria()">
+        <select class="campo__entrada campo__selector" id="filtroAuditTipo" onchange="filtrarAuditoria()" aria-label="Tipo de evento">
           <option value="">Todos los eventos</option>
-          <option>Inicio de sesión</option>
-          <option>Cierre de sesión</option>
-          <option>Intento fallido</option>
-          <option>Cambio de datos</option>
-          <option>Asignación creada</option>
-          <option>Notificación enviada</option>
+          <option value="inicio">Inicio de sesión</option>
+          <option value="cierre">Cierre de sesión</option>
+          <option value="fallido">Intento fallido o bloqueo</option>
+          <option value="registro">Registro de cuenta</option>
+          <option value="usuarios">Cambios de usuarios</option>
+          <option value="tutorias">Asignaciones y asesorías</option>
+          <option value="notificacion">Notificación enviada</option>
+          <option value="sistema">Configuración y períodos</option>
         </select>
-        <input type="date" class="campo__entrada" id="filtroAuditFecha" style="max-width:160px" onchange="filtrarAuditoria()">
+        <input type="date" class="campo__entrada" id="filtroAuditFecha" style="max-width:160px" onchange="filtrarAuditoria()" aria-label="Fecha del evento">
+        <label class="meta-linea" style="gap:6px;cursor:pointer"><input type="checkbox" id="filtroAuditArchivados" onchange="cargarAuditoria()"> Ver archivados</label>
         <button class="btn-secundario" type="button" onclick="exportarLogAuditoria()">📥 Exportar Log</button>
       </div>
 
@@ -1352,16 +1357,9 @@
       <div class="tabla-contenedor">
         <div class="tabla-desplazable">
           <table class="tabla-datos">
-            <thead><tr><th scope="col">Fecha y hora</th><th scope="col">Usuario</th><th scope="col">Evento</th><th scope="col">Detalle</th><th scope="col">IP / Dispositivo</th><th scope="col">Resultado</th></tr></thead>
-            <tbody>
-              <tr><td>10/03/2026 14:32</td><td>lina.montoya@amigo.edu.co</td><td>🔑 Inicio de sesión</td><td>Login con correo institucional</td><td>192.168.1.42 — Chrome/Win</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
-              <tr><td>10/03/2026 13:50</td><td>carlos.martinez@amigo.edu.co</td><td>🔑 Inicio de sesión</td><td>Login con correo institucional</td><td>192.168.1.87 — Safari/iOS</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
-              <tr><td>10/03/2026 12:15</td><td>unknown@gmail.com</td><td>❌ Intento fallido</td><td>Correo no institucional</td><td>201.234.56.78 — Chrome/Mac</td><td><span class="insignia insignia--alerta">✗ Bloqueado</span></td></tr>
-              <tr><td>10/03/2026 11:08</td><td>admin@amigo.edu.co</td><td>✏️ Cambio de datos</td><td>Usuario Valentina Osorio desactivada</td><td>192.168.1.1 — Chrome/Win</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
-              <tr><td>10/03/2026 09:15</td><td>admin@amigo.edu.co</td><td>📤 Notificación</td><td>Alerta masiva a 47 estudiantes</td><td>192.168.1.1 — Chrome/Win</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>
-              <tr><td>09/03/2026 16:40</td><td>sandra.rios@amigo.edu.co</td><td>🔗 Asignación</td><td>Tutoría programada — Valentina Osorio</td><td>192.168.1.55 — Firefox/Win</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
-              <tr><td>09/03/2026 08:00</td><td>unknown</td><td>❌ Intento fallido</td><td>5 intentos fallidos — cuenta bloqueada</td><td>45.123.67.90 — Chrome/Linux</td><td><span class="insignia insignia--alerta">✗ Bloqueado</span></td></tr>
-              <tr><td>08/03/2026 17:30</td><td>andres.rios@amigo.edu.co</td><td>🚪 Cierre de sesión</td><td>Cierre manual por el usuario</td><td>192.168.2.14 — Chrome/Android</td><td><span class="insignia insignia--activo">✓ Exitoso</span></td></tr>
+            <thead><tr><th scope="col">Fecha y hora</th><th scope="col">Usuario</th><th scope="col">Evento</th><th scope="col">Detalle</th><th scope="col">IP</th><th scope="col">Resultado</th></tr></thead>
+            <tbody id="cuerpoAuditoria">
+              <tr><td colspan="6" class="sin-datos">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1391,7 +1389,7 @@
             <div class="config-item">
               <div class="config-item__info">
                 <p class="config-item__nombre">Umbral de alerta (promedio mínimo)</p>
-                <p class="config-item__desc">RN01 — Estudiantes por debajo activan seguimiento obligatorio</p>
+                <p class="config-item__desc">RRN07 — Estudiantes por debajo quedan en alerta académica</p>
               </div>
               <div class="config-item__control">
                 <input type="number" class="campo__entrada config-item__input" id="cfgUmbral" value="3.0" min="1.0" max="5.0" step="0.1">
@@ -1402,10 +1400,10 @@
             <div class="config-item">
               <div class="config-item__info">
                 <p class="config-item__nombre">Máx. estudiantes por tutor</p>
-                <p class="config-item__desc">RN04 — Límite de asignaciones simultáneas por docente</p>
+                <p class="config-item__desc">RRN09 — Límite de estudiantes asignados por docente</p>
               </div>
               <div class="config-item__control">
-                <input type="number" class="campo__entrada config-item__input" id="cfgMaxEst" value="15" min="1" max="30">
+                <input type="number" class="campo__entrada config-item__input" id="cfgMaxEst" value="15" min="1" max="100">
                 <button class="btn-guardar-config" onclick="guardarConfig('cfgMaxEst','Máx. estudiantes por tutor')" type="button">✓</button>
               </div>
             </div>
@@ -1413,7 +1411,7 @@
             <div class="config-item">
               <div class="config-item__info">
                 <p class="config-item__nombre">Horas mínimas para cancelar tutoría</p>
-                <p class="config-item__desc">RN03 — Cancelaciones con menos tiempo quedan como inasistencia</p>
+                <p class="config-item__desc">RN03 — Con menos anticipación la tutoría ya no se puede cancelar</p>
               </div>
               <div class="config-item__control">
                 <input type="number" class="campo__entrada config-item__input" id="cfgCancelacion" value="24" min="1" max="72">
@@ -1424,10 +1422,10 @@
             <div class="config-item">
               <div class="config-item__info">
                 <p class="config-item__nombre">Sesión expira tras (minutos inactividad)</p>
-                <p class="config-item__desc">Seguridad — Usuarios son desconectados automáticamente</p>
+                <p class="config-item__desc">RNF02 — La sesión se cierra tras ese tiempo sin actividad</p>
               </div>
               <div class="config-item__control">
-                <input type="number" class="campo__entrada config-item__input" id="cfgSesion" value="120" min="15" max="480">
+                <input type="number" class="campo__entrada config-item__input" id="cfgSesion" value="15" min="5" max="480">
                 <button class="btn-guardar-config" onclick="guardarConfig('cfgSesion','Expiración de sesión')" type="button">✓</button>
               </div>
             </div>
@@ -1439,21 +1437,7 @@
         <div class="tabla-contenedor">
           <div class="tabla-encabezado"><h3>📅 Períodos Académicos</h3></div>
           <div style="padding:20px">
-            <div class="config-periodo activo-periodo">
-              <div class="config-periodo__estado">● Activo</div>
-              <div class="config-periodo__nombre">Período 2026-1</div>
-              <div class="config-periodo__fechas">03 Feb — 15 Jun 2026</div>
-            </div>
-            <div class="config-periodo">
-              <div class="config-periodo__estado texto-gris">○ Cerrado</div>
-              <div class="config-periodo__nombre">Período 2025-2</div>
-              <div class="config-periodo__fechas">28 Jul — 22 Nov 2025</div>
-            </div>
-            <div class="config-periodo">
-              <div class="config-periodo__estado texto-gris">○ Cerrado</div>
-              <div class="config-periodo__nombre">Período 2025-1</div>
-              <div class="config-periodo__fechas">03 Feb — 14 Jun 2025</div>
-            </div>
+            <div id="listaPeriodos"><p class="sin-datos">Cargando períodos…</p></div>
             <button class="btn-primario" style="margin-top:16px;width:100%" type="button" onclick="crearNuevoPeriodo()">+ Crear Nuevo Período</button>
           </div>
         </div>
@@ -1464,8 +1448,8 @@
         <h3 class="zona-peligrosa__titulo">⚠️ Zona de Acciones Críticas</h3>
         <p class="zona-peligrosa__desc">Estas acciones son irreversibles. Úsalas con precaución.</p>
         <div class="zona-peligrosa__botones">
-          <button class="btn-peligro" type="button" onclick="confirmarAccionCritica('Cerrar el período 2026-1')">Cerrar Período Actual</button>
-          <button class="btn-peligro" type="button" onclick="confirmarAccionCritica('Archivar todos los registros de auditoría')">Archivar Auditoría</button>
+          <button class="btn-peligro" type="button" id="btnCerrarPeriodo" onclick="confirmarAccionCritica('Cerrar el período actual')">Cerrar Período Actual</button>
+          <button class="btn-peligro" type="button" onclick="confirmarAccionCritica('Archivar la auditoría antigua')">Archivar Auditoría</button>
           <button class="btn-peligro" type="button" onclick="confirmarAccionCritica('Resetear configuración a valores por defecto')">Resetear Configuración</button>
         </div>
       </div>
@@ -1474,10 +1458,10 @@
     <section class="pagina" id="pagina-programar-tutoria">
       <div class="seccion__encabezado"><h2 class="seccion__titulo">Programar <span class="texto-teal">Tutoría</span></h2><p class="seccion__subtitulo">RF03 — Agenda una sesión de acompañamiento académico</p></div>
       <div class="formulario-centrado"><div class="formulario-caja">
-        <div class="aviso-naranja"><span>⚠</span><p>Cancelaciones con mínimo <strong>24 horas de anticipación</strong>. Sin esto queda como inasistencia. <strong>(RN03)</strong></p></div>
+        <div class="aviso-naranja"><span>⚠</span><p>Cancelaciones con mínimo <strong><span id="avisoHorasCancelacion">24</span> horas de anticipación</strong>. Después ya no se puede cancelar. <strong>(RN03)</strong></p></div>
         <form id="formularioTutoria" novalidate>
-          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutEstudiante">Número de documento del estudiante</label><input type="text" id="tutEstudiante" class="campo__entrada" placeholder="Ej: 1098765432"><span class="campo__mensaje-error" id="errorTutEstudiante"></span></div><div class="campo"><label class="campo__etiqueta" for="tutTutor">Tutor</label><div class="campo__selector-contenedor"><select id="tutTutor" class="campo__entrada campo__selector"><option value="">— Selecciona —</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutTutor"></span></div></div>
-          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutAsignatura">Asignatura</label><div class="campo__selector-contenedor"><select id="tutAsignatura" class="campo__entrada campo__selector"><option value="">— Cargando materias... —</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutAsignatura"></span></div><div class="campo"><label class="campo__etiqueta" for="tutModalidad">Modalidad</label><div class="campo__selector-contenedor"><select id="tutModalidad" class="campo__entrada campo__selector"><option value="">—</option><option>Presencial</option><option>Virtual</option><option>Híbrida</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutModalidad"></span></div></div>
+          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutEstudiante">Número de documento del estudiante</label><input type="text" id="tutEstudiante" class="campo__entrada" placeholder="Ej: 1098765432"><span class="campo__mensaje-error" id="errorTutEstudiante"></span></div><div class="campo"><label class="campo__etiqueta" for="tutTutor">Tutor</label><div class="campo__selector-contenedor"><select id="tutTutor" class="campo__entrada campo__selector" onchange="actualizarMateriasTutoria()"><option value="">— Selecciona —</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutTutor"></span></div></div>
+          <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutAsignatura">Asignatura</label><div class="campo__selector-contenedor"><select id="tutAsignatura" class="campo__entrada campo__selector"><option value="">— Primero elige el tutor —</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutAsignatura"></span></div><div class="campo"><label class="campo__etiqueta" for="tutModalidad">Modalidad</label><div class="campo__selector-contenedor"><select id="tutModalidad" class="campo__entrada campo__selector"><option value="">—</option><option>Presencial</option><option>Virtual</option><option>Híbrida</option></select><span class="campo__flecha">▾</span></div><span class="campo__mensaje-error" id="errorTutModalidad"></span></div></div>
           <div class="grilla-dos"><div class="campo"><label class="campo__etiqueta" for="tutFecha">Fecha</label><input type="date" id="tutFecha" class="campo__entrada"><span class="campo__mensaje-error" id="errorTutFecha"></span></div><div class="campo"><label class="campo__etiqueta" for="tutHora">Hora</label><input type="time" id="tutHora" class="campo__entrada"><span class="campo__mensaje-error" id="errorTutHora"></span></div></div>
           <div class="campo"><label class="campo__etiqueta" for="tutObservaciones">Observaciones</label><textarea id="tutObservaciones" class="campo__entrada" rows="3" placeholder="Describe los temas o dificultades del estudiante..."></textarea></div>
           <button type="submit" class="btn-submit btn-submit--naranja">📅 Programar Tutoría</button>
@@ -1490,8 +1474,8 @@
     ════════════════════════════════════════════════════════ -->
     <section class="pagina" id="pagina-mi-calendario">
       <div class="seccion__encabezado">
-        <h2 class="seccion__titulo">📅 Mi <span class="texto-teal">Calendario</span></h2>
-        <p class="seccion__subtitulo">Visualiza y filtra todas tus asesorías del mes</p>
+        <h2 class="seccion__titulo" id="calTituloPagina">📅 Mi <span class="texto-teal">Calendario</span></h2>
+        <p class="seccion__subtitulo" id="calSubtituloPagina">Visualiza y filtra todas tus asesorías del mes</p>
       </div>
 
       <!-- Barra de herramientas del calendario -->

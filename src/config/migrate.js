@@ -193,6 +193,13 @@ async function migrar() {
   // Sin valor por defecto: un estudiante nuevo queda sin promedio y no en 0, que lo marcaba en alerta (DEF-14).
   await c.query('ALTER TABLE perfiles_estudiante ALTER COLUMN promedio DROP DEFAULT');
 
+  // Auditoría: IP de origen y marca de archivado (los archivados salen del listado pero se conservan).
+  await c.query(`
+    ALTER TABLE auditoria ADD COLUMN IF NOT EXISTS ip TEXT;
+    ALTER TABLE auditoria ADD COLUMN IF NOT EXISTS archivada INTEGER DEFAULT 0;
+    UPDATE auditoria SET archivada = 0 WHERE archivada IS NULL;
+  `);
+
   // Purga de intentos viejos para que la tabla no crezca sin control.
   await c.query(`DELETE FROM intentos_login WHERE creado_en < NOW() - INTERVAL '1 day'`);
 
@@ -206,8 +213,15 @@ async function migrar() {
     ON CONFLICT (id) DO NOTHING;
 
     INSERT INTO configuracion (clave, valor) VALUES
-      ('RN_PROMEDIO_MINIMO','3.0'),('RN_HORAS_CANCELACION','24'),('RN_MAX_ESTUDIANTES','15')
+      ('RN_PROMEDIO_MINIMO','3.0'),('RN_HORAS_CANCELACION','24'),('RN_MAX_ESTUDIANTES','15'),
+      ('RN_MINUTOS_SESION','15')
     ON CONFLICT (clave) DO NOTHING;
+  `);
+
+  // El período 1 se inserta con id fijo y la secuencia no avanza: el siguiente período chocaba con él y daba error 500.
+  await c.query(`
+    SELECT setval(pg_get_serial_sequence('periodos', 'id'),
+                  GREATEST((SELECT COALESCE(MAX(id), 0) FROM periodos), 1))
   `);
 
   await sembrarAsignaturas(c);

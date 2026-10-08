@@ -76,7 +76,7 @@ function irAPagina(nombre) {
   if (pagina) pagina.classList.add("activa");
 
   const titulo = document.getElementById("tituloPaginaActual");
-  if (titulo) titulo.textContent = tituloPagina[nombre] || nombre;
+  if (titulo) titulo.textContent = nombre === "mi-calendario" ? tituloCalendario().corto : tituloPagina[nombre] || nombre;
 
   document.querySelectorAll(".lateral-item").forEach((item) => {
     item.classList.toggle("activo", item.dataset.pagina === nombre);
@@ -109,9 +109,11 @@ function irAPagina(nombre) {
     cargarSelectsAsignacion();
     if (typeof cargarTablaAsignaciones === "function") cargarTablaAsignaciones();
     if (typeof cargarClasesProgramadas === "function") cargarClasesProgramadas();
-    // Carga las materias en el select de asesoría.
-    if (typeof cargarAsignaturasEnSelect === "function")
-      cargarAsignaturasEnSelect("claseAsignatura");
+    // La materia sale de las que registró el docente elegido, no del catálogo completo.
+    obtenerDocentesConMaterias(true)
+      .catch(() => {})
+      .then(() => cargarMateriasDeDocente("claseAsignatura", document.getElementById("claseDocenteId")?.value, "— Primero elige el docente —"));
+    actualizarTextosReglas();
     // Las asesorías del admin también van desde mañana (RN06).
     const fechaEl = document.getElementById("claseFecha");
     if (fechaEl) {
@@ -120,11 +122,12 @@ function irAPagina(nombre) {
       fechaEl.min = fechaLocalISO(manana);
     }
   }
-  if (
-    nombre === "admin-notificaciones" &&
-    typeof cargarHistorialNotificaciones === "function"
-  )
+  if (nombre === "admin-notificaciones") {
     cargarHistorialNotificaciones();
+    cargarProgramasNotificacion();
+    cambiarDestinatarioNotif();
+  }
+  if (nombre === "admin-reportes") cargarReportes();
   if (nombre === "admin-auditoria" && typeof cargarAuditoria === "function")
     cargarAuditoria();
   if (nombre === "admin-configuracion") {
@@ -132,13 +135,19 @@ function irAPagina(nombre) {
     if (typeof cargarPeriodos === "function") cargarPeriodos();
   }
   if (nombre === "mi-perfil") cargarMiPerfil();
-  if (nombre === "mi-calendario" && typeof iniciarCalendario === "function") iniciarCalendario();
+  if (nombre === "mi-calendario") {
+    const textos = tituloCalendario();
+    const h2 = document.getElementById("calTituloPagina");
+    const sub = document.getElementById("calSubtituloPagina");
+    if (h2) h2.innerHTML = textos.titulo;
+    if (sub) sub.textContent = textos.subtitulo;
+    if (typeof iniciarCalendario === "function") iniciarCalendario();
+  }
   if (nombre === "completar-perfil") mostrarFormPerfil();
   if (nombre === "programar-tutoria") {
     ponerFechaMinima();
+    actualizarTextosReglas();
     if (typeof prepararFormTutoria === "function") prepararFormTutoria();
-    if (typeof cargarAsignaturasEnSelect === "function")
-      cargarAsignaturasEnSelect("tutAsignatura");
   }
 
   authStorage.setUltimaActividad();
@@ -151,17 +160,38 @@ function irAPagina(nombre) {
   }
 }
 
-// Carga las métricas globales del panel admin desde el API.
+// Textos del calendario según el rol: el menú lo llama «Mis Tutorías» o «Todas las Tutorías».
+function tituloCalendario() {
+  if (sesion.rol === "admin") {
+    return { corto: "Todas las Tutorías", titulo: '📅 Todas las <span class="texto-teal">Tutorías</span>', subtitulo: "Todas las sesiones del sistema; filtra por materia o estado" };
+  }
+  if (sesion.rol === "docente") {
+    return { corto: "Mis Tutorías", titulo: '📅 Mis <span class="texto-teal">Tutorías</span>', subtitulo: "Tus sesiones del mes; marca como realizadas las que ya pasaron" };
+  }
+  return { corto: "Mi Calendario", titulo: '📅 Mi <span class="texto-teal">Calendario</span>', subtitulo: "Visualiza y filtra todas tus asesorías del mes" };
+}
+
+// Carga las métricas globales del panel admin; cada número va con su leyenda (antes había «∞», «RN» y cifras fijas).
 async function cargarPanelAdmin() {
   try {
     var stats = await llamarAPI("/admin/estadisticas", "GET");
-    var tarjetas = document.querySelectorAll(
-      "#pagina-panel-admin .tarjeta-admin__numero",
-    );
-    if (tarjetas[0]) tarjetas[0].textContent = stats.total_usuarios || 0;
-    if (tarjetas[1]) tarjetas[1].textContent = stats.total_tutorias || 0;
-    if (tarjetas[2]) tarjetas[2].textContent = stats.alertas_activas || 0;
-    if (tarjetas[3]) tarjetas[3].textContent = stats.total_asignaciones || 0;
+    var poner = function (id, valor) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = valor;
+    };
+    poner("admNumUsuarios", stats.total_usuarios || 0);
+    poner("admNumTutorias", stats.total_tutorias || 0);
+    poner("admNumAlertas", stats.alertas_activas || 0);
+    poner("admNumAsignaciones", stats.total_asignaciones || 0);
+    poner("admNumEventos", stats.eventos_auditoria || 0);
+    poner("admNumPeriodo", stats.periodo_activo || "—");
+    poner("admLeyendaPeriodo", stats.periodo_activo ? "período activo" : "sin período activo");
+
+    var pastilla = document.getElementById("pastillaTutoriasAdmin");
+    if (pastilla) {
+      pastilla.textContent = stats.tutorias_proximas || "";
+      pastilla.classList.toggle("oculto", !stats.tutorias_proximas);
+    }
 
     // Renderiza la acción destacada.
     renderAccion("accionAdmin", accionAdmin({
@@ -308,57 +338,42 @@ function confirmarAccionCritica(accion) {
   abrirModalAccionCritica(accion);
 }
 
-// Abre el modal de confirmación para acciones críticas.
+// Abre el modal de confirmación con el efecto real de cada acción crítica.
 function abrirModalAccionCritica(accion) {
   const existente = document.getElementById("modalAccionCritica");
   if (existente) existente.remove();
 
-  // Define la descripción específica según la acción.
   let icono = "⚠️";
+  let titulo = accion;
   let descripcion = "Esta acción no se puede deshacer.";
   let botonTexto = "Confirmar";
-  let alCompletar = null;
+  let irreversible = true;
 
   if (accion.includes("Cerrar")) {
+    const periodo = window._periodoActivo;
+    if (!periodo) {
+      mostrarTostada("No hay un período activo para cerrar", "error");
+      return;
+    }
     icono = "🔒";
+    titulo = "Cerrar el período " + periodo.nombre;
     descripcion =
-      "Al cerrar el período 2026-1, ningún usuario podrá crear nuevas tutorías ni modificar calificaciones. Los datos quedarán archivados en modo solo-lectura.";
+      "El período " + periodo.nombre + " quedará como cerrado y dejará de ser el período activo de los reportes. " +
+      "Las tutorías registradas se conservan. Después puedes activar un período próximo.";
     botonTexto = "Sí, cerrar período";
-    alCompletar = function () {
-      // Marca el período actual como cerrado visualmente.
-      const periodoActivo = document.querySelector(
-        "#pagina-admin-configuracion .activo-periodo",
-      );
-      if (periodoActivo) {
-        periodoActivo.classList.remove("activo-periodo");
-        const estado = periodoActivo.querySelector(".config-periodo__estado");
-        if (estado) {
-          estado.textContent = "○ Cerrado";
-          estado.classList.add("texto-gris");
-        }
-      }
-    };
   } else if (accion.includes("Archivar")) {
     icono = "📦";
     descripcion =
-      "Se archivarán 1,247 registros de auditoría de más de 90 días de antigüedad. Podrás consultarlos posteriormente pero no aparecerán en el listado principal.";
+      "Los registros de auditoría con más de 90 días saldrán del listado principal. " +
+      "No se borran: se consultan marcando «Ver archivados» en Auditoría.";
     botonTexto = "Sí, archivar";
+    irreversible = false;
   } else if (accion.includes("Resetear")) {
     icono = "🔄";
     descripcion =
-      "Todos los parámetros de configuración volverán a sus valores por defecto (umbral 3.0, máx. 15 estudiantes por tutor, 24h de cancelación).";
+      "Los parámetros vuelven a sus valores por defecto: umbral 3.0, máximo 15 estudiantes por tutor, " +
+      "24 horas para cancelar y 15 minutos de inactividad.";
     botonTexto = "Sí, resetear";
-    alCompletar = function () {
-      // Restablece los inputs de configuración.
-      const cfgUmbral = document.getElementById("cfgUmbral");
-      const cfgMaxEst = document.getElementById("cfgMaxEst");
-      const cfgCancelacion = document.getElementById("cfgCancelacion");
-      const cfgSesion = document.getElementById("cfgSesion");
-      if (cfgUmbral) cfgUmbral.value = "3.0";
-      if (cfgMaxEst) cfgMaxEst.value = "15";
-      if (cfgCancelacion) cfgCancelacion.value = "24";
-      if (cfgSesion) cfgSesion.value = "120";
-    };
   }
 
   const modal = document.createElement("div");
@@ -367,13 +382,13 @@ function abrirModalAccionCritica(accion) {
   modal.innerHTML =
     '<div class="modal-info-caja">' +
     '  <div class="modal-info-cabecera" style="background:#fff8f8;border-bottom-color:#fee2e2">' +
-    '    <h3 style="color:#c0392b">' + icono + " " + accion + "</h3>" +
+    '    <h3 style="color:#c0392b">' + icono + " " + escaparHtml(titulo) + "</h3>" +
     '    <button class="modal-cerrar" type="button" onclick="cerrarModalAccionCritica()">✕</button>' +
     "  </div>" +
     '  <div class="modal-info-cuerpo">' +
     "    <p><strong>¿Estás seguro de que quieres continuar?</strong></p>" +
-    "    <p>" + descripcion + "</p>" +
-    '    <p style="color:#c0392b;font-size:12px"><strong>Esta acción es irreversible.</strong></p>' +
+    "    <p>" + escaparHtml(descripcion) + "</p>" +
+    (irreversible ? '    <p style="color:#c0392b;font-size:12px"><strong>Esta acción es irreversible.</strong></p>' : "") +
     "  </div>" +
     '  <div class="modal-info-pie">' +
     '    <button class="btn-secundario" type="button" onclick="cerrarModalAccionCritica()">Cancelar</button>' +
@@ -386,8 +401,6 @@ function abrirModalAccionCritica(accion) {
     if (e.target === modal) cerrarModalAccionCritica();
   });
 
-  // Guarda el callback para ejecutarlo después.
-  window._accionCriticaCallback = alCompletar;
   window._accionCriticaNombre = accion;
 }
 
@@ -396,38 +409,34 @@ function cerrarModalAccionCritica() {
   if (modal) modal.remove();
 }
 
+// Ejecuta la acción crítica en el servidor y muestra lo que realmente pasó.
 async function ejecutarAccionCritica() {
+  const nombre = window._accionCriticaNombre || "";
+  const boton = document.querySelector("#modalAccionCritica .btn-peligro");
+  if (boton) boton.disabled = true;
   try {
-    var nombre = window._accionCriticaNombre || "Acción";
     if (nombre.includes("Resetear")) {
       await llamarAPI("/admin/configuracion/reset", "POST", {});
-      // Restablece los inputs visualmente.
-      var cfgUmbral = document.getElementById("cfgUmbral");
-      var cfgMaxEst = document.getElementById("cfgMaxEst");
-      var cfgCancelacion = document.getElementById("cfgCancelacion");
-      var cfgSesion = document.getElementById("cfgSesion");
-      if (cfgUmbral) cfgUmbral.value = "3.0";
-      if (cfgMaxEst) cfgMaxEst.value = "15";
-      if (cfgCancelacion) cfgCancelacion.value = "24";
-      if (cfgSesion) cfgSesion.value = "120";
+      await cargarConfiguracion();
+      cargarReglas();
+      mostrarTostada("✓ Configuración restaurada a los valores por defecto", "exito");
     } else if (nombre.includes("Cerrar")) {
-      // Cierra el período activo en el backend.
-      if (!window._periodoActivoId) {
-        mostrarTostada("No hay un período activo para cerrar", "error");
-        cerrarModalAccionCritica();
-        return;
-      }
-      await llamarAPI("/admin/periodos/" + window._periodoActivoId + "/cerrar", "PATCH");
-      if (typeof cargarPeriodos === "function") cargarPeriodos();
+      const periodo = window._periodoActivo;
+      if (!periodo) throw { mensaje: "No hay un período activo para cerrar" };
+      const resp = await llamarAPI("/admin/periodos/" + periodo.id + "/cerrar", "PATCH");
+      await cargarPeriodos();
+      mostrarTostada("✓ " + resp.mensaje, "exito");
+    } else if (nombre.includes("Archivar")) {
+      const resp = await llamarAPI("/admin/auditoria/archivar", "POST", {});
+      mostrarTostada((resp.archivados ? "✓ " : "") + resp.mensaje, resp.archivados ? "exito" : "advertencia");
     }
-    if (window._accionCriticaCallback) window._accionCriticaCallback();
-    mostrarTostada("✓ " + nombre + " completada", "exito");
   } catch (err) {
-    mostrarTostada(err.mensaje || "Error al ejecutar acción", "error");
+    mostrarTostada(err.mensaje || "Error al ejecutar la acción", "error");
   }
   cerrarModalAccionCritica();
 }
 
+// Guarda un parámetro con la clave que leen las reglas (antes iba a claves que nadie usaba).
 async function guardarConfig(idInput, nombre) {
   const valor = document.getElementById(idInput)?.value;
   if (valor === undefined || valor === "") {
@@ -435,20 +444,20 @@ async function guardarConfig(idInput, nombre) {
     return;
   }
 
-  // Mapea los IDs del input a claves de la base de datos.
-  var claveMap = {
-    cfgUmbral: "umbral_alerta",
-    cfgMaxEst: "max_estudiantes_tutor",
-    cfgCancelacion: "horas_cancelacion",
-    cfgSesion: "minutos_sesion"
+  const claveMap = {
+    cfgUmbral: "RN_PROMEDIO_MINIMO",
+    cfgMaxEst: "RN_MAX_ESTUDIANTES",
+    cfgCancelacion: "RN_HORAS_CANCELACION",
+    cfgSesion: "RN_MINUTOS_SESION",
   };
-  var clave = claveMap[idInput] || idInput;
 
   try {
-    await llamarAPI("/admin/configuracion", "POST", { clave: clave, valor: valor });
-    mostrarTostada("✓ " + nombre + " actualizado a " + valor, "exito");
-    var input = document.getElementById(idInput);
+    const resp = await llamarAPI("/admin/configuracion", "POST", { clave: claveMap[idInput], valor: valor });
+    mostrarTostada("✓ " + nombre + " actualizado a " + resp.valor, "exito");
+    cargarReglas();
+    const input = document.getElementById(idInput);
     if (input) {
+      input.value = resp.valor;
       input.style.borderColor = "#22c55e";
       input.style.boxShadow = "0 0 0 3px rgba(34, 197, 94, 0.2)";
       setTimeout(function () { input.style.borderColor = ""; input.style.boxShadow = ""; }, 1500);
@@ -458,81 +467,120 @@ async function guardarConfig(idInput, nombre) {
   }
 }
 
-// Genera y descarga el reporte académico como archivo de texto.
+// Formatea un número con coma decimal, como se escribe en Colombia.
+function numeroCO(valor, decimales) {
+  if (valor === null || valor === undefined || isNaN(valor)) return "—";
+  return Number(valor).toFixed(decimales).replace(".", ",");
+}
+
+// Abre la impresión del reporte real para guardarlo como PDF (antes descargaba un .txt con cifras inventadas).
 function exportarReportePDF() {
-  const contenido = `
-REPORTE ACADÉMICO — ConectaProfe
-Universidad Católica Luis Amigó
-Período: ${document.getElementById("filtroPeriodo")?.value || "2026-1"}
-Generado: ${new Date().toLocaleString("es-CO")}
-═══════════════════════════════════════
+  const r = window._reporte;
+  if (!r) {
+    mostrarTostada("Espera a que cargue el reporte", "error");
+    return;
+  }
+  const i = r.indicadores;
+  const filas = r.por_programa.map((p) =>
+    "<tr><td>" + escaparHtml(p.programa) + "</td><td>" + p.estudiantes + "</td><td>" + p.alertas + "</td><td>" +
+    numeroCO(p.porcentaje_alerta, 1) + "%</td><td>" + p.tutorias_realizadas + "</td><td>" + p.recuperacion + "%</td></tr>"
+  ).join("");
 
-INDICADORES GENERALES
-─────────────────────
-Total tutorías:      284
-Alertas activas:      47
-Tasa recuperación:   83%
-Estudiantes activos: 312
-Docentes tutores:     24
-Promedio general:    3.6
+  const zona = document.createElement("div");
+  zona.className = "zona-impresion";
+  zona.innerHTML =
+    "<h1>Reporte académico — ConectaProfe</h1>" +
+    "<p>Universidad Católica Luis Amigó</p>" +
+    "<p><strong>Período:</strong> " + escaparHtml(textoPeriodoReporte(r)) + "</p>" +
+    "<p><strong>Generado:</strong> " + new Date().toLocaleString("es-CO") + "</p>" +
+    "<h2>Indicadores</h2>" +
+    "<table><tbody>" +
+    "<tr><th>Tutorías programadas</th><td>" + i.total_tutorias + " (completadas " + i.tutorias_completadas + ", pendientes " + i.tutorias_pendientes + ", canceladas " + i.tutorias_canceladas + ")</td></tr>" +
+    "<tr><th>Alertas activas (promedio menor a " + numeroCO(r.umbral, 1) + ")</th><td>" + i.alertas_activas + "</td></tr>" +
+    "<tr><th>Tasa de recuperación (RF024)</th><td>" + (i.tasa_recuperacion === null ? "—" : i.tasa_recuperacion + "%") + " — " + i.estudiantes_recuperados + " de " + i.perfiles_estudiante + " perfiles</td></tr>" +
+    "<tr><th>Estudiantes activos</th><td>" + i.estudiantes_activos + "</td></tr>" +
+    "<tr><th>Docentes tutores</th><td>" + i.docentes_tutores + "</td></tr>" +
+    "<tr><th>Promedio general</th><td>" + numeroCO(i.promedio_general, 2) + " (" + i.estudiantes_con_promedio + " con promedio registrado)</td></tr>" +
+    "</tbody></table>" +
+    "<h2>Alertas por programa académico</h2>" +
+    "<table><thead><tr><th>Programa</th><th>Estudiantes</th><th>Alertas</th><th>% Alerta</th><th>Tutorías realizadas</th><th>Recuperación</th></tr></thead>" +
+    "<tbody>" + (filas || '<tr><td colspan="6">Sin estudiantes con perfil</td></tr>') + "</tbody></table>" +
+    "<p style=\"margin-top:12px;color:#555\">Las tutorías se cuentan por las fechas del período. Alertas y promedios muestran el estado actual.</p>";
 
-ALERTAS POR PROGRAMA
-────────────────────
-Ing. de Software         12 alertas (13.5%)
-Administración           9 alertas  (12.2%)
-Psicología               7 alertas  (11.1%)
-Trabajo Social           4 alertas  (8.3%)
-Derecho                  5 alertas  (13.2%)
-
-═══════════════════════════════════════
-Documento generado por ConectaProfe
-  `.trim();
-
-  descargarArchivo(
-    "reporte-conectaprofe-" + new Date().toISOString().slice(0, 10) + ".txt",
-    contenido,
-  );
-  mostrarTostada("📥 Reporte descargado", "exito");
+  document.body.appendChild(zona);
+  document.body.classList.add("imprimiendo-reporte");
+  const limpiar = function () {
+    document.body.classList.remove("imprimiendo-reporte");
+    zona.remove();
+    window.removeEventListener("afterprint", limpiar);
+  };
+  window.addEventListener("afterprint", limpiar);
+  mostrarTostada("Se abrió la impresión: elige «Guardar como PDF»", "exito");
+  setTimeout(function () {
+    window.print();
+    // Algunos navegadores no avisan el final de la impresión: limpia de todos modos.
+    setTimeout(limpiar, 1000);
+  }, 50);
 }
 
-// Genera y descarga el reporte como archivo CSV.
+// Arma un CSV con punto y coma y BOM para que Excel en español lo abra con tildes y columnas.
+function armarCSV(filas) {
+  const celda = (v) => {
+    const texto = v === null || v === undefined ? "" : String(v);
+    return /[";\n]/.test(texto) ? '"' + texto.replace(/"/g, '""') + '"' : texto;
+  };
+  return "\uFEFF" + filas.map((f) => f.map(celda).join(";")).join("\r\n");
+}
+
+// Descarga el reporte real como CSV para Excel (antes eran filas fijas).
 function exportarReporteExcel() {
-  const csv =
-    "Programa,Estudiantes,Alertas,Porcentaje,Tutorias,Recuperacion\n" +
-    "Ing. de Software,89,12,13.5%,56,78%\n" +
-    "Administración de Empresas,74,9,12.2%,41,82%\n" +
-    "Psicología,63,7,11.1%,38,90%\n" +
-    "Trabajo Social,48,4,8.3%,22,95%\n" +
-    "Derecho,38,5,13.2%,29,80%\n";
+  const r = window._reporte;
+  if (!r) {
+    mostrarTostada("Espera a que cargue el reporte", "error");
+    return;
+  }
+  const i = r.indicadores;
+  const filas = [
+    ["Reporte académico ConectaProfe"],
+    ["Período", textoPeriodoReporte(r)],
+    ["Generado", new Date().toLocaleString("es-CO")],
+    [],
+    ["Indicador", "Valor"],
+    ["Tutorías programadas", i.total_tutorias],
+    ["Tutorías completadas", i.tutorias_completadas],
+    ["Tutorías pendientes", i.tutorias_pendientes],
+    ["Tutorías canceladas", i.tutorias_canceladas],
+    ["Alertas activas", i.alertas_activas],
+    ["Tasa de recuperación (%)", i.tasa_recuperacion === null ? "" : i.tasa_recuperacion],
+    ["Estudiantes activos", i.estudiantes_activos],
+    ["Docentes tutores", i.docentes_tutores],
+    ["Promedio general", numeroCO(i.promedio_general, 2)],
+    [],
+    ["Programa", "Estudiantes", "Alertas", "% Alerta", "Tutorías realizadas", "Recuperación (%)"],
+  ].concat(r.por_programa.map((p) => [p.programa, p.estudiantes, p.alertas, numeroCO(p.porcentaje_alerta, 1), p.tutorias_realizadas, p.recuperacion]));
 
-  descargarArchivo(
-    "reporte-conectaprofe-" + new Date().toISOString().slice(0, 10) + ".csv",
-    csv,
-  );
-  mostrarTostada("📊 Reporte Excel descargado", "exito");
+  descargarArchivo("reporte-conectaprofe-" + fechaLocalISO(new Date()) + ".csv", armarCSV(filas), "text/csv;charset=utf-8");
+  mostrarTostada("📊 Reporte descargado (abre en Excel)", "exito");
 }
 
-// Genera y descarga el log de auditoría.
+// Descarga los eventos de auditoría que se están viendo, con los filtros aplicados.
 function exportarLogAuditoria() {
-  const ahora = new Date().toLocaleString("es-CO");
-  const log =
-    "LOG DE AUDITORÍA — ConectaProfe\n" +
-    "Exportado: " + ahora + "\n" +
-    "═══════════════════════════════════════\n\n" +
-    "[10/03/2026 14:32] LOGIN_EXITOSO — lina.montoya@amigo.edu.co — 192.168.1.42\n" +
-    "[10/03/2026 13:50] LOGIN_EXITOSO — carlos.martinez@amigo.edu.co — 192.168.1.87\n" +
-    "[10/03/2026 12:15] LOGIN_FALLIDO — unknown@gmail.com — 201.234.56.78 (correo no institucional)\n" +
-    "[10/03/2026 11:08] CAMBIO_DATOS — admin@amigo.edu.co — Usuario Valentina Osorio desactivada\n" +
-    "[10/03/2026 09:15] NOTIFICACION — admin@amigo.edu.co — Alerta masiva a 47 estudiantes\n" +
-    "[09/03/2026 16:40] TUTORIA_CREADA — sandra.rios@amigo.edu.co — Valentina Osorio\n" +
-    "[09/03/2026 08:00] BLOQUEO_CUENTA — unknown — 5 intentos fallidos desde 45.123.67.90\n" +
-    "[08/03/2026 17:30] LOGOUT — andres.rios@amigo.edu.co — Sesión cerrada manualmente\n";
-
-  descargarArchivo(
-    "log-auditoria-" + new Date().toISOString().slice(0, 10) + ".txt",
-    log,
+  const eventos = typeof eventosAuditoriaFiltrados === "function" ? eventosAuditoriaFiltrados() : [];
+  if (!eventos.length) {
+    mostrarTostada("No hay eventos para exportar con esos filtros", "error");
+    return;
+  }
+  const filas = [["Fecha y hora", "Usuario", "Evento", "Detalle", "IP"]].concat(
+    eventos.map((e) => [formatearFechaHora(e.creada_en), e.correo_usuario || "—", textoEvento(e.evento), e.detalle || "", e.ip || ""])
   );
-  mostrarTostada("📥 Log exportado", "exito");
+  descargarArchivo("log-auditoria-" + fechaLocalISO(new Date()) + ".csv", armarCSV(filas), "text/csv;charset=utf-8");
+  mostrarTostada("📥 Log exportado (" + eventos.length + " eventos)", "exito");
+}
+
+// Sugiere el nombre del siguiente período según la fecha de hoy.
+function siguientePeriodoSugerido() {
+  const hoy = new Date();
+  return hoy.getMonth() < 6 ? hoy.getFullYear() + "-2" : hoy.getFullYear() + 1 + "-1";
 }
 
 // Abre el modal para crear un nuevo período académico.
@@ -550,14 +598,15 @@ function crearNuevoPeriodo() {
     '    <button class="modal-cerrar" type="button" onclick="cerrarModalNuevoPeriodo()">✕</button>' +
     "  </div>" +
     '  <div class="modal-info-cuerpo">' +
-    '    <div class="campo"><label class="campo__etiqueta">Nombre del período</label>' +
-    '      <input type="text" id="npNombre" class="campo__entrada" value="2026-2" placeholder="Ej: 2026-2"/></div>' +
+    '    <div class="campo"><label class="campo__etiqueta" for="npNombre">Nombre del período</label>' +
+    '      <input type="text" id="npNombre" class="campo__entrada" maxlength="40" value="' + siguientePeriodoSugerido() + '" placeholder="Ej: 2027-1"/></div>' +
     '    <div class="grilla-dos">' +
-    '      <div class="campo"><label class="campo__etiqueta">Fecha de inicio</label>' +
+    '      <div class="campo"><label class="campo__etiqueta" for="npInicio">Fecha de inicio</label>' +
     '        <input type="date" id="npInicio" class="campo__entrada"/></div>' +
-    '      <div class="campo"><label class="campo__etiqueta">Fecha de cierre</label>' +
+    '      <div class="campo"><label class="campo__etiqueta" for="npFin">Fecha de cierre</label>' +
     '        <input type="date" id="npFin" class="campo__entrada"/></div>' +
     "    </div>" +
+    '    <p style="font-size:12px;color:#777;margin-top:8px">Se crea como «Próximo». Lo activas cuando cierres el período actual.</p>' +
     "  </div>" +
     '  <div class="modal-info-pie">' +
     '    <button class="btn-secundario" type="button" onclick="cerrarModalNuevoPeriodo()">Cancelar</button>' +
@@ -589,16 +638,16 @@ async function guardarNuevoPeriodo() {
     await llamarAPI("/admin/periodos", "POST", { nombre: nombre, inicio: inicio, fin: fin });
     cerrarModalNuevoPeriodo();
     mostrarTostada("✓ Período " + nombre + " creado correctamente", "exito");
-    // Recarga la página de configuración.
-    irAPagina("admin-configuracion");
+    cargarPeriodos();
   } catch (err) {
+    // El modal sigue abierto para corregir; antes quedaba encima y bloqueaba la página.
     mostrarTostada(err.mensaje || "Error al crear período", "error");
   }
 }
 
 // Descarga un archivo de texto en el navegador.
-function descargarArchivo(nombre, contenido) {
-  const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+function descargarArchivo(nombre, contenido, tipo) {
+  const blob = new Blob([contenido], { type: tipo || "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const enlace = document.createElement("a");
   enlace.href = url;
@@ -705,6 +754,14 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(() => {
     if (sesion.activa && sesionInactivaVencida()) cerrarSesionPorInactividad();
   }, 30000);
+
+  // Trae notificaciones nuevas cada 2 minutos y al volver a la pestaña; antes solo llegaban al iniciar sesión.
+  setInterval(() => {
+    if (sesion.activa && !document.hidden) cargarNotificaciones();
+  }, 120000);
+  document.addEventListener("visibilitychange", () => {
+    if (sesion.activa && !document.hidden) cargarNotificaciones();
+  });
 
   activarValidacionBlur();
 });

@@ -36,9 +36,12 @@ function mostrarFormPerfil() {
       inicializarAutocompleteAsignaturas();
     if (typeof inicializarSelectFacultad === "function")
       inicializarSelectFacultad();
+    rellenarFormDocente();
   }
-  if (rol === "admin")
+  if (rol === "admin") {
     document.getElementById("perfilFormAdmin").classList.remove("oculto");
+    rellenarFormAdmin();
+  }
 
   const etiquetas = {
     estudiante: "Estudiante",
@@ -60,6 +63,63 @@ async function rellenarFormEstudiante() {
     if (d.telefono) document.getElementById("estTelefono").value = d.telefono;
   } catch (err) {
     // Sin perfil previo el formulario queda vacío, como en el primer registro.
+  }
+}
+
+// Llena el formulario del docente con lo guardado: cédula, facultad, programas, materias y horarios.
+async function rellenarFormDocente() {
+  let d;
+  try {
+    d = (await llamarAPI("/perfil", "GET"))?.perfil;
+  } catch (err) {
+    return;
+  }
+  if (!d) return;
+
+  if (d.cedula) document.getElementById("docCedula").value = d.cedula;
+  if (d.telefono) document.getElementById("docTelefono").value = d.telefono;
+
+  if (d.facultad) {
+    const facultad = FACULTADES_FUNLAM.find((f) => f.nombre === d.facultad);
+    if (facultad) {
+      seleccionarFacultad(facultad.area, facultad.nombre);
+    } else {
+      document.getElementById("docFacultadInput").value = d.facultad;
+      document.getElementById("docFacultad").value = d.facultad;
+    }
+    (d.programas || []).forEach((programa) => {
+      const casilla = [...document.querySelectorAll("#docProgramas input")].find((c) => c.value === programa);
+      if (casilla) casilla.checked = true;
+    });
+  }
+
+  if (typeof precargarAsignaturas === "function") precargarAsignaturas(d.asignaturas || []);
+
+  const contenedor = document.getElementById("docHorariosContainer");
+  if (contenedor) {
+    contenedor.innerHTML = "";
+    (d.horarios || []).forEach((h) => {
+      agregarFilaHorario();
+      const fila = contenedor.lastElementChild;
+      fila.querySelector(".horDia").value = h.dia || "";
+      fila.querySelector(".horInicio").value = (h.hora_inicio || "").slice(0, 5);
+      fila.querySelector(".horFin").value = (h.hora_fin || "").slice(0, 5);
+      fila.querySelector(".horLugar").value = h.lugar || "";
+    });
+  }
+}
+
+// Llena el formulario del administrador con sus datos guardados.
+async function rellenarFormAdmin() {
+  try {
+    const d = (await llamarAPI("/perfil", "GET"))?.perfil;
+    if (!d) return;
+    if (d.cedula) document.getElementById("admCedula").value = d.cedula;
+    if (d.cargo) document.getElementById("admCargo").value = d.cargo;
+    if (d.dependencia) document.getElementById("admDependencia").value = d.dependencia;
+    if (d.telefono) document.getElementById("admTelefono").value = d.telefono;
+  } catch (err) {
+    // Sin perfil previo el formulario queda vacío.
   }
 }
 
@@ -147,6 +207,13 @@ async function alEnviarPerfilDocente(e) {
   if (!datos.cedula) {
     ponerError("docCedula", "El número de cédula es requerido");
     hayError = true;
+  } else if (!/^\d{6,11}$/.test(datos.cedula)) {
+    ponerError("docCedula", "Solo números, entre 6 y 11 dígitos");
+    hayError = true;
+  }
+  if (datos.telefono && !/^\d{7,10}$/.test(datos.telefono)) {
+    ponerError("docTelefono", "Entre 7 y 10 números");
+    hayError = true;
   }
   if (!datos.facultad) {
     ponerError("docFacultad", "Selecciona facultad");
@@ -182,6 +249,13 @@ async function alEnviarPerfilAdmin(e) {
   let hayError = false;
   if (!datos.cedula) {
     ponerError("admCedula", "Requerido");
+    hayError = true;
+  } else if (!/^\d{6,11}$/.test(datos.cedula)) {
+    ponerError("admCedula", "Solo números, entre 6 y 11 dígitos");
+    hayError = true;
+  }
+  if (datos.telefono && !/^\d{7,10}$/.test(datos.telefono)) {
+    ponerError("admTelefono", "Entre 7 y 10 números");
     hayError = true;
   }
   if (!datos.cargo) {
@@ -233,17 +307,19 @@ async function cargarMiPerfil() {
     perfilStorage.setFotoPerfil(fotoPerfilServidor);
   }
 
+  // La foto empieza con la clase «oculto» (display:none !important): hay que quitarla, el style.display no basta.
   const imgPerfil = document.getElementById("perfilFotoImg");
   const iniciales = document.getElementById("perfilFotoIniciales");
   if (fotoPerfil && imgPerfil && iniciales) {
     imgPerfil.src = fotoPerfil;
-    imgPerfil.style.display = "block";
-    iniciales.style.display = "none";
+    imgPerfil.classList.remove("oculto");
+    iniciales.classList.add("oculto");
   } else if (iniciales && imgPerfil) {
-    imgPerfil.style.display = "none";
-    iniciales.style.display = "flex";
-    iniciales.textContent = sesion?.inicial || idSesion?.toString().slice(0,2).toUpperCase() || "?";
+    imgPerfil.classList.add("oculto");
+    iniciales.classList.remove("oculto");
+    iniciales.textContent = sesion?.inicial || "?";
   }
+  aplicarFotoAvatar(fotoPerfil);
 
   // Resuelve la foto de portada con la misma lógica
   const fotoPortadaServidor = perfil.fotos?.foto_portada || "";
@@ -256,12 +332,8 @@ async function cargarMiPerfil() {
 
   const imgPortada = document.getElementById("perfilPortadaImg");
   if (imgPortada) {
-    if (fotoPortada) {
-      imgPortada.src = fotoPortada;
-      imgPortada.style.display = "block";
-    } else {
-      imgPortada.style.display = "none";
-    }
+    if (fotoPortada) imgPortada.src = fotoPortada;
+    imgPortada.classList.toggle("oculto", !fotoPortada);
   }
 
   // RF027 — Muestra un aviso si el perfil está incompleto
@@ -308,11 +380,20 @@ function perfilEstaIncompleto(rol, datos) {
   return false;
 }
 
+// Arma una sección del perfil con cabecera y cuerpo con espacio interno; antes el contenido pegaba con el borde.
+function seccionPerfil(titulo, cuerpo) {
+  return `
+    <div class="perfil-seccion">
+      <div class="perfil-seccion__cabecera"><h3 class="perfil-seccion__titulo">${titulo}</h3></div>
+      <div class="perfil-seccion__cuerpo">${cuerpo}</div>
+    </div>`;
+}
+
 function perfilEstudianteHTML(p) {
   const d = p.perfil || {};
   const promedio = parseFloat(d.promedio) || 0;
   const textoPromedio = promedio > 0 ? promedio.toFixed(1) : "Sin registrar";
-  const enAlerta = promedio > 0 && promedio < 3.0;
+  const enAlerta = promedio > 0 && promedio < CONFIG.PROMEDIO_MINIMO;
 
   // RF031 — Calcula la barra de progreso de créditos
   const semestre = parseInt(d.semestre) || 0;
@@ -323,53 +404,43 @@ function perfilEstudianteHTML(p) {
   );
   const colorBarra = porcentajeCreditos < 50 ? "#f39200" : "#22c55e";
 
-  return `
-    <div class="perfil-seccion">
-      <h3 class="perfil-seccion__titulo">Datos Académicos</h3>
+  return (
+    seccionPerfil("Datos Académicos", `
       <div class="perfil-datos-grilla">
         <div class="perfil-dato"><span class="perfil-dato__label">N° Documento</span><span>${escaparHtml(d.documento || "—")}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Programa</span><span>${escaparHtml(d.programa || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Semestre</span><span>${d.semestre || "—"}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Semestre</span><span>${escaparHtml(d.semestre || "—")}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Promedio</span>
           <span class="${enAlerta ? "texto-naranja" : ""}">${textoPromedio}${enAlerta ? " ⚠️" : ""}</span>
           <small style="display:block;color:#94a3b8;font-size:11px">Lo registra la universidad</small>
         </div>
         <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
+      </div>`) +
+    seccionPerfil("📚 Avance del Programa Académico", `
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:#555">
+        <span><strong>${creditosAprobados}</strong> de ${totalCreditos} créditos aprobados</span>
+        <span style="color:${colorBarra};font-weight:700">${porcentajeCreditos}%</span>
       </div>
-    </div>
-
-    <div class="perfil-seccion">
-      <h3 class="perfil-seccion__titulo">📚 Avance del Programa Académico</h3>
-      <div style="padding:8px 4px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:#555">
-          <span><strong>${creditosAprobados}</strong> de ${totalCreditos} créditos aprobados</span>
-          <span style="color:${colorBarra};font-weight:700">${porcentajeCreditos}%</span>
-        </div>
-        <div style="background:#e5e7eb;border-radius:8px;height:14px;overflow:hidden">
-          <div style="width:${porcentajeCreditos}%;height:100%;background:linear-gradient(90deg,${colorBarra},${colorBarra}cc);border-radius:8px;transition:width 0.6s ease"></div>
-        </div>
-        <p style="margin-top:10px;font-size:12px;color:#777">
-          Estimado a partir del semestre actual · 16 créditos por semestre
-        </p>
+      <div style="background:#e5e7eb;border-radius:8px;height:14px;overflow:hidden">
+        <div style="width:${porcentajeCreditos}%;height:100%;background:linear-gradient(90deg,${colorBarra},${colorBarra}cc);border-radius:8px;transition:width 0.6s ease"></div>
       </div>
-    </div>
-  `;
+      <p style="margin-top:10px;font-size:12px;color:#777">
+        Estimado a partir del semestre actual · 16 créditos por semestre
+      </p>`)
+  );
 }
 
 function perfilDocenteHTML(p) {
   const d = p.perfil || {};
-  const asig = (d.asignaturas || []).join(", ") || "—";
-  const progs = (d.programas || []).join(", ") || "—";
-
-  const horarios = d.horarios && d.horarios.length > 0
-    ? d.horarios
-    : [];
+  const asig = escaparHtml((d.asignaturas || []).join(", ") || "—");
+  const progs = escaparHtml((d.programas || []).join(", ") || "—");
+  const horarios = d.horarios || [];
 
   const horariosHTML = horarios.length > 0
     ? horarios.map(h => `
         <div style="background:#f0f9fb;border-left:3px solid #007b99;padding:10px;border-radius:6px">
-          <div style="font-weight:700;color:#007b99;font-size:13px">${h.dia}</div>
-          <div style="font-size:12px;color:#333;margin-top:4px">${h.hora_inicio} – ${h.hora_fin}</div>
+          <div style="font-weight:700;color:#007b99;font-size:13px">${escaparHtml(h.dia)}</div>
+          <div style="font-size:12px;color:#333;margin-top:4px">${escaparHtml(h.hora_inicio)} – ${escaparHtml(h.hora_fin)}</div>
           <div style="font-size:11px;color:#777">${escaparHtml(h.lugar || 'Por definir')}</div>
         </div>`).join("")
     : '<p style="color:#999;font-size:13px;padding:8px 0">Sin horarios registrados aún.</p>';
@@ -386,85 +457,108 @@ function perfilDocenteHTML(p) {
       : tutorias
           .map(
             (t) => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #eee">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee">
           <div>
             <div style="font-weight:600;font-size:13px">${escaparHtml(t.asignatura || "—")}</div>
-            <div style="font-size:11px;color:#777">${t.nombre_estudiante || "Estudiante"} · ${formatearFecha(t.fecha)}</div>
+            <div style="font-size:11px;color:#777">${escaparHtml(t.nombre_estudiante || "Estudiante")} · ${formatearFecha(t.fecha)}</div>
           </div>
-          <span class="insignia ${t.estado === "pendiente" ? "insignia--alerta" : "insignia--activo"}">${t.estado || "pendiente"}</span>
+          <span class="insignia ${t.estado === "pendiente" ? "insignia--alerta" : "insignia--activo"}">${escaparHtml(t.estado || "pendiente")}</span>
         </div>`,
           )
           .join("");
 
-  return `
-    <div class="perfil-seccion">
-      <h3 class="perfil-seccion__titulo">Datos del Docente</h3>
+  return (
+    seccionPerfil("Datos del Docente", `
       <div class="perfil-datos-grilla">
         <div class="perfil-dato"><span class="perfil-dato__label">Cédula</span><span>${escaparHtml(d.cedula || "—")}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Facultad</span><span>${escaparHtml(d.facultad || "—")}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
         <div class="perfil-dato" style="grid-column:1/-1"><span class="perfil-dato__label">Programas que atiende</span><span>${progs}</span></div>
         <div class="perfil-dato" style="grid-column:1/-1"><span class="perfil-dato__label">Materias</span><span>${asig}</span></div>
-      </div>
-    </div>
-
-    <div class="perfil-seccion">
-      <h3 class="perfil-seccion__titulo">🕒 Horarios Disponibles</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;padding:8px 4px">
+      </div>`) +
+    seccionPerfil("🕒 Horarios Disponibles", `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">
         ${horariosHTML}
       </div>
-      <button class="btn-secundario" style="margin-top:12px;font-size:12px" onclick="irAPagina('completar-perfil')">✏️ Editar horarios</button>
-    </div>
-
-    <div class="perfil-seccion">
-      <h3 class="perfil-seccion__titulo">📋 Últimas Tutorías</h3>
-      <div style="padding:4px">${tutoriasHTML}</div>
-    </div>
-  `;
+      <button class="btn-secundario" style="margin-top:12px;font-size:12px" onclick="irAPagina('completar-perfil')">✏️ Editar perfil y horarios</button>`) +
+    seccionPerfil("📋 Últimas Tutorías", tutoriasHTML)
+  );
 }
 
 function perfilAdminHTML(p) {
   const d = p.perfil || {};
+  // RF034 — La actividad reciente sale de la auditoría; antes eran acciones de ejemplo que nunca pasaron.
+  setTimeout(cargarActividadAdmin, 0);
 
-  // RF034 — Define el registro de actividad reciente (datos de ejemplo)
-  const actividades = [
-    { icono: "🔑", accion: "Inicio de sesión", tiempo: "Hace 5 min", color: "#22c55e" },
-    { icono: "✏️", accion: "Editó configuración: umbral de alerta", tiempo: "Hace 1h", color: "#007b99" },
-    { icono: "📤", accion: "Envió notificación masiva (47 destinatarios)", tiempo: "Hace 3h", color: "#f39200" },
-    { icono: "🔗", accion: "Creó asignación: Carlos M. ↔ Lina M.", tiempo: "Hace 5h", color: "#007b99" },
-    { icono: "🔒", accion: "Desactivó cuenta: Valentina O.", tiempo: "Ayer", color: "#ef4444" },
-    { icono: "📅", accion: "Cerró período académico 2025-2", tiempo: "Hace 2 días", color: "#777" },
-  ];
-
-  return `
-    <div class="perfil-seccion">
-      <h3 class="perfil-seccion__titulo">Datos del Administrador</h3>
+  return (
+    seccionPerfil("Datos del Administrador", `
       <div class="perfil-datos-grilla">
         <div class="perfil-dato"><span class="perfil-dato__label">Cédula</span><span>${escaparHtml(d.cedula || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Cargo</span><span>${d.cargo || "—"}</span></div>
+        <div class="perfil-dato"><span class="perfil-dato__label">Cargo</span><span>${escaparHtml(d.cargo || "—")}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Dependencia</span><span>${escaparHtml(d.dependencia || "—")}</span></div>
         <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
-      </div>
-    </div>
+      </div>`) +
+    seccionPerfil("📜 Actividad Reciente", '<div id="perfilActividadAdmin"><p class="sin-datos">Cargando…</p></div>')
+  );
+}
 
-    <div class="perfil-seccion">
-      <h3 class="perfil-seccion__titulo">📜 Actividad Reciente</h3>
-      <div style="padding:4px">
-        ${actividades
-          .map(
-            (a) => `
-          <div style="display:flex;align-items:center;gap:12px;padding:10px;border-bottom:1px solid #eee">
-            <div style="width:36px;height:36px;border-radius:50%;background:${a.color}20;color:${a.color};display:flex;align-items:center;justify-content:center;font-size:16px">${a.icono}</div>
-            <div style="flex:1">
-              <div style="font-weight:600;font-size:13px;color:#333">${a.accion}</div>
-              <div style="font-size:11px;color:#777">${a.tiempo}</div>
-            </div>
-          </div>`,
-          )
-          .join("")}
-      </div>
-    </div>
-  `;
+// Muestra las últimas acciones del administrador registradas en la auditoría.
+async function cargarActividadAdmin() {
+  const contenedor = document.getElementById("perfilActividadAdmin");
+  if (!contenedor) return;
+  try {
+    const eventos = await llamarAPI("/admin/auditoria?mios=1", "GET");
+    if (!eventos.length) {
+      contenedor.innerHTML = '<p class="sin-datos">Aún no hay acciones registradas.</p>';
+      return;
+    }
+    contenedor.innerHTML = eventos.slice(0, 6).map((e) => {
+      const evento = typeof EVENTOS_AUDITORIA !== "undefined" ? EVENTOS_AUDITORIA[e.evento] : null;
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #eee">
+          <div style="width:36px;height:36px;border-radius:50%;background:#007b9920;display:flex;align-items:center;justify-content:center;font-size:16px">${evento ? evento.icono : "📝"}</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px;color:#333">${escaparHtml(evento ? evento.texto : e.evento)}${e.detalle ? " — " + escaparHtml(e.detalle) : ""}</div>
+            <div style="font-size:11px;color:#777">${formatearTiempo(e.creada_en)}</div>
+          </div>
+        </div>`;
+    }).join("");
+  } catch (err) {
+    contenedor.innerHTML = '<p class="sin-datos">No se pudo cargar la actividad.</p>';
+  }
+}
+
+// Pone la foto en los avatares del encabezado y del menú, o las iniciales si no hay foto.
+function aplicarFotoAvatar(foto) {
+  const valida = typeof foto === "string" && /^data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+$/.test(foto);
+  ["chipAvatar", "barraAvatar"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (valida) {
+      el.style.backgroundImage = `url("${foto}")`;
+      el.style.backgroundSize = "cover";
+      el.style.backgroundPosition = "center";
+      el.textContent = "";
+    } else {
+      el.style.backgroundImage = "";
+      el.textContent = sesion?.inicial || "?";
+    }
+  });
+}
+
+// Al entrar, trae la foto guardada para que el encabezado no quede con las iniciales.
+async function cargarFotoAvatar() {
+  let foto = perfilStorage.getFotoPerfil();
+  if (!foto) {
+    try {
+      const perfil = await llamarAPI("/perfil", "GET");
+      foto = perfil?.fotos?.foto_perfil || "";
+      if (foto) perfilStorage.setFotoPerfil(foto);
+    } catch (err) {
+      foto = "";
+    }
+  }
+  aplicarFotoAvatar(foto);
 }
 
 // Comprime una imagen hasta un máximo de maxKB kilobytes
@@ -526,11 +620,9 @@ function subirFotoPerfil(input) {
   comprimirImagen(archivo, 400, 300).then(async function(base64) {
     var img = document.getElementById("perfilFotoImg");
     var iniciales = document.getElementById("perfilFotoIniciales");
-    if (img) { img.src = base64; img.style.display = "block"; }
-    if (iniciales) iniciales.style.display = "none";
-
-    var chipAv = document.getElementById("chipAvatar");
-    if (chipAv) { chipAv.style.backgroundImage = "url(" + base64 + ")"; chipAv.textContent = ""; }
+    if (img) { img.src = base64; img.classList.remove("oculto"); }
+    if (iniciales) iniciales.classList.add("oculto");
+    aplicarFotoAvatar(base64);
 
     try { perfilStorage.setFotoPerfil(base64); } catch(e) { console.warn("localStorage lleno"); }
 
@@ -554,7 +646,7 @@ function subirPortada(input) {
 
   comprimirImagen(archivo, 1200, 400).then(async function(base64) {
     var img = document.getElementById("perfilPortadaImg");
-    if (img) { img.src = base64; img.style.display = "block"; }
+    if (img) { img.src = base64; img.classList.remove("oculto"); }
 
     try { perfilStorage.setFotoPortada(base64); } catch(e) { console.warn("localStorage lleno"); }
 

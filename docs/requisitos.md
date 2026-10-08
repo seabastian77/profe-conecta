@@ -40,8 +40,8 @@ Documento de especificación de requisitos del sistema **ConectaProfe**, platafo
 | RF030 | Desplazar al inicio al navegar | Al cambiar de sección, el sistema debe desplazar la vista al inicio con animación suave. | Media | Sistema |
 | RF031 | Mostrar barra de progreso de créditos | El perfil del estudiante debe incluir una barra visual del porcentaje de créditos aprobados respecto al total del programa. | Media | Sistema |
 | RF032 | Login con proveedor externo | Los botones de Google y Microsoft deben informar al usuario que esta función requiere backend. | Baja | Sistema |
-| RF033 | Mostrar horario de atención del docente | El perfil del docente debe incluir bloques de disponibilidad horaria; actualmente con datos de ejemplo. | Baja | Sistema |
-| RF034 | Mostrar log de actividad reciente | El perfil del administrador debe incluir un registro de acciones recientes; actualmente con datos de ejemplo. | Baja | Sistema |
+| RF033 | Mostrar horario de atención del docente | El perfil del docente debe incluir los bloques de disponibilidad horaria que el docente registra al editar su perfil. | Baja | Sistema |
+| RF034 | Mostrar log de actividad reciente | El perfil del administrador debe incluir sus acciones recientes, tomadas del registro de auditoría. | Baja | Sistema |
 
 ### 1.2 Estudiante
 
@@ -73,13 +73,13 @@ Documento de especificación de requisitos del sistema **ConectaProfe**, platafo
 | RF048 | Listar usuarios registrados | El módulo de usuarios debe mostrar en tabla todos los usuarios del sistema con nombre, correo, rol y estado. | Alta | Administrador |
 | RF049 | Filtrar usuarios en tiempo real | Debe permitirse filtrar la tabla de usuarios por texto libre, rol y estado, actualizando un contador de resultados visible. | Alta | Administrador |
 | RF050 | Activar y desactivar cuentas de usuario | El administrador debe poder alternar el estado de una cuenta entre activo e inactivo con cambio visual inmediato. | Media | Administrador |
-| RF051 | Enviar notificación al grupo de usuarios | El administrador debe poder enviar notificaciones especificando tipo, destinatario, asunto y mensaje. | Media | Administrador |
+| RF051 | Enviar notificación al grupo de usuarios | El administrador debe poder enviar notificaciones especificando tipo, destinatario (un grupo, los estudiantes de un programa o un usuario específico), asunto y mensaje; solo las reciben los destinatarios elegidos. | Media | Administrador |
 | RF052 | Registrar historial de notificaciones enviadas | Cada notificación enviada debe quedar registrada en tabla con fecha, tipo, destinatario, asunto y estado. | Media | Administrador |
 | RF053 | Crear asignación estudiante-tutor | El administrador debe poder asignar un estudiante a un tutor seleccionando ambos de listas desplegables. | Media | Administrador |
 | RF054 | Eliminar asignación estudiante-tutor | El administrador debe poder eliminar una asignación de la tabla con animación de desvanecimiento. | Media | Administrador |
-| RF055 | Guardar parámetro de configuración | El administrador debe poder modificar parámetros del sistema con confirmación visual al guardar. | Media | Administrador |
+| RF055 | Guardar parámetro de configuración | El administrador debe poder modificar el umbral de alerta, el máximo de estudiantes por tutor, las horas mínimas para cancelar y los minutos de inactividad, con confirmación visual al guardar; los valores se aplican de inmediato en todo el sistema. | Media | Administrador |
 | RF056 | Confirmar acciones críticas del sistema | Antes de ejecutar acciones irreversibles, el sistema debe solicitar confirmación explícita del administrador. | Media | Administrador |
-| RF057 | Editar datos de un usuario | El sistema debe permitir al administrador editar los datos de un usuario; actualmente muestra una notificación informativa. | Baja | Administrador |
+| RF057 | Editar datos de un usuario | El sistema debe permitir al administrador editar nombres, apellidos, correo, rol y contraseña de un usuario, y el promedio de los estudiantes. | Baja | Administrador |
 
 ---
 
@@ -88,7 +88,7 @@ Documento de especificación de requisitos del sistema **ConectaProfe**, platafo
 | N° | Nombre | Descripción | Prioridad | Rol |
 |---|---|---|---|---|
 | RNF01 | Garantizar rendimiento | El sistema debe cargar completamente en menos de 3 segundos en una conexión de 10 Mbps. | Alta | Sistema |
-| RNF02 | Expirar sesión | La sesión debe expirar automáticamente tras 15 minutos de inactividad del usuario. | Alta | Sistema |
+| RNF02 | Expirar sesión | La sesión debe expirar automáticamente tras 15 minutos de inactividad del usuario (valor que el administrador puede ajustar en Configuración). | Alta | Sistema |
 | RNF03 | Ofrecer diseño responsivo | El sistema debe adaptarse a dispositivos con pantallas desde 360 px de ancho sin pérdida funcional. | Alta | Todos |
 | RNF04 | Garantizar compatibilidad | El sistema debe funcionar en las dos versiones más recientes de Chrome, Firefox y Edge. | Alta | Todos |
 | RNF05 | Proteger contraseñas | Las contraseñas no deben almacenarse ni mostrarse en texto plano en ningún momento. | Alta | Sistema |
@@ -110,8 +110,10 @@ Documento de especificación de requisitos del sistema **ConectaProfe**, platafo
 | RRN04 | Confirmar contraseña en el registro | El usuario debe ingresar la contraseña dos veces durante el registro; ambas deben coincidir para completar la creación de la cuenta. | Alta | Visitante |
 | RRN05 | Proteger rutas privadas | Ningún usuario sin sesión activa puede acceder a páginas protegidas; el sistema redirige automáticamente al inicio de sesión. | Alta | Sistema |
 | RRN06 | Programar tutorías con fecha futura | No es posible programar una tutoría para la fecha del mismo día; la fecha mínima de programación es el día siguiente a la solicitud. | Alta | Estudiante, Docente |
-| RRN07 | Marcar alerta académica | Un estudiante con promedio acumulado inferior a 3.0 es clasificado automáticamente como caso en alerta y aparece destacado en el panel del docente y del administrador. | Alta | Sistema |
+| RRN07 | Marcar alerta académica | Un estudiante con promedio acumulado inferior al umbral configurado (3.0 por defecto) es clasificado automáticamente como caso en alerta y aparece destacado en el panel del docente y del administrador. | Alta | Sistema |
 | RRN08 | Mantener unicidad de correo | No pueden existir dos cuentas registradas con el mismo correo electrónico en el sistema. | Alta | Sistema |
+| RRN09 | Limitar estudiantes por tutor | Un docente no puede tener más estudiantes asignados que el máximo configurado por el administrador (15 por defecto). | Media | Administrador |
+| RRN10 | Programar en materias del tutor | Una tutoría o asesoría solo se puede programar en una asignatura que el tutor tenga registrada en su perfil. | Media | Estudiante, Docente, Administrador |
 
 ---
 

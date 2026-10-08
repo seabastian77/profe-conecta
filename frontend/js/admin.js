@@ -15,6 +15,7 @@ async function buscarUsuarioAdmin(campo, rol) {
   if (q.length === 0) {
     resultsEl.innerHTML = '';
     if (hiddenEl) hiddenEl.value = '';
+    if (campo === 'claseDocente') cargarMateriasDeDocente('claseAsignatura', '', '— Primero elige el docente —');
     return;
   }
   if (q.length < 2) { resultsEl.innerHTML = ''; return; }
@@ -45,6 +46,8 @@ function seleccionarUsuario(campo, id, nombreMostrado) {
   if (input) input.value = nombreMostrado;
   if (hidden) hidden.value = id;
   if (results) results.innerHTML = '';
+  // Al elegir el docente, la lista de materias pasa a ser la suya.
+  if (campo === 'claseDocente') cargarMateriasDeDocente('claseAsignatura', id, '— Primero elige el docente —');
 }
 
 // Valida y envía la programación de una asesoría.
@@ -65,9 +68,9 @@ async function confirmarProgramarClase() {
   if (!fecha)         { mostrarTostada('⚠️ Selecciona la fecha', 'error'); document.getElementById('claseFecha')?.focus(); return; }
   if (!hora)          { mostrarTostada('⚠️ Selecciona la hora', 'error'); document.getElementById('claseHora')?.focus(); return; }
 
-  // Verifica que la fecha no sea pasada.
-  if (new Date(fecha + 'T' + hora) < new Date()) {
-    mostrarTostada('⚠️ La fecha y hora no pueden ser en el pasado', 'error');
+  // Misma regla del servidor (RN06): la asesoría va desde mañana.
+  if (fecha <= fechaLocalISO(new Date())) {
+    mostrarTostada('⚠️ La fecha debe ser a partir de mañana (RN06)', 'error');
     return;
   }
 
@@ -101,8 +104,7 @@ function limpiarFormularioAsesoria() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  const asig = document.getElementById('claseAsignatura');
-  if (asig) asig.selectedIndex = 0;
+  cargarMateriasDeDocente('claseAsignatura', '', '— Primero elige el docente —');
   const fecha = document.getElementById('claseFecha');
   if (fecha) fecha.value = '';
   const hora = document.getElementById('claseHora');
@@ -124,11 +126,11 @@ async function cargarClasesProgramadas() {
     tbody.innerHTML = clases.map(c => {
       const f = c.fecha ? new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-CO', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
       return `<tr>
-        <td><strong>${c.asignatura || '—'}</strong></td>
+        <td><strong>${escaparHtml(c.asignatura || '—')}</strong></td>
         <td>${escaparHtml(c.nombre_docente || '—')}</td>
         <td>${escaparHtml(c.nombre_estudiante || '—')}</td>
         <td>${f}</td>
-        <td>${(c.hora || '—').slice(0,5)}</td>
+        <td>${escaparHtml((c.hora || '—').slice(0,5))}</td>
       </tr>`;
     }).join('');
   } catch(err) {
@@ -284,14 +286,13 @@ async function guardarEdicionUsuario(id) {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
 
   try {
-    var resp = await llamarAPI("/admin/usuarios/" + id, "PUT", datos);
+    await llamarAPI("/admin/usuarios/" + id, "PUT", datos);
     document.getElementById("modalEditarUsuario").remove();
     mostrarTostada("✅ Guardado correctamente", "exito");
-    // Recarga la página para mostrar datos frescos.
-    setTimeout(function() { window.location.reload(); }, 1200);
+    // Recarga solo la tabla: recargar la página sacaba al admin de Gestión de Usuarios.
+    cargarTablaUsuarios();
   } catch(err) {
-    var msg = err.error || err.mensaje || err.message || JSON.stringify(err);
-    alert("Error al guardar: " + msg);
+    mostrarTostada("Error al guardar: " + (err.mensaje || "intenta de nuevo"), "error");
     if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar cambios'; }
   }
 }
@@ -334,7 +335,32 @@ async function guardarNuevoUsuario() {
   }
 }
 
-// Envía una notificación a los destinatarios seleccionados.
+// Muestra el campo de programa o de usuario según el destinatario elegido.
+function cambiarDestinatarioNotif() {
+  var destino = (document.getElementById("notifDestinatario") || {}).value;
+  var campoPrograma = document.getElementById("notifProgramaCampo");
+  var campoUsuario = document.getElementById("notifUsuarioCampo");
+  if (campoPrograma) campoPrograma.classList.toggle("oculto", destino !== "programa");
+  if (campoUsuario) campoUsuario.classList.toggle("oculto", destino !== "usuario");
+}
+
+// Llena la lista de programas con los que tienen estudiantes (antes eran dos programas fijos).
+async function cargarProgramasNotificacion() {
+  var select = document.getElementById("notifPrograma");
+  if (!select) return;
+  try {
+    var programas = await llamarAPI("/admin/programas", "GET");
+    select.innerHTML = programas.length
+      ? '<option value="">— Selecciona el programa —</option>' + programas.map(function(p) {
+          return '<option value="' + escaparHtml(p.programa) + '">' + escaparHtml(p.programa) + ' (' + p.estudiantes + ')</option>';
+        }).join("")
+      : '<option value="">No hay estudiantes con programa registrado</option>';
+  } catch (err) {
+    select.innerHTML = '<option value="">No se pudieron cargar los programas</option>';
+  }
+}
+
+// Envía la notificación solo al grupo, programa o usuario elegido.
 async function enviarNotificacion() {
   var destEl = document.getElementById("notifDestinatario");
   var tipoEl = document.getElementById("notifTipo");
@@ -342,40 +368,51 @@ async function enviarNotificacion() {
   var mensajeEl = document.getElementById("notifMensaje");
   if (!destEl || !tipoEl || !asuntoEl || !mensajeEl) return;
 
-  var asunto = asuntoEl.value.trim();
-  var mensaje = mensajeEl.value.trim();
-  if (!asunto) { mostrarTostada("Escribe un asunto", "error"); asuntoEl.focus(); return; }
-  if (!mensaje) { mostrarTostada("Escribe el mensaje", "error"); mensajeEl.focus(); return; }
+  var datos = { destinatario: destEl.value, tipo: tipoEl.value, asunto: asuntoEl.value.trim(), mensaje: mensajeEl.value.trim() };
+  if (datos.destinatario === "programa") {
+    datos.programa = (document.getElementById("notifPrograma") || {}).value || "";
+    if (!datos.programa) { mostrarTostada("Elige el programa", "error"); return; }
+  }
+  if (datos.destinatario === "usuario") {
+    datos.usuario_id = parseInt((document.getElementById("notifUsuarioId") || {}).value || "0");
+    if (!datos.usuario_id) { mostrarTostada("Busca y elige el usuario de la lista", "error"); document.getElementById("notifUsuario")?.focus(); return; }
+  }
+  if (!datos.asunto) { mostrarTostada("Escribe un asunto", "error"); asuntoEl.focus(); return; }
+  if (!datos.mensaje) { mostrarTostada("Escribe el mensaje", "error"); mensajeEl.focus(); return; }
 
   try {
-    var resp = await llamarAPI("/admin/notificaciones", "POST", {
-      destinatario: destEl.value,
-      tipo: tipoEl.value,
-      asunto: asunto,
-      mensaje: mensaje
-    });
+    var resp = await llamarAPI("/admin/notificaciones", "POST", datos);
     asuntoEl.value = "";
     mensajeEl.value = "";
     mostrarTostada("📤 " + resp.mensaje, "exito");
     cargarHistorialNotificaciones();
+    cargarNotificaciones();
   } catch (err) {
     mostrarTostada(err.mensaje || "Error al enviar", "error");
   }
 }
 
+// Formatea una fecha guardada como texto a dd/mm/aaaa hh:mm.
+function formatearFechaHora(texto) {
+  var f = new Date(texto);
+  if (!texto || isNaN(f)) return "—";
+  return String(f.getDate()).padStart(2, "0") + "/" + String(f.getMonth() + 1).padStart(2, "0") + "/" + f.getFullYear() +
+    " " + String(f.getHours()).padStart(2, "0") + ":" + String(f.getMinutes()).padStart(2, "0");
+}
+
 // Carga el historial de notificaciones desde el API.
 async function cargarHistorialNotificaciones() {
+  var tbody = document.getElementById("cuerpoHistorialNotificaciones");
+  if (!tbody) return;
   try {
     var historial = await llamarAPI("/admin/notificaciones/historial", "GET");
-    var tbody = document.querySelector("#pagina-admin-notificaciones .tabla-datos tbody");
-    if (!tbody) return;
     if (historial.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="sin-datos">Sin notificaciones enviadas</td></tr>'; return; }
     tbody.innerHTML = historial.map(function(n) {
-      var f = new Date(n.creada_en);
-      var fecha = String(f.getDate()).padStart(2,"0") + "/" + String(f.getMonth()+1).padStart(2,"0") + "/" + f.getFullYear() + " " + String(f.getHours()).padStart(2,"0") + ":" + String(f.getMinutes()).padStart(2,"0");
-      return '<tr><td>' + fecha + '</td><td>' + n.tipo + '</td><td>' + n.destinatario + ' (' + n.cantidad + ')</td><td>' + n.asunto + '</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>';
+      return '<tr><td>' + formatearFechaHora(n.creada_en) + '</td><td>' + escaparHtml(n.tipo) + '</td><td>' + escaparHtml(n.destinatario) + ' (' + n.cantidad + ')</td><td>' + escaparHtml(n.asunto) + '</td><td><span class="insignia insignia--activo">✓ Enviado</span></td></tr>';
     }).join("");
-  } catch (err) { console.warn("Error cargando historial:", err); }
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" class="sin-datos">No se pudo cargar el historial</td></tr>';
+  }
 }
 
 // Crea una asignación entre estudiante y tutor.
@@ -426,12 +463,15 @@ async function cargarTablaUsuarios() {
     var usuarios = await llamarAPI("/admin/usuarios", "GET");
     var tbody = document.getElementById("cuerpoTablaUsuarios");
     if (!tbody) return;
+    if (usuarios.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="sin-datos">No hay usuarios registrados</td></tr>';
+    }
     var rolLabels = { estudiante: "Estudiante", docente: "Docente", admin: "Admin" };
-    tbody.innerHTML = usuarios.map(function(u) {
+    if (usuarios.length) tbody.innerHTML = usuarios.map(function(u) {
       var programa = escaparHtml(u.programa || u.facultad || u.dependencia || "—");
       var estadoHTML;
       var activo = !!(u.activo && u.activo != 0);
-      var enAlerta = u.rol === 'estudiante' && parseFloat(u.promedio) > 0 && parseFloat(u.promedio) < 3.0;
+      var enAlerta = u.rol === 'estudiante' && parseFloat(u.promedio) > 0 && parseFloat(u.promedio) < CONFIG.PROMEDIO_MINIMO;
       if (!activo) estadoHTML = '<span class="insignia insignia--inactivo">○ Inactivo</span>';
       else if (enAlerta) estadoHTML = '<span class="insignia insignia--alerta">⚠ Alerta</span>';
       else estadoHTML = '<span class="insignia insignia--activo">● Activo</span>';
@@ -460,6 +500,7 @@ async function cargarTablaUsuarios() {
     }).join("");
     var conteo = document.getElementById("conteoUsuarios");
     if (conteo) conteo.textContent = "Mostrando " + usuarios.length + " usuario(s)";
+    filtrarTablaUsuarios();
   } catch (err) {
     console.warn("Error cargando usuarios:", err);
     mostrarTostada("⚠️ Error al recargar la tabla: " + (err.error || err.message || ""), "error");
@@ -470,12 +511,16 @@ async function cargarTablaUsuarios() {
 async function cargarUsuariosRecientes() {
   try {
     var usuarios = await llamarAPI("/admin/usuarios", "GET");
-    var tbody = document.querySelector("#pagina-panel-admin .tabla-datos tbody");
-    if (!tbody || usuarios.length === 0) return;
+    var tbody = document.getElementById("cuerpoUsuariosRecientes");
+    if (!tbody) return;
+    if (usuarios.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="sin-datos">Aún no hay usuarios</td></tr>';
+      return;
+    }
     var rolLabels = { estudiante: "Estudiante", docente: "Docente", admin: "Admin" };
     tbody.innerHTML = usuarios.slice(0, 5).map(function(u) {
       var programa = escaparHtml(u.programa || u.facultad || u.dependencia || "—");
-      var enAlerta = u.rol === 'estudiante' && parseFloat(u.promedio) > 0 && parseFloat(u.promedio) < 3.0;
+      var enAlerta = u.rol === 'estudiante' && parseFloat(u.promedio) > 0 && parseFloat(u.promedio) < CONFIG.PROMEDIO_MINIMO;
       var estadoHTML = !u.activo ? '<span class="insignia insignia--inactivo">○ Inactivo</span>' : enAlerta ? '<span class="insignia insignia--alerta">⚠ Alerta</span>' : '<span class="insignia insignia--activo">● Activo</span>';
       return '<tr><td><strong>' + escaparHtml(u.nombres) + ' ' + escaparHtml(u.apellidos) + '</strong></td><td>' + (rolLabels[u.rol] || escaparHtml(u.rol)) + '</td><td>' + programa + '</td><td>' + estadoHTML + '</td><td>' + (u.creado_en ? new Date(u.creado_en).toLocaleDateString("es-CO") : "—") + '</td></tr>';
     }).join("");
@@ -494,7 +539,7 @@ async function cargarSelectsAsignacion() {
     }
     if (selDoc) {
       var docs = usuarios.filter(function(u) { return u.rol === "docente" && u.activo; });
-      selDoc.innerHTML = '<option value="">— Selecciona tutor —</option>' + docs.map(function(d) { return '<option value="' + d.id + '">' + d.nombres + ' ' + d.apellidos + '</option>'; }).join("");
+      selDoc.innerHTML = '<option value="">— Selecciona tutor —</option>' + docs.map(function(d) { return '<option value="' + d.id + '">' + escaparHtml(d.nombres) + ' ' + escaparHtml(d.apellidos) + '</option>'; }).join("");
     }
   } catch (err) { console.warn("Error:", err); }
 }
@@ -517,94 +562,211 @@ async function cargarTablaAsignaciones() {
   } catch (err) { console.warn("Error cargando asignaciones:", err); }
 }
 
-// Filtra las filas de auditoría por tipo y fecha.
-function filtrarAuditoria() {
-  var tipoFiltro = (document.getElementById("filtroAuditTipo") || {}).value || "";
-  var fechaFiltro = (document.getElementById("filtroAuditFecha") || {}).value || "";
-  var filas = document.querySelectorAll("#pagina-admin-auditoria .tabla-datos tbody tr");
-  var visibles = 0;
-  filas.forEach(function(fila) {
-    var contenido = fila.textContent.toLowerCase();
-    var mostrar = true;
-    if (tipoFiltro && !contenido.includes(tipoFiltro.toLowerCase())) mostrar = false;
-    if (fechaFiltro) {
-      var partes = fechaFiltro.split("-");
-      if (!contenido.includes(partes[2] + "/" + partes[1] + "/" + partes[0])) mostrar = false;
-    }
-    fila.style.display = mostrar ? "" : "none";
-    if (mostrar) visibles++;
+// Nombre, ícono y grupo de filtro de cada evento que registra el servidor.
+const EVENTOS_AUDITORIA = {
+  LOGIN: { icono: "🔑", texto: "Inicio de sesión", grupo: "inicio" },
+  LOGOUT: { icono: "🚪", texto: "Cierre de sesión", grupo: "cierre" },
+  LOGIN_FALLIDO: { icono: "❌", texto: "Intento fallido", grupo: "fallido" },
+  LOGIN_BLOQUEADO: { icono: "⛔", texto: "Cuenta bloqueada por intentos", grupo: "fallido" },
+  REGISTRO: { icono: "🆕", texto: "Registro de cuenta", grupo: "registro" },
+  CREAR_USUARIO: { icono: "👤", texto: "Usuario creado", grupo: "usuarios" },
+  EDITAR_USUARIO: { icono: "✏️", texto: "Usuario editado", grupo: "usuarios" },
+  ELIMINAR_USUARIO: { icono: "🗑️", texto: "Usuario eliminado", grupo: "usuarios" },
+  ACTIVAR_USUARIO: { icono: "🟢", texto: "Usuario activado", grupo: "usuarios" },
+  DESACTIVAR_USUARIO: { icono: "🔴", texto: "Usuario desactivado", grupo: "usuarios" },
+  ASIGNACION_CREADA: { icono: "🔗", texto: "Asignación creada", grupo: "tutorias" },
+  ASIGNACION_ELIMINADA: { icono: "🗑️", texto: "Asignación eliminada", grupo: "tutorias" },
+  ASESORIA_PROGRAMADA: { icono: "📅", texto: "Asesoría programada", grupo: "tutorias" },
+  NOTIFICACION: { icono: "📤", texto: "Notificación enviada", grupo: "notificacion" },
+  CONFIG: { icono: "⚙️", texto: "Parámetro cambiado", grupo: "sistema" },
+  CONFIG_RESET: { icono: "🔄", texto: "Configuración restaurada", grupo: "sistema" },
+  PERIODO_CREADO: { icono: "📅", texto: "Período creado", grupo: "sistema" },
+  PERIODO_ACTIVADO: { icono: "▶️", texto: "Período activado", grupo: "sistema" },
+  PERIODO_CERRADO: { icono: "🔒", texto: "Período cerrado", grupo: "sistema" },
+  AUDITORIA_ARCHIVADA: { icono: "📦", texto: "Auditoría archivada", grupo: "sistema" },
+};
+
+// Texto legible de un evento de auditoría.
+function textoEvento(evento) {
+  var conocido = EVENTOS_AUDITORIA[evento];
+  if (conocido) return conocido.texto;
+  return String(evento || "").replace(/_/g, " ").toLowerCase().replace(/^./, function(c) { return c.toUpperCase(); });
+}
+
+let _eventosAuditoria = [];
+
+// Devuelve los eventos cargados que cumplen el tipo y la fecha elegidos.
+function eventosAuditoriaFiltrados() {
+  var grupo = (document.getElementById("filtroAuditTipo") || {}).value || "";
+  var fecha = (document.getElementById("filtroAuditFecha") || {}).value || "";
+  return _eventosAuditoria.filter(function(e) {
+    var info = EVENTOS_AUDITORIA[e.evento];
+    if (grupo && (!info || info.grupo !== grupo)) return false;
+    if (fecha && String(e.creada_en || "").slice(0, 10) !== fecha) return false;
+    return true;
   });
 }
 
-// Carga los eventos de auditoría desde el API.
-async function cargarAuditoria() {
-  try {
-    var eventos = await llamarAPI("/admin/auditoria", "GET");
-    var tbody = document.querySelector("#pagina-admin-auditoria .tabla-datos tbody");
-    if (!tbody) return;
-    if (eventos.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="sin-datos">Sin eventos registrados aún</td></tr>';
-      return;
-    }
-    // Mapea los eventos a iconos.
-    var iconos = { LOGIN: "🔑", LOGIN_BLOQUEADO: "⛔", REGISTRO: "🆕", CREAR_USUARIO: "👤", EDITAR_USUARIO: "✏️", ELIMINAR_USUARIO: "🗑️", ACTIVAR_USUARIO: "🟢", DESACTIVAR_USUARIO: "🔴", NOTIFICACION: "📤", ASIGNACION_CREADA: "🔗", ASIGNACION_ELIMINADA: "🗑️", ASESORIA_PROGRAMADA: "📅", CONFIG: "⚙️", CONFIG_RESET: "🔄", PERIODO_CREADO: "📅", PERIODO_CERRADO: "🔒" };
-    tbody.innerHTML = eventos.map(function(e) {
-      var f = new Date(e.creada_en);
-      var fecha = isNaN(f) ? "—" : String(f.getDate()).padStart(2,"0") + "/" + String(f.getMonth()+1).padStart(2,"0") + "/" + f.getFullYear() + " " + String(f.getHours()).padStart(2,"0") + ":" + String(f.getMinutes()).padStart(2,"0");
-      var icono = iconos[e.evento] || "📝";
-      var eventoLimpio = e.evento.replace(/_/g, " ").toLowerCase().replace(/^./, function(s) { return s.toUpperCase(); });
-      return '<tr><td>' + fecha + '</td><td>' + escaparHtml(e.correo_usuario || "—") + '</td><td>' + icono + ' ' + escaparHtml(eventoLimpio) + '</td><td>' + escaparHtml(e.detalle || "—") + '</td><td>' + escaparHtml(e.ip || "—") + '</td><td><span class="insignia insignia--activo">✓ Registrado</span></td></tr>';
-    }).join("");
-  } catch (err) { console.warn("Error cargando auditoría:", err); }
+// Pinta la tabla de auditoría con los filtros; antes las opciones no coincidían con ningún evento.
+function filtrarAuditoria() {
+  var tbody = document.getElementById("cuerpoAuditoria");
+  if (!tbody) return;
+  var eventos = eventosAuditoriaFiltrados();
+  if (eventos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="sin-datos">' + (_eventosAuditoria.length ? "Ningún evento coincide con el filtro" : "Sin eventos registrados aún") + '</td></tr>';
+    return;
+  }
+  tbody.innerHTML = eventos.map(function(e) {
+    var info = EVENTOS_AUDITORIA[e.evento];
+    var bloqueado = e.evento === "LOGIN_FALLIDO" || e.evento === "LOGIN_BLOQUEADO";
+    var resultado = bloqueado
+      ? '<span class="insignia insignia--alerta">✗ Rechazado</span>'
+      : Number(e.archivada) === 1 ? '<span class="insignia insignia--inactivo">📦 Archivado</span>' : '<span class="insignia insignia--activo">✓ Registrado</span>';
+    return '<tr><td>' + formatearFechaHora(e.creada_en) + '</td><td>' + escaparHtml(e.correo_usuario || "—") + '</td><td>' + (info ? info.icono : "📝") + ' ' + escaparHtml(textoEvento(e.evento)) + '</td><td>' + escaparHtml(e.detalle || "—") + '</td><td>' + escaparHtml(e.ip || "—") + '</td><td>' + resultado + '</td></tr>';
+  }).join("");
 }
 
-// Carga la configuración desde el API.
+// Carga los eventos de auditoría (con los archivados si se marcó la casilla).
+async function cargarAuditoria() {
+  var tbody = document.getElementById("cuerpoAuditoria");
+  try {
+    var verArchivados = (document.getElementById("filtroAuditArchivados") || {}).checked;
+    _eventosAuditoria = await llamarAPI("/admin/auditoria" + (verArchivados ? "?archivadas=1" : ""), "GET");
+    filtrarAuditoria();
+  } catch (err) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="sin-datos">No se pudo cargar la auditoría</td></tr>';
+  }
+}
+
+// Carga los parámetros con las claves RN_* que usan las reglas.
 async function cargarConfiguracion() {
   try {
     var cfg = await llamarAPI("/admin/configuracion", "GET");
-    if (cfg.umbral_alerta && document.getElementById("cfgUmbral"))
-      document.getElementById("cfgUmbral").value = cfg.umbral_alerta;
-    if (cfg.max_estudiantes_tutor && document.getElementById("cfgMaxEst"))
-      document.getElementById("cfgMaxEst").value = cfg.max_estudiantes_tutor;
-    if (cfg.horas_cancelacion && document.getElementById("cfgCancelacion"))
-      document.getElementById("cfgCancelacion").value = cfg.horas_cancelacion;
-    if (cfg.minutos_sesion && document.getElementById("cfgSesion"))
-      document.getElementById("cfgSesion").value = cfg.minutos_sesion;
-  } catch (err) { console.warn("Error cargando config:", err); }
+    var poner = function(id, valor) {
+      var el = document.getElementById(id);
+      if (el && valor !== undefined && valor !== null) el.value = valor;
+    };
+    poner("cfgUmbral", Number(cfg.RN_PROMEDIO_MINIMO).toFixed(1));
+    poner("cfgMaxEst", cfg.RN_MAX_ESTUDIANTES);
+    poner("cfgCancelacion", cfg.RN_HORAS_CANCELACION);
+    poner("cfgSesion", cfg.RN_MINUTOS_SESION);
+  } catch (err) { mostrarTostada("No se pudo cargar la configuración", "error"); }
 }
 
-// Carga los períodos académicos desde el API.
+// Formatea AAAA-MM-DD como «03 Feb 2026».
+function fechaCorta(iso) {
+  var partes = String(iso || "").split("-");
+  if (partes.length !== 3) return "—";
+  var meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  return partes[2] + " " + meses[parseInt(partes[1]) - 1] + " " + partes[0];
+}
+
+// Lista los períodos de la base, con activar para los próximos; antes se mezclaban con tres períodos fijos.
 async function cargarPeriodos() {
+  var contenedor = document.getElementById("listaPeriodos");
+  if (!contenedor) return;
   try {
     var periodos = await llamarAPI("/admin/periodos", "GET");
-    var contenedor = document.querySelector(
-      "#pagina-admin-configuracion .grilla-dos > div:nth-child(2) > div"
-    );
-    if (!contenedor || periodos.length === 0) return;
+    window._periodoActivo = periodos.find(function(p) { return p.estado === "activo"; }) || null;
 
-    // Conserva el botón de crear período para no borrarlo.
-    var botonCrear = contenedor.querySelector("button");
-    contenedor.innerHTML = "";
+    var botonCerrar = document.getElementById("btnCerrarPeriodo");
+    if (botonCerrar) {
+      botonCerrar.disabled = !window._periodoActivo;
+      botonCerrar.textContent = window._periodoActivo ? "Cerrar Período " + window._periodoActivo.nombre : "Sin período activo";
+    }
 
-    window._periodoActivoId = null;
-    periodos.forEach(function(p) {
-      if (p.estado === "activo") window._periodoActivoId = p.id;
-      var div = document.createElement("div");
-      div.className = "config-periodo" + (p.estado === "activo" ? " activo-periodo" : "");
-      var estadoTxt = p.estado === "activo" ? "● Activo" : p.estado === "proximo" ? "○ Próximo" : "○ Cerrado";
-      var estadoColor = p.estado === "activo" ? "" : "texto-gris";
-      var fmtFecha = function(iso) {
-        var partes = iso.split("-");
-        var meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-        return partes[2] + " " + meses[parseInt(partes[1])-1] + " " + partes[0];
-      };
-      div.innerHTML =
-        '<div class="config-periodo__estado ' + estadoColor + '">' + estadoTxt + '</div>' +
-        '<div class="config-periodo__nombre">Período ' + p.nombre + '</div>' +
-        '<div class="config-periodo__fechas">' + fmtFecha(p.inicio) + ' — ' + fmtFecha(p.fin) + '</div>';
-      contenedor.appendChild(div);
-    });
+    if (periodos.length === 0) {
+      contenedor.innerHTML = '<p class="sin-datos">Aún no hay períodos. Crea el primero.</p>';
+      return;
+    }
+    var hayActivo = Boolean(window._periodoActivo);
+    contenedor.innerHTML = periodos.map(function(p) {
+      var estado = p.estado === "activo" ? "● Activo" : p.estado === "proximo" ? "○ Próximo" : "○ Cerrado";
+      var accion = p.estado === "proximo"
+        ? '<button type="button" class="btn-secundario config-periodo__accion" ' + (hayActivo ? 'disabled title="Cierra primero el período activo"' : '') + ' onclick="activarPeriodo(' + p.id + ')">Activar</button>'
+        : "";
+      return '<div class="config-periodo' + (p.estado === "activo" ? " activo-periodo" : "") + '">' +
+        '<div class="config-periodo__estado ' + (p.estado === "activo" ? "" : "texto-gris") + '">' + estado + '</div>' +
+        '<div class="config-periodo__nombre">Período ' + escaparHtml(p.nombre) + '</div>' +
+        '<div class="config-periodo__fechas">' + fechaCorta(p.inicio) + ' — ' + fechaCorta(p.fin) + '</div>' +
+        accion +
+        '</div>';
+    }).join("");
+  } catch (err) {
+    contenedor.innerHTML = '<p class="sin-datos">No se pudieron cargar los períodos</p>';
+  }
+}
 
-    if (botonCrear) contenedor.appendChild(botonCrear);
-  } catch (err) { console.warn("Error cargando períodos:", err); }
+// Activa un período próximo.
+async function activarPeriodo(id) {
+  try {
+    var resp = await llamarAPI("/admin/periodos/" + id + "/activar", "PATCH");
+    mostrarTostada("✓ " + resp.mensaje, "exito");
+    cargarPeriodos();
+  } catch (err) {
+    mostrarTostada(err.mensaje || "No se pudo activar el período", "error");
+  }
+}
+
+// Texto del período del reporte para la pantalla y las exportaciones.
+function textoPeriodoReporte(r) {
+  if (!r.periodo) return "Todo el histórico";
+  return r.periodo.nombre + " (" + fechaCorta(r.periodo.inicio) + " — " + fechaCorta(r.periodo.fin) + ")";
+}
+
+// Carga el reporte del período elegido con datos de la base; antes todas las cifras eran fijas.
+async function cargarReportes(periodo) {
+  var select = document.getElementById("filtroPeriodo");
+  var nota = document.getElementById("reporteNota");
+  try {
+    var pedido = periodo === undefined ? (select && select.dataset.cargado ? select.value : "") : periodo;
+    var r = await llamarAPI("/admin/reportes" + (pedido ? "?periodo=" + encodeURIComponent(pedido) : ""), "GET");
+    window._reporte = r;
+
+    if (select) {
+      select.innerHTML = r.periodos.map(function(p) {
+        return '<option value="' + p.id + '">' + escaparHtml(p.nombre) + (p.estado === "activo" ? " (Actual)" : p.estado === "proximo" ? " (Próximo)" : "") + '</option>';
+      }).join("") + '<option value="todos">Todo el histórico</option>';
+      select.value = r.periodo ? String(r.periodo.id) : "todos";
+      select.dataset.cargado = "1";
+    }
+    renderReporte(r);
+    if (nota) {
+      nota.textContent = "Período: " + textoPeriodoReporte(r) +
+        ". Las tutorías se cuentan por las fechas del período; alertas y promedios muestran el estado actual.";
+    }
+  } catch (err) {
+    if (nota) nota.textContent = err.mensaje || "No se pudo cargar el reporte";
+  }
+}
+
+// Pinta las tarjetas y la tabla por programa del reporte.
+function renderReporte(r) {
+  var i = r.indicadores;
+  var poner = function(id, texto) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = texto;
+  };
+  poner("repTutorias", i.total_tutorias);
+  poner("repTutoriasDetalle", i.tutorias_completadas + " completadas · " + i.tutorias_pendientes + " pendientes · " + i.tutorias_canceladas + " canceladas");
+  poner("repAlertas", i.alertas_activas);
+  poner("repAlertasDetalle", "Promedio menor a " + numeroCO(r.umbral, 1));
+  poner("repRecuperacion", i.tasa_recuperacion === null ? "—" : i.tasa_recuperacion + "%");
+  poner("repRecuperacionDetalle", i.estudiantes_recuperados + " de " + i.perfiles_estudiante + " perfiles con promedio ≥ " + numeroCO(r.umbral, 1));
+  poner("repEstudiantes", i.estudiantes_activos);
+  poner("repEstudiantesDetalle", i.perfiles_estudiante + " con perfil registrado");
+  poner("repDocentes", i.docentes_tutores);
+  poner("repPromedio", numeroCO(i.promedio_general, 2));
+  poner("repPromedioDetalle", i.estudiantes_con_promedio + " estudiante(s) con promedio registrado");
+
+  var tbody = document.getElementById("cuerpoReporteProgramas");
+  if (!tbody) return;
+  if (r.por_programa.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="sin-datos">Aún no hay estudiantes con perfil</td></tr>';
+    return;
+  }
+  tbody.innerHTML = r.por_programa.map(function(p) {
+    var clase = p.alertas > 0 ? "insignia--alerta" : "insignia--activo";
+    return '<tr><td>' + escaparHtml(p.programa) + '</td><td>' + p.estudiantes + '</td><td>' + p.alertas + '</td><td><span class="insignia ' + clase + '">' + numeroCO(p.porcentaje_alerta, 1) + '%</span></td><td>' + p.tutorias_realizadas + '</td><td>' + p.recuperacion + '%</td></tr>';
+  }).join("");
 }

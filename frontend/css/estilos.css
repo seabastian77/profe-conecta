@@ -2689,3 +2689,30 @@ body.sin-sesion { --barra-superior-alto: 0px; }
   .accion-destacada { flex-wrap: wrap; }
   .accion-destacada__boton { width: 100%; justify-content: center; }
 }
+
+/* Leyenda que explica el número de cada tarjeta del panel admin */
+.tarjeta-admin__leyenda { display: block; font-size: 10.5px; color: var(--gris); margin-top: 1px; }
+
+/* Nota del reporte con el período y la fuente de los datos */
+.reporte-nota { font-size: 12px; color: var(--gris); margin: -8px 0 6px; }
+
+/* Botón para activar un período próximo; se ve apagado mientras haya otro activo */
+.config-periodo__accion { font-size: 11px; padding: 4px 10px; }
+.config-periodo__accion:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Quita el margen extra de la grilla cuando ya va dentro del cuerpo con padding */
+.perfil-seccion__cuerpo .perfil-datos-grilla { margin-top: 0; }
+
+/* Solo se imprime el reporte cuando se exporta a PDF */
+.zona-impresion { display: none; }
+@media print {
+  body.imprimiendo-reporte > *:not(.zona-impresion) { display: none !important; }
+  body.imprimiendo-reporte > .zona-impresion { display: block !important; }
+}
+.zona-impresion { font-family: Arial, sans-serif; color: #111; padding: 24px; }
+.zona-impresion h1 { font-size: 20px; margin: 0 0 4px; }
+.zona-impresion h2 { font-size: 15px; margin: 18px 0 8px; }
+.zona-impresion p { margin: 2px 0; font-size: 12px; }
+.zona-impresion table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.zona-impresion th, .zona-impresion td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+.zona-impresion th { background: #f0f4f5; }

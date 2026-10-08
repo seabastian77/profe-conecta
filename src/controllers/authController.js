@@ -9,13 +9,7 @@ const MINUTOS_BLOQUEO   = parseInt(process.env.MINUTOS_BLOQUEO || '5');
 const DOMINIO_PERMITIDO = process.env.DOMINIO_CORREO || '@amigo.edu.co';
 const { RONDAS_BCRYPT } = require('../config/seguridad');
 
-// Guarda un evento en auditoría sin bloquear la petición si falla.
-async function registrarAuditoria(usuario_id, evento, detalle) {
-  try {
-    await db.prepare('INSERT INTO auditoria (usuario_id, evento, detalle) VALUES (?,?,?)')
-      .run(usuario_id, evento, detalle);
-  } catch { /* no crítico */ }
-}
+const { auditar } = require('../config/auditoria');
 
 // Límite por IP más alto que por cuenta: el campus comparte una IP pública (NAT).
 const MAX_INTENTOS_IP = MAX_INTENTOS * 20;
@@ -100,7 +94,7 @@ async function registro(req, res) {
     if (!nuevoId) throw new Error('No se pudo crear el usuario');
 
     const token = generarToken({ id: nuevoId, correo, rol });
-    await registrarAuditoria(nuevoId, 'REGISTRO', `Nuevo usuario: ${correo} (${rol})`);
+    await auditar(req, 'REGISTRO', `Nuevo usuario: ${correo} (${rol})`, nuevoId);
 
     res.status(201).json({
       mensaje: 'Cuenta creada. Completa tu perfil.',
@@ -124,7 +118,7 @@ async function login(req, res) {
 
   try {
     if (await estaBloqueado(correo, ip)) {
-      await registrarAuditoria(null, 'LOGIN_BLOQUEADO', `Bloqueo por intentos: ${correo}`);
+      await auditar(req, 'LOGIN_BLOQUEADO', `Bloqueo por intentos: ${correo}`, null);
       return res.status(429).json({
         error: `Demasiados intentos fallidos. Espera ${MINUTOS_BLOQUEO} minutos.`
       });
@@ -140,6 +134,8 @@ async function login(req, res) {
 
     if (!usuario || !ok) {
       await registrarIntento(correo, ip, false);
+      // El filtro «Intento fallido» de Auditoría no tenía qué mostrar: los fallos no se registraban.
+      await auditar(req, 'LOGIN_FALLIDO', `Credenciales incorrectas: ${correo}`, usuario?.id ?? null);
       return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
     }
 
@@ -147,7 +143,7 @@ async function login(req, res) {
     await limpiarIntentos(correo);
 
     const token = generarToken({ id: usuario.id, correo: usuario.correo, rol: usuario.rol });
-    await registrarAuditoria(usuario.id, 'LOGIN', 'Inicio de sesión');
+    await auditar(req, 'LOGIN', 'Inicio de sesión', usuario.id);
 
     res.json({
       token,
@@ -160,6 +156,13 @@ async function login(req, res) {
     console.error('Error en login:', err.message);
     res.status(500).json({ error: 'Error del servidor' });
   }
+}
+
+// Registra el cierre de sesión (manual o por inactividad) para el historial de accesos.
+async function salir(req, res) {
+  const motivo = req.body?.motivo === 'inactividad' ? 'Sesión cerrada por inactividad' : 'Cierre de sesión';
+  await auditar(req, 'LOGOUT', motivo);
+  res.json({ mensaje: 'Sesión cerrada' });
 }
 
 // Responde igual exista o no el correo para no confirmar cuentas.
@@ -181,4 +184,4 @@ async function yo(req, res) {
   }
 }
 
-module.exports = { registro, login, recuperar, yo, reglasRegistro, reglasLogin };
+module.exports = { registro, login, salir, recuperar, yo, reglasRegistro, reglasLogin };
