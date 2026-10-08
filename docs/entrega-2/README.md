@@ -14,8 +14,9 @@ Equipo F · Sebastián González González · Esteban Palencia
 
 ## Cómo se llena
 
-1. **Ejecutar en Railway** cada caso que nos toca, según la guía de ejecución del equipo
-   (ciclo 1 en Chrome, ciclo 2 en Firefox, los dos en Windows).
+1. **Ejecutar en Railway** cada caso que nos toca, según la guía de ejecución del equipo (el PDF «Guía de
+   ejecución · Equipo F») y la columna «Resultado esperado» del registro: ciclo 1 en Chrome, ciclo 2 en Firefox,
+   los dos en Windows.
 2. **Tomar la captura** con Windows + Shift + S, con la barra de direcciones y la hora de Windows a la vista,
    y guardarla con el nombre de la columna «Evidencia» del registro (`EV-CP016-C1-01.png`, `EV-DEF06-01.png`…).
    Las capturas van en la carpeta compartida y en `pruebas/e2/evidencias-equipo/`.

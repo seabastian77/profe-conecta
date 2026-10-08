@@ -7,7 +7,7 @@ import os
 
 from docxutil import (nuevo_doc, tabla, ficha, recuadro, parrafo, figura, proxima_figura, recuadro_captura,
                       salto, titulo_portada, titulo_en_pagina_nueva, rango_figuras, pie_de_pagina, TEAL)
-from datos import EQUIPO, DEFECTOS, REPRO, v, entorno
+from datos import EQUIPO, DEFECTOS, REPRO, AUTOR_CAPTURA, v, entorno
 from textos import PASOS, PRECOND, ESPERADO, SEV_JUST, PRIO_JUST
 
 BUILD = os.path.dirname(os.path.abspath(__file__))
@@ -78,14 +78,13 @@ salto(doc)
 
 # ===== Anexo A: reparto =====
 doc.add_heading('Anexo A. Tabla de reparto interno', level=2)
-parrafo(doc, 'Se escriben los identificadores concretos de los defectos que reportó y que reprodujo cada '
-             'integrante. Cada defecto lo reproduce el integrante que no lo reportó, siguiendo solo lo que '
-             'dice su reporte.', size=10.5)
+parrafo(doc, 'Cada uno reportó cuatro de los ocho defectos y reproduce los cuatro del otro, siguiendo solo lo '
+             'que dice el reporte.', size=11)
 rep = {}
 for d in elegidos:
     rep.setdefault(d['reporta'], {'reporta': [], 'reproduce': []})['reporta'].append(d['id'])
     rep.setdefault(d['reproduce'], {'reporta': [], 'reproduce': []})['reproduce'].append(d['id'])
-filas = [['Integrante', 'Defectos que reportó', 'Defectos que reprodujo', 'Firma']]
+filas = [['Integrante', 'Defectos que reportó', 'Defectos que reproduce', 'Firma']]
 for integrante in EQUIPO['integrantes']:
     r = rep.get(integrante, {'reporta': [], 'reproduce': []})
     filas.append([integrante, ', '.join(r['reporta']) or '—', ', '.join(r['reproduce']) or '—', ''])
@@ -108,21 +107,21 @@ salto(doc)
 # ===== 1. Propósito =====
 doc.add_heading('1. Propósito y alcance', level=1)
 parrafo(doc,
-    'Encontrar un defecto es la mitad del trabajo; la otra mitad es escribirlo de modo que otra persona, que '
-    'no estaba ahí y no conoce el sistema, pueda reproducirlo y corregirlo. Esta tarea presenta ocho de los '
-    'catorce defectos del Entregable 2 con el formato profesional completo, la reproducción cruzada dentro '
-    'del equipo y el análisis que los relaciona con los riesgos del Entregable 1.')
+    'Escogimos ocho de los catorce defectos del Entregable 2 para escribirlos con el formato completo, de modo '
+    'que alguien que no estaba ahí y no conoce el sistema pueda reproducirlos y corregirlos. Aquí van esos ocho '
+    'reportes, la reproducción cruzada dentro del equipo y el análisis que los relaciona con los riesgos del '
+    'Entregable 1.')
 recuadro(doc,
     'La pregunta que responde esta tarea: ¿nuestros reportes permiten que alguien más reproduzca el fallo sin '
     'preguntarnos nada? Para responderla, cada defecto lo reproduce en Railway el integrante que no lo reportó, '
     'usando solo los pasos escritos, y anota si le salió con el reporte, si necesitó ayuda o si no le salió.',
     bold_primero=True)
-parrafo(doc, 'Cómo se ejecutaron las pruebas.', bold=True, space=2)
+parrafo(doc, 'Cómo se ejecutan las pruebas.', bold=True, space=2)
 parrafo(doc,
-    'Todo se ejecutó a mano en la aplicación desplegada en Railway (commit 693358a), en Chrome y Firefox sobre '
-    'Windows. Lo que se mira en el servidor se revisó en la pestaña Red de F12, y las peticiones que la interfaz no '
-    'deja hacer se pegaron en la consola con el token de la sesión, tal como pide la guía. Cada reporte trae el '
-    'entorno, la fecha y los intentos de quien lo ejecutó, y su evidencia nombrada con el identificador.', size=10.5)
+    'Todo se ejecuta a mano en la aplicación desplegada en Railway (commit 693358a), en Chrome y Firefox sobre '
+    'Windows. Lo que se mira en el servidor se revisa en la pestaña Red de F12, y las peticiones que la interfaz no '
+    'deja hacer se pegan en la consola con el token de la sesión, tal como pide la guía. Cada reporte lleva el '
+    'entorno, la fecha y los intentos de quien lo reportó, y su evidencia nombrada con el identificador.', size=11)
 salto(doc)
 
 # ===== 2. Los ocho defectos (tabla resumen) =====
@@ -131,9 +130,10 @@ filas = [['ID', 'Título', 'Requisito', 'Severidad', 'Prioridad', 'Origen', 'Est
 for d in elegidos:
     filas.append([d['id'], d['titulo'], d['requisito'], d['severidad'], d['prioridad'], d['origen'], d['estado']])
 tabla(doc, filas, anchos=[1.5, 6.8, 2.0, 1.5, 1.5, 1.5, 1.4], fuente=8.3)
-parrafo(doc, 'Los ocho cubren seis requisitos distintos (R2/RNF02, R4, R5, R6, R7 y R8/transversal), para no '
+_req = sorted({d['requisito'].split('·')[0].strip() for d in elegidos})
+parrafo(doc, f"Los ocho tocan {len(_req)} requisitos distintos ({', '.join(_req[:-1])} y {_req[-1]}), para no "
              'concentrar todo en una sola funcionalidad. Los reportes completos, con los trece campos, van en '
-             'la sección 4.', size=10.5)
+             'la sección 4.', size=11)
 salto(doc)
 
 # ===== 3. Análisis por riesgo =====
@@ -143,19 +143,21 @@ figura(doc, GRAFICO, 'Defectos por requisito y severidad (los catorce del Entreg
        'de defectos del equipo.', ancho_cm=15.5, comprimir=False)
 parrafo(doc, 'Comparación con la matriz de riesgos del Entregable 1', bold=True, space=2)
 parrafo(doc,
-    'El análisis de riesgos del Entregable 1 apuntó donde debía: R5 era el riesgo más alto de la matriz '
-    '(R-03, nivel 15) y concentra cuatro defectos, incluido el único crítico. R6, que habíamos calificado como '
-    'riesgo medio (R-11), aportó un defecto de severidad alta (DEF-08). Lo que la matriz no vio fueron dos '
-    'riesgos transversales: la zona horaria (DEF-08 y DEF-12 comparten causa, el servidor en UTC) y la '
-    'visibilidad de los mensajes al usuario (DEF-13), que toca todas las pantallas.')
+    'Mirando los catorce defectos del Entregable 2, el análisis de riesgos del Entregable 1 apuntó donde debía: '
+    'R5 era uno de los tres riesgos de nivel 15 de la matriz (R-03) y concentra cuatro defectos, entre ellos el '
+    'único crítico (DEF-05, que se detalla en el Entregable 2). R6, que habíamos calificado como riesgo medio '
+    '(R-11, nivel 9), aportó un defecto de severidad alta (DEF-08). Lo que la matriz no vio fueron dos riesgos '
+    'transversales: la zona horaria (DEF-08 comparte causa con DEF-12: el servidor trabaja en UTC) y la '
+    'visibilidad de los mensajes al usuario (DEF-13), que toca todas las pantallas.', size=11)
 recuadro(doc,
-    'Conclusión (cinco líneas). La matriz de riesgos acertó en los requisitos: donde predijo más riesgo '
-    '(R5, R-03) es donde más defectos aparecieron, y el análisis llevó a probar primero esos caminos. Su '
+    'Conclusión. La matriz de riesgos acertó en los requisitos: donde predijo más riesgo (R5, R-03) es donde se '
+    'concentran los defectos documentados, y por eso esos caminos van primero en la ejecución. Su '
     'punto ciego fueron los riesgos transversales —zona horaria y mensajes al usuario—, que no estaban '
     'ligados a un requisito concreto y por eso ninguna fila los nombraba. Para el Entregable 3 agregamos esos '
     'dos riesgos y subimos R6 a nivel alto.')
 parrafo(doc, 'Los tres defectos bloqueantes', bold=True, space=2)
-parrafo(doc, 'De los ocho, estos tres impedirían liberar el producto:', size=10.5)
+parrafo(doc, 'De los ocho, estos tres impedirían liberar el producto, por su severidad, el riesgo del requisito '
+             'que tocan y a cuántos usuarios afectan:', size=11)
 BLQ_JUST = {
  'DEF-01': 'DEF-01 (sesión que no expira, severidad alta, RNF02). Es un control de seguridad que el requisito '
            'exige y que no funciona: la sesión sigue abierta a los 16 minutos y solo se cierra a las dos horas. '
@@ -165,21 +167,22 @@ BLQ_JUST = {
            'operaciones centrales del módulo y la regla se aplica mal a todos los usuarios: con 26 horas reales '
            'de margen el sistema dice que faltan 21 y no deja cancelar. El requisito es de riesgo medio-alto y '
            'el usuario no tiene alternativa dentro de la aplicación salvo escribirle al docente.',
- 'DEF-13': 'DEF-13 (mensajes emergentes que nunca se ven, prioridad alta, transversal). El servidor acepta o '
-           'rechaza bien cada acción, pero el usuario no recibe ninguna confirmación ni error en pantalla. '
-           'Afecta todas las pantallas y deja al usuario sin saber por qué se rechaza lo que intenta; sin esa '
-           'respuesta visible, varias reglas de negocio quedan invisibles para quien usa el sistema.',
+ 'DEF-13': 'DEF-13 (mensajes emergentes que nunca se ven, severidad media, transversal). Su severidad es media '
+           'porque el servidor acepta o rechaza bien cada acción, pero el impacto es el más amplio de los ocho: '
+           'ninguna pantalla muestra confirmaciones ni errores, así que reglas como el bloqueo de RRN01 o la fecha '
+           'mínima de RRN06 nunca se le comunican al usuario. Es además un riesgo transversal que la matriz no '
+           'tenía, y se corrige con muy poco código.',
 }
 for b in BLOQUEANTES:
-    parrafo(doc, BLQ_JUST[b], size=10.5, space=6)
+    parrafo(doc, BLQ_JUST[b], size=11, space=6)
 salto(doc)
 
 # ===== 4. Reportes completos =====
 
 doc.add_heading('4. Reportes completos de los ocho defectos', level=1)
-parrafo(doc, 'El entorno, la fecha, la frecuencia y el resultado real de cada reporte son los de quien lo '
-             'ejecutó en Railway. Las capturas están en el Anexo F, con el número de figura que cita el campo '
-             '«Evidencia».', size=10, italic=True)
+parrafo(doc, 'El entorno, la fecha, la frecuencia y el resultado real de cada reporte los pone quien lo reportó, '
+             'con su propia ejecución en Railway. Las capturas están en el Anexo F, con el número de figura que cita '
+             'el campo «Evidencia».', size=11, italic=True)
 for d in elegidos:
     doc.add_heading(f"{d['id']} · {d['titulo']}", level=3)
     ficha(doc, [
@@ -196,13 +199,13 @@ for d in elegidos:
         ('Evidencia', texto_evidencia(d)),
         ('Origen', d['origen']),
         ('Reportado por', d['reporta']),
-    ])
-    doc.add_paragraph()
+    ], fuente=10.5)
+    parrafo(doc, ' ', size=6, space=0)
 
 # ===== Anexo B: formato del reporte =====
 titulo_en_pagina_nueva(doc, 'Anexo B. Formato del reporte de defecto', nivel=1)
 parrafo(doc, 'Estos son los trece campos que usamos en cada reporte, con lo que va en cada uno. La columna de '
-             'ejemplo sale de nuestro propio DEF-08.', size=10.5)
+             'ejemplo sale de nuestro propio DEF-08.', size=11)
 _d8 = por_id['DEF-08']
 tabla(doc, [
     ['Campo', 'Qué se escribe', 'Ejemplo (DEF-08)'],
@@ -227,7 +230,7 @@ titulo_en_pagina_nueva(doc, 'Anexo C. Matriz de reproducción cruzada', nivel=1)
 parrafo(doc, 'Cada defecto lo reproduce en Railway un integrante distinto del que lo reportó, siguiendo '
              'únicamente lo que dice el reporte. Resultados posibles: reproducido (solo con el reporte), con '
              'ayuda (hubo que preguntarle al autor) o no reproducido; los dos últimos dicen qué le faltaba al '
-             'reporte.', size=10.5)
+             'reporte.', size=11)
 filas = [['Defecto', 'Reportado por', 'Reproducido por', 'Fecha', 'Resultado', 'Qué faltó o qué se observó']]
 for d in elegidos:
     r = REPRO.get(d['id'], {})
@@ -245,8 +248,11 @@ tabla(doc, [
     ['Media', 'Falla una función secundaria o el resultado es incorrecto en casos poco frecuentes.'],
     ['Baja', 'Problema de apariencia o de texto que no altera el resultado.'],
 ], anchos=[3.0, 13.0], fuente=9.5)
-parrafo(doc, 'Prioridad. Dice qué tan pronto conviene corregir el defecto y puede no coincidir con la '
-             'severidad: en seis de los ocho reportes difieren, y en cada uno se justifica por separado.', size=10.5)
+_dif = [d['id'] for d in elegidos if d['severidad'] != d['prioridad']]
+_num = {0: 'ninguno', 1: 'uno', 2: 'dos', 3: 'tres', 4: 'cuatro', 5: 'cinco', 6: 'seis', 7: 'siete', 8: 'ocho'}
+parrafo(doc, 'Prioridad. Dice qué tan pronto conviene corregir el defecto y puede no coincidir con la severidad: '
+             f"en {_num[len(_dif)]} de los ocho reportes difieren ({', '.join(_dif[:-1])} y {_dif[-1]}), y en cada "
+             'uno se justifica por separado.', size=11)
 
 
 # ===== Anexo E: lista de verificación =====
@@ -271,18 +277,21 @@ tabla(doc, [
 
 # ===== Anexo F: capturas de los ocho defectos =====
 titulo_en_pagina_nueva(doc, 'Anexo F. Evidencia de los ocho defectos', nivel=1)
-parrafo(doc, 'Aquí están las capturas que cita el campo «Evidencia» de cada reporte, en el mismo orden de la '
-             'sección 4. Son las de quien ejecutó en Railway: en cada una se ven la barra de direcciones y la '
-             'hora de Windows.', size=10.5)
+parrafo(doc, 'Aquí van las capturas que cita el campo «Evidencia» de cada reporte, en el mismo orden de la '
+             'sección 4, tomadas en Railway: en cada una se ven la barra de direcciones y la hora de Windows.', size=11)
+_mostradas = {}
 for d in elegidos:
     doc.add_heading(f"{d['id']} · {d['titulo']}", level=3)
     for nombre, ruta in zip(d['evidencias'], d['rutas']):
-        if ruta:
+        quien, cuando = AUTOR_CAPTURA.get(nombre, (d['reporta'], d['fecha']))
+        if nombre in _mostradas:
+            parrafo(doc, f'{nombre}: se ve en la figura {_mostradas[nombre]}.', size=10, italic=True, space=4)
+        elif ruta:
             assert proxima_figura() == FIG[nombre], 'la numeración de figuras se desfasó'
-            figura(doc, ruta, f"{d['id']} · {nombre}. Captura de {d['reporta']} en Railway"
-                   + (f", {d['fecha']}" if d['fecha'] else ''))
+            _mostradas[nombre] = figura(doc, ruta, f"{d['id']} · {nombre}. Captura de {quien} en Railway"
+                                        + (f", {cuando}" if cuando else ''))
         else:
-            recuadro_captura(doc, f'Falta la captura {nombre}\nLa toma {d["reporta"]} en Railway', alto_cm=4.5)
+            recuadro_captura(doc, f'Falta la captura {nombre}\nLa toma {quien} en Railway', alto_cm=4.5)
 
 salida = os.path.join(BUILD, '..', '..', '..', 'docs', 'entrega-2', 'IS071_T4_EquipoF.docx')
 doc.save(salida)

@@ -39,3 +39,4 @@ temp/
 # Pruebas E2 — artefactos generados
 pruebas/e2/generar-docs/__pycache__/
 pruebas/e2/generar-docs/_evid/
+docs/entrega-2/*_respaldo_*.xlsx

@@ -1,10 +1,10 @@
 # Pruebas por consola del navegador (F12) — Equipo F
 
-Estas son las pruebas que se hacen desde la pestaña **Consola** de las herramientas del navegador (F12), en https://profe-conecta-production-e40c.up.railway.app. En cinco se pega un `fetch()`: cuatro con el token de la sesión y el de CP-008 sin sesión, como lo haría un visitante. En la de DEF-13 se inspecciona el elemento del mensaje emergente con `document.getElementById()`.
+Estas son las pruebas que hacemos desde la pestaña **Consola** de las herramientas del navegador (F12), en https://profe-conecta-production-e40c.up.railway.app. En cinco se pega un `fetch()`: cuatro con el token de la sesión y el de CP-008 sin sesión, como lo haría un visitante. En la de DEF-13 se inspecciona el elemento del mensaje emergente con `document.getElementById()`.
 
-- En DEF-06 hay que cambiar `ID` por el número de una tutoría cancelada (se ve en la pestaña Red) y entrar como su docente. En DEF-10, `docente_id` tiene que ser el de un docente activo.
+- En DEF-06 hay que cambiar `ID` por el número de una tutoría cancelada (se ve en la pestaña Red) y entrar como su docente. En DEF-10, `docente_id` tiene que ser el de un docente activo (se ve en la pestaña Red, en la respuesta de `/api/tutorias/docentes-disponibles` al abrir «Programar Tutoría»).
 - Firefox pide escribir `permitir pegar` antes de dejar pegar en la consola; Chrome pide `allow pasting`.
-- La captura que va como evidencia es la de ustedes en Railway, con la consola abierta y la respuesta a la vista. La imagen que aparece debajo de cada comando es una **referencia de la copia local, no es evidencia**.
+- La evidencia es nuestra captura en Railway, con la consola abierta y la respuesta a la vista.
 
 ## CP-008 · Rechazo de registro con rol de administrador
 
@@ -20,10 +20,7 @@ fetch("/api/auth/registro",{method:"POST",headers:{
 ```
 
 - **Resultado esperado:** La consola muestra {error: "Rol inválido"} y la pestaña Red, el código 400. No se crea la cuenta.
-
-Referencia (copia local, no es evidencia):
-
-![CP-008 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-CP008-CONSOLA.png)
+- **Captura:** EV-CP008-C1-01.png y EV-CP008-C2-01.png
 
 ## CP-018 · Un estudiante no puede guardar un perfil de docente
 
@@ -39,10 +36,7 @@ fetch("/api/perfil/docente",{method:"POST",headers:{
 ```
 
 - **Resultado esperado:** La consola muestra {error: "No tienes permiso para esto"} y la pestaña Red, el código 403. No se crea ningún perfil de docente.
-
-Referencia (copia local, no es evidencia):
-
-![CP-018 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-CP018-CONSOLA.png)
+- **Captura:** EV-CP018-C1-01.png y EV-CP018-C2-01.png
 
 ## CP-021 · Rechazo de tutoría con docente inexistente
 
@@ -59,10 +53,7 @@ fetch("/api/tutorias",{method:"POST",headers:{
 ```
 
 - **Resultado esperado:** La consola muestra {error: "Docente no encontrado o inactivo"} y la pestaña Red, el código 404. Al recargar, la página carga normal: el servidor sigue arriba (no hay error 500).
-
-Referencia (copia local, no es evidencia):
-
-![CP-021 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-CP021-CONSOLA.png)
+- **Captura:** EV-CP021-C1-01.png y EV-CP021-C2-01.png
 
 ## DEF-06 · Una tutoría cancelada se marca «completada» por la API
 
@@ -74,10 +65,7 @@ fetch("/api/tutorias/ID/realizada",{method:"PATCH",headers:{Authorization:"Beare
 ```
 
 - **Resultado esperado:** R6: una tutoría cancelada no admite nuevas transiciones. El servidor rechaza el cambio con un error y la tutoría sigue «cancelada».
-
-Referencia (copia local, no es evidencia):
-
-![DEF-06 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-DEF06-CONSOLA.png)
+- **Captura:** EV-DEF06-01.png
 
 ## DEF-10 · La API guarda tutorías con fechas y horas que no existen
 
@@ -94,10 +82,7 @@ fetch("/api/tutorias",{method:"POST",headers:{
 ```
 
 - **Resultado esperado:** R5: el servidor rechaza una fecha o una hora que no existen (código 400 con un mensaje claro) y no guarda la tutoría.
-
-Referencia (copia local, no es evidencia):
-
-![DEF-10 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-DEF10-CONSOLA.png)
+- **Captura:** EV-DEF10-01.png
 
 ## DEF-13 · Los mensajes emergentes se generan pero nunca se ven
 
@@ -111,7 +96,4 @@ console.log(t.textContent, "|", t.className,
 ```
 
 - **Resultado esperado:** RF028: el mensaje emergente se ve en pantalla (opacidad 1) y después desaparece solo.
-
-Referencia (copia local, no es evidencia):
-
-![DEF-13 · referencia](../../pruebas/e2/resultados/consola/evidencias/EV-DEF13-CONSOLA.png)
+- **Captura:** EV-CP024-C1-01.png

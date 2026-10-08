@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Ayudas de formato para armar los documentos del Entregable 2 con python-docx."""
+import hashlib
 import os
 from PIL import Image
 from docx import Document
@@ -154,13 +155,13 @@ def tabla(doc, filas, anchos=None, cab=True, fuente=9.5, cab_bg=TEAL_HEX):
     return t
 
 
-def ficha(doc, pares, ancho_k=4.2, ancho_v=12.5):
+def ficha(doc, pares, ancho_k=4.2, ancho_v=12.5, fuente=9.5):
     """Tabla de dos columnas clave/valor (para reportes de defecto)."""
     t = doc.add_table(rows=len(pares), cols=2)
     _bordes_tabla(t)
     for i, (k, v) in enumerate(pares):
-        _celda(t.cell(i, 0), k, bold=True, size=9.5, bg=TEALCL_HEX)
-        _celda(t.cell(i, 1), v, size=9.5)
+        _celda(t.cell(i, 0), k, bold=True, size=fuente, bg=TEALCL_HEX)
+        _celda(t.cell(i, 1), v, size=fuente)
     _anchos(t, [ancho_k, ancho_v])
     _no_partir(t)
     return t
@@ -251,11 +252,13 @@ def proxima_figura():
 
 
 def _comprimida(ruta, ancho_max=1200, calidad=74):
-    """Copia JPEG reducida de la captura, para que el documento no pese de más."""
+    """Copia JPEG reducida de la captura, para que el documento no pese de más. La caché se
+    identifica por el contenido del archivo, así que nunca se reutiliza una imagen distinta."""
     os.makedirs(CACHE, exist_ok=True)
-    base = os.path.splitext(os.path.basename(ruta))[0]
-    destino = os.path.join(CACHE, f'{base}.jpg')
-    if os.path.exists(destino) and os.path.getmtime(destino) >= os.path.getmtime(ruta):
+    with open(ruta, 'rb') as f:
+        huella = hashlib.sha1(f.read()).hexdigest()[:16]
+    destino = os.path.join(CACHE, f'{huella}.jpg')
+    if os.path.exists(destino):
         return destino
     im = Image.open(ruta).convert('RGB')
     if im.width > ancho_max:
