@@ -41,12 +41,15 @@ const CAL_COLORES_ESTADO = {
 
 let _cal = { mes: new Date().getMonth(), anio: new Date().getFullYear(), tutorias: [], diaSeleccionado: null };
 
-async function iniciarCalendario() {
-  _cal.mes = new Date().getMonth();
-  _cal.anio = new Date().getFullYear();
-  _cal.diaSeleccionado = null;
-  const detalle = calEl('calDetalleDia');
-  if (detalle) detalle.style.display = 'none';
+// Carga las tutorías y dibuja el mes; con «conservar» se queda en el mes y el día que se estaban viendo.
+async function iniciarCalendario(conservar) {
+  if (!conservar) {
+    _cal.mes = new Date().getMonth();
+    _cal.anio = new Date().getFullYear();
+    _cal.diaSeleccionado = null;
+    const detalle = calEl('calDetalleDia');
+    if (detalle) detalle.style.display = 'none';
+  }
 
   try {
     const data = await llamarAPI('/tutorias', 'GET');
@@ -58,13 +61,27 @@ async function iniciarCalendario() {
   // Llena el filtro de materias.
   var selMat = calEl('calFiltroMateria');
   if (selMat) {
+    var elegida = selMat.value;
     var mats = [...new Set(_cal.tutorias.map(t => t.asignatura).filter(Boolean))].sort();
     selMat.innerHTML = '<option value="">📚 Todas las materias</option>' +
-      mats.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+      mats.map(m => '<option value="' + escaparHtml(m) + '">' + escaparHtml(m) + '</option>').join('');
+    if (conservar && mats.includes(elegida)) selMat.value = elegida;
   }
 
   renderCalendario();
   renderProximas();
+  if (conservar && _cal.diaSeleccionado) calClickDia(_cal.diaSeleccionado);
+}
+
+// Dice con quién es la sesión según quién mira: el docente ve al estudiante, el estudiante al docente y el admin a ambos.
+function calPersonas(t) {
+  var rol = (typeof sesion !== 'undefined') ? sesion.rol : '';
+  if (rol === 'docente') return '🎓 Estudiante: <strong>' + escaparHtml(t.nombre_estudiante || 'Estudiante') + '</strong>';
+  if (rol === 'admin') {
+    return '🎓 <strong>' + escaparHtml(t.nombre_estudiante || 'Estudiante') + '</strong> · 👩‍🏫 <strong>' +
+      escaparHtml(t.nombre_docente || 'Docente') + '</strong>';
+  }
+  return '👩‍🏫 Docente: <strong>' + escaparHtml(t.nombre_docente || 'Docente') + '</strong>';
 }
 
 function renderCalendario() {
@@ -123,12 +140,12 @@ function renderCalendario() {
 
     var puntos = sesiones.slice(0,5).map(function(s) {
       var col = (CAL_COLORES_ESTADO[s.estado] || CAL_COLORES_ESTADO.pendiente).punto;
-      return '<span title="' + (s.asignatura||'') + '" style="width:7px;height:7px;border-radius:50%;background:' + col + ';display:inline-block;flex-shrink:0"></span>';
+      return '<span title="' + escaparHtml(s.asignatura||'') + '" style="width:7px;height:7px;border-radius:50%;background:' + col + ';display:inline-block;flex-shrink:0"></span>';
     }).join('') + (sesiones.length > 5 ? '<span style="font-size:9px;color:#999">+' + (sesiones.length-5) + '</span>' : '');
 
-    var tooltip = sesiones.length > 0
+    var tooltip = escaparHtml(sesiones.length > 0
       ? sesiones.length + ' asesoría' + (sesiones.length>1?'s':'') + ': ' + sesiones.map(function(s){return s.asignatura;}).join(', ')
-      : festivo;
+      : festivo);
 
     html += '<div onclick="calClickDia(' + dia + ')" title="' + tooltip + '"' +
       ' style="min-height:72px;border-radius:8px;border:' + border + ';background:' + bg + ';' +
@@ -166,7 +183,8 @@ function calClickDia(dia) {
   });
 
   var detalle = calEl('calDetalleDia');
-  var tituloEl = document.querySelector('#calDetalleTitulo h3');
+  var cabecera = calEl('calDetalleTitulo');
+  var tituloEl = cabecera ? cabecera.querySelector('h3') : null;
   var contenido = calEl('calDetalleContenido');
   if (!detalle || !contenido) return;
 
@@ -174,7 +192,6 @@ function calClickDia(dia) {
   if (tituloEl) tituloEl.textContent = '📅 Sesiones del ' + diaFmt;
 
   var rolActual = (typeof sesion !== 'undefined') ? sesion.rol : '';
-  var esDocente = rolActual === 'docente';
 
   var html = '';
   if (festivo) html += '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px">🎉 <strong>Festivo:</strong> ' + festivo + '</div>';
@@ -184,21 +201,19 @@ function calClickDia(dia) {
   } else {
     sesiones.forEach(function(s) {
       var col = CAL_COLORES_ESTADO[s.estado] || CAL_COLORES_ESTADO.pendiente;
-      var persona = esDocente ? (s.nombre_estudiante || 'Estudiante') : (s.nombre_docente || 'Docente');
-      var rolLabel = esDocente ? '🎓 Estudiante' : '👩‍🏫 Docente';
       var hora = (s.hora || '').slice(0,5);
       var iconMod = (s.modalidad||'').toLowerCase().includes('virtual') ? '💻' : '🏫';
       html += '<div style="border:0.5px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px;border-left:4px solid ' + col.punto + '">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-        '<span style="font-weight:600;font-size:14px;color:#1f2937">' + (s.asignatura||'—') + '</span>' +
-        '<span style="font-size:11px;background:' + col.bg + ';color:' + col.texto + ';padding:3px 10px;border-radius:20px;font-weight:500">' + (s.estado||'pendiente') + '</span>' +
+        '<span style="font-weight:600;font-size:14px;color:#1f2937">' + escaparHtml(s.asignatura||'—') + '</span>' +
+        '<span style="font-size:11px;background:' + col.bg + ';color:' + col.texto + ';padding:3px 10px;border-radius:20px;font-weight:500">' + escaparHtml(s.estado||'pendiente') + '</span>' +
         '</div>' +
         '<div style="font-size:12px;color:#555;display:flex;flex-direction:column;gap:4px">' +
-        '<span>' + rolLabel + ': <strong>' + persona + '</strong></span>' +
-        '<span>' + iconMod + ' ' + hora + ' · 🖥️ ' + (s.modalidad||'Virtual') + '</span>' +
+        '<span>' + calPersonas(s) + '</span>' +
+        '<span>' + iconMod + ' ' + escaparHtml(hora) + ' · 🖥️ ' + escaparHtml(s.modalidad||'Virtual') + '</span>' +
         (s.observaciones ? '<span>📝 ' + escaparHtml(s.observaciones) + '</span>' : '') +
         '</div>' +
-        ((s.estado === 'pendiente' || s.estado === 'confirmada') ? '<button class="btn-secundario" onclick="cancelarTutoria(' + s.id + ')" type="button" style="margin-top:10px;font-size:11px;padding:5px 12px;color:#ef4444;border-color:#fca5a5">Cancelar asesoría</button>' : '') +
+        calAccionSesion(s, rolActual) +
         '</div>';
     });
   }
@@ -208,13 +223,26 @@ function calClickDia(dia) {
   detalle.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+// Ofrece cancelar las sesiones futuras y marcar como realizadas las que ya pasaron (docente o admin).
+function calAccionSesion(s, rol) {
+  if (s.estado !== 'pendiente' && s.estado !== 'confirmada') return '';
+  var estilo = 'margin-top:10px;font-size:11px;padding:5px 12px';
+  if (typeof tutoriaYaPaso === 'function' && tutoriaYaPaso(s)) {
+    return rol === 'docente' || rol === 'admin'
+      ? '<button class="btn-secundario" onclick="marcarTutoriaRealizada(' + s.id + ')" type="button" style="' + estilo + '">Marcar realizada</button>'
+      : '<p class="tarjeta-tutoria__nota" style="margin-top:8px">Sesión vencida · pendiente de registrar</p>';
+  }
+  return '<button class="btn-secundario" onclick="cancelarTutoria(' + s.id + ')" type="button" style="' + estilo + ';color:#ef4444;border-color:#fca5a5">Cancelar asesoría</button>';
+}
+
 function renderProximas() {
   var cont = calEl('calProximas');
   if (!cont) return;
   var hoy = new Date(); hoy.setHours(0,0,0,0);
-  var todayStr = hoy.toISOString().split('T')[0];
+  // Usa la fecha local: toISOString está en UTC y después de las 7 p. m. marcaba «Hoy» el día siguiente.
+  var todayStr = fechaLocalISO(hoy);
   var tom = new Date(hoy); tom.setDate(tom.getDate()+1);
-  var tomStr = tom.toISOString().split('T')[0];
+  var tomStr = fechaLocalISO(tom);
 
   var proximas = _cal.tutorias
     .filter(function(t) {
@@ -234,8 +262,6 @@ function renderProximas() {
     grupos[t.fecha].push(t);
   });
 
-  var rolActual = (typeof sesion !== 'undefined') ? sesion.rol : '';
-  var esDocente = rolActual === 'docente';
   var html = '';
 
   Object.keys(grupos).sort().forEach(function(fecha) {
@@ -251,12 +277,11 @@ function renderProximas() {
 
     grupos[fecha].forEach(function(t) {
       var col = (CAL_COLORES_ESTADO[t.estado] || CAL_COLORES_ESTADO.pendiente).punto;
-      var persona = esDocente ? (t.nombre_estudiante||'Estudiante') : (t.nombre_docente||'Docente');
       var hora = (t.hora||'').slice(0,5);
       var iconMod = (t.modalidad||'').toLowerCase().includes('virtual') ? '💻' : '🏫';
       html += '<div style="padding:8px 10px;border-radius:8px;background:#f9fafb;border-left:3px solid ' + col + ';margin-bottom:5px;font-size:12px;cursor:pointer" onclick="calIrAFecha(\'' + fecha + '\')">' +
-        '<div style="font-weight:600;color:#1f2937">' + (t.asignatura||'—') + '</div>' +
-        '<div style="color:#666;margin-top:2px">' + iconMod + ' ' + hora + ' · ' + persona + '</div></div>';
+        '<div style="font-weight:600;color:#1f2937">' + escaparHtml(t.asignatura||'—') + '</div>' +
+        '<div style="color:#666;margin-top:2px">' + iconMod + ' ' + escaparHtml(hora) + ' · ' + calPersonas(t) + '</div></div>';
     });
     html += '</div>';
   });

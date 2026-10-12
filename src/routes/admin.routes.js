@@ -14,6 +14,8 @@ router.delete('/usuarios/:id',       ctrl.eliminarUsuario);
 
 // Estadísticas
 router.get('/estadisticas',          ctrl.estadisticas);
+router.get('/reportes',              ctrl.reportes);
+router.get('/programas',             ctrl.listarProgramas);
 
 // Notificaciones
 router.post('/notificaciones',       ctrl.enviarNotificacion);
@@ -21,6 +23,7 @@ router.get('/notificaciones/historial', ctrl.historialNotificaciones);
 
 // Auditoría
 router.get('/auditoria',             ctrl.verAuditoria);
+router.post('/auditoria/archivar',   ctrl.archivarAuditoria);
 
 // Asignaciones
 router.get('/asignaciones',          ctrl.listarAsignaciones);
@@ -36,6 +39,7 @@ router.post('/configuracion/reset',  ctrl.resetearConfiguracion);
 router.get('/periodos',              ctrl.listarPeriodos);
 router.post('/periodos',             ctrl.crearPeriodo);
 router.patch('/periodos/:id/cerrar', ctrl.cerrarPeriodo);
+router.patch('/periodos/:id/activar', ctrl.activarPeriodo);
 
 // Buscar usuario + Programar clase (admin)
 router.get('/buscar-usuario',        ctrl.buscarUsuario);

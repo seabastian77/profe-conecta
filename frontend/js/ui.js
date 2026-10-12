@@ -156,8 +156,8 @@ function obtenerEstudiantesEnAlerta(tutorias) {
         sesiones: 0,
         ultima: null,
         asignaturas: new Set(),
-        // Simula el promedio a partir del id.
-        promedio: 2.0 + ((t.estudiante_id * 7) % 15) / 10,
+        // Usa el promedio real del perfil; antes se inventaba a partir del id del estudiante.
+        promedio: t.promedio === null || t.promedio === undefined ? null : parseFloat(t.promedio),
       };
     }
     porEstudiante[t.estudiante_id].sesiones++;
@@ -171,7 +171,7 @@ function obtenerEstudiantesEnAlerta(tutorias) {
   });
 
   return Object.values(porEstudiante)
-    .filter((e) => e.promedio < CONFIG.PROMEDIO_MINIMO)
+    .filter((e) => e.promedio > 0 && e.promedio < CONFIG.PROMEDIO_MINIMO)
     .sort((a, b) => a.promedio - b.promedio);
 }
 
@@ -304,7 +304,7 @@ function renderizarGrafica(perfil, tutorias) {
           x2="${pMin.x + 16 * cosMin}" y2="${pMin.y + 16 * senMin}"
           stroke="#f39200" stroke-width="3"/>
     <text x="${pMin.x + 28 * cosMin}" y="${pMin.y + 28 * senMin + 4}"
-          font-size="12" fill="#f39200" font-weight="700" text-anchor="middle">3.0</text>
+          font-size="12" fill="#f39200" font-weight="700" text-anchor="middle">${minimo.toFixed(1)}</text>
 
     <!-- Extremos de escala -->
     <text x="${pol(angIni).x - 14}" y="${pol(angIni).y + 6}"
@@ -506,11 +506,11 @@ function seleccionarDia(prefijo, dia) {
     .map(
       (t) => `
     <div class="calendario-evento">
-      <span class="calendario-evento__hora">${t.hora?.slice(0, 5)}</span>
+      <span class="calendario-evento__hora">${escaparHtml(t.hora?.slice(0, 5))}</span>
       <div class="calendario-evento__info">
         <div class="calendario-evento__asig">${escaparHtml(t.asignatura)}</div>
         <div class="calendario-evento__meta">
-          ${t.nombre_docente || t.nombre_estudiante || ""} · 
+          ${escaparHtml(t.nombre_docente || t.nombre_estudiante || "")} · 
           <span class="calendario-evento__modo">${iconoModalidad(t.modalidad)} ${escaparHtml(t.modalidad)}</span>
         </div>
       </div>
@@ -568,11 +568,13 @@ async function cargarNotificaciones() {
   }
 }
 
+// Abre o cierra la campana; al abrirla trae las notificaciones nuevas, que antes solo se cargaban al iniciar sesión.
 function alternarNotificaciones() {
   const panel = document.getElementById("notifPanel");
   panel.classList.toggle("oculto");
 
   if (!panel.classList.contains("oculto")) {
+    cargarNotificaciones();
     document.addEventListener("click", cerrarNotifFuera, { once: true });
   }
 }
@@ -606,15 +608,15 @@ async function marcarTodasLeidas() {
 function mostrarTostada(mensaje, tipo) {
   const tostada = document.getElementById("tostada");
   tostada.textContent = mensaje;
-  tostada.className = "tostada tostada--visible";
 
-  if (tipo === "error") tostada.classList.add("tostada--error");
-  if (tipo === "alerta") tostada.classList.add("tostada--alerta");
+  // Usa las clases que define estilos.css; las de estilo «tostada--» no existían y el mensaje nunca se veía (DEF-13).
+  const claseTipo = { exito: "exito", error: "error", alerta: "advertencia", advertencia: "advertencia" }[tipo];
+  tostada.className = "tostada visible" + (claseTipo ? " " + claseTipo : "");
 
   clearTimeout(window._tostadaTimer);
   window._tostadaTimer = setTimeout(
-    () => tostada.classList.remove("tostada--visible"),
-    3500,
+    () => tostada.classList.remove("visible"),
+    tipo === "error" ? 6000 : 3500,
   );
 }
 

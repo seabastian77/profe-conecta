@@ -1,5 +1,13 @@
 const { db } = require('../config/db');
-const { obtenerOCrearId } = require('./asignaturasController');
+const { obtenerOCrearId, nombreMateriaValido } = require('./asignaturasController');
+
+// Aplica a docentes y administradores la misma regla del documento del estudiante: solo números.
+function errorCedulaTelefono(cedula, telefono) {
+  if (!/^\d{6,11}$/.test(String(cedula).trim())) return 'La cédula debe tener solo números (entre 6 y 11 dígitos)';
+  const tel = String(telefono || '').trim();
+  if (tel && !/^\d{7,10}$/.test(tel)) return 'El teléfono debe tener entre 7 y 10 números';
+  return null;
+}
 
 // Crea o actualiza el perfil del estudiante.
 async function guardarPerfilEstudiante(req, res) {
@@ -10,14 +18,24 @@ async function guardarPerfilEstudiante(req, res) {
     return res.status(400).json({ error: 'Faltan datos obligatorios: documento, programa y semestre' });
   }
 
-  // El promedio no lo fija el estudiante: lo administra la institución.
+  // CC y TI son solo números: antes se guardaba cualquier texto, como «: 1098765432».
+  const doc = String(documento).trim();
+  if (!/^\d{6,11}$/.test(doc)) {
+    return res.status(400).json({ error: 'El documento debe tener solo números (entre 6 y 11 dígitos)' });
+  }
+  const tel = String(telefono || '').trim();
+  if (tel && !/^\d{7,10}$/.test(tel)) {
+    return res.status(400).json({ error: 'El teléfono debe tener entre 7 y 10 números' });
+  }
+
+  // El promedio no lo fija el estudiante: lo registra la institución desde la gestión de usuarios.
   await db.prepare(`
     INSERT INTO perfiles_estudiante (usuario_id, codigo, documento, programa, semestre, telefono)
     VALUES (?,?,?,?,?,?)
     ON CONFLICT(usuario_id) DO UPDATE SET
       codigo=excluded.codigo, documento=excluded.documento, programa=excluded.programa,
       semestre=excluded.semestre, telefono=excluded.telefono
-  `).run(usuario_id, documento, documento, programa, semestre, telefono || '');
+  `).run(usuario_id, doc, doc, programa, semestre, tel);
   res.json({ mensaje: 'Perfil guardado' });
 }
 
@@ -29,6 +47,14 @@ async function guardarPerfilDocente(req, res) {
   if (!cedula || !facultad) {
     return res.status(400).json({ error: 'Faltan datos obligatorios: cédula y facultad' });
   }
+  const errorDatos = errorCedulaTelefono(cedula, telefono);
+  if (errorDatos) return res.status(400).json({ error: errorDatos });
+  // RF041 pide mínimo una asignatura; el formulario lo exigía pero la API no.
+  if (!Array.isArray(asignaturas) || !asignaturas.some(a => typeof a === 'string' && a.trim())) {
+    return res.status(400).json({ error: 'Agrega al menos una asignatura que dictes' });
+  }
+  const invalida = asignaturas.find(a => typeof a === 'string' && a.trim() && !nombreMateriaValido(a));
+  if (invalida) return res.status(400).json({ error: `El nombre de materia «${invalida.slice(0, 40)}» no es válido` });
 
   await db.prepare(`
     INSERT INTO perfiles_docente (usuario_id, cedula, codigo_docente, facultad, telefono)
@@ -36,7 +62,7 @@ async function guardarPerfilDocente(req, res) {
     ON CONFLICT(usuario_id) DO UPDATE SET
       cedula=excluded.cedula, codigo_docente=excluded.codigo_docente,
       facultad=excluded.facultad, telefono=excluded.telefono
-  `).run(usuario_id, cedula, cedula, facultad, telefono || '');
+  `).run(usuario_id, String(cedula).trim(), String(cedula).trim(), facultad, String(telefono || '').trim());
 
   const perfil = await db.prepare('SELECT id FROM perfiles_docente WHERE usuario_id = ?').get(usuario_id);
 
@@ -78,6 +104,8 @@ async function guardarPerfilAdmin(req, res) {
   if (!cedula || !cargo) {
     return res.status(400).json({ error: 'Faltan datos obligatorios' });
   }
+  const errorDatos = errorCedulaTelefono(cedula, telefono);
+  if (errorDatos) return res.status(400).json({ error: errorDatos });
 
   await db.prepare(`
     INSERT INTO perfiles_admin (usuario_id, cedula, cargo, dependencia, telefono)
@@ -85,7 +113,7 @@ async function guardarPerfilAdmin(req, res) {
     ON CONFLICT(usuario_id) DO UPDATE SET
       cedula=excluded.cedula, cargo=excluded.cargo,
       dependencia=excluded.dependencia, telefono=excluded.telefono
-  `).run(usuario_id, cedula, cargo, dependencia || '', telefono || '');
+  `).run(usuario_id, String(cedula).trim(), cargo, dependencia || '', String(telefono || '').trim());
 
   res.json({ mensaje: 'Perfil guardado' });
 }
@@ -135,6 +163,11 @@ async function subirFoto(req, res) {
   const usuario_id = req.usuario.id;
 
   if (!foto_base64) return res.status(400).json({ error: 'No se recibió foto' });
+
+  // Solo acepta imágenes en base64; cualquier otro texto terminaba en el atributo src de la página.
+  if (!/^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(String(foto_base64))) {
+    return res.status(400).json({ error: 'El archivo debe ser una imagen JPG, PNG, WebP o GIF' });
+  }
 
   // Rechaza imágenes de más de 2 MB para no llenar la base ni degradar el servicio.
   const datos = String(foto_base64).split(',').pop() || '';

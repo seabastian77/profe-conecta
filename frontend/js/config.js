@@ -10,14 +10,28 @@ const CONFIG = {
 
   // Reglas de negocio
   PROMEDIO_MINIMO: 3.0,
-  MAX_INTENTOS: 5,
+  MAX_INTENTOS: 3,
   MINUTOS_BLOQUEO: 5,
   HORAS_CANCELACION: 24,
-  MINUTOS_INACTIVIDAD: 120,
+  MINUTOS_INACTIVIDAD: 15,
+  MAX_ESTUDIANTES: 15,
 
   // Dominio institucional permitido
   DOMINIO_CORREO: "@amigo.edu.co",
 };
+
+
+// Aplica las reglas que fija el administrador en Configuración; antes la pantalla usaba siempre los valores fijos.
+function aplicarReglas(reglas) {
+  if (!reglas) return;
+  ["PROMEDIO_MINIMO", "HORAS_CANCELACION", "MAX_ESTUDIANTES", "MINUTOS_INACTIVIDAD"].forEach(function (clave) {
+    var valor = Number(reglas[clave]);
+    if (Number.isFinite(valor) && valor > 0) CONFIG[clave] = valor;
+  });
+}
+
+// Usa las últimas reglas conocidas mientras se consultan las vigentes.
+try { aplicarReglas(JSON.parse(localStorage.getItem("cp.reglas") || "null")); } catch (e) { /* sin caché */ }
 
 
 // Carga el script del modo demo solo cuando está activado.

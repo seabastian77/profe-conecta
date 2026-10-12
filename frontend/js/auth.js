@@ -110,6 +110,14 @@ async function alEnviarLogin(e) {
       admin: "panel-admin",
     };
     irAPagina(paneles[data.usuario.rol] || "panel-estudiante");
+
+    // El rol lo define la cuenta: si eligió a mano otra tarjeta, se lo dice en vez de ignorarlo en silencio.
+    var selector = document.getElementById("selectorRolLogin");
+    var rolElegido = selector?.dataset.elegido === "1" ? selector.querySelector(".tarjeta-rol.seleccionada")?.dataset.rol : null;
+    if (rolElegido && rolElegido !== data.usuario.rol) {
+      var nombresRol = { estudiante: "Estudiante", docente: "Docente", admin: "Administrador" };
+      mostrarTostada("Tu cuenta es de " + (nombresRol[data.usuario.rol] || data.usuario.rol) + ": entraste a ese panel", "advertencia");
+    }
   } catch (err) {
     if (err.status === 429) {
       document.getElementById("avisoBloqueo").classList.remove("oculto");
@@ -350,6 +358,8 @@ function aplicarEstadoInvitado() {
   var chipNombre = document.getElementById("chipNombre");
   if (chipAvatar) chipAvatar.textContent = "?";
   if (chipNombre) chipNombre.textContent = "Invitado";
+  // Quita la foto del usuario anterior para que no quede en el encabezado del siguiente.
+  if (typeof aplicarFotoAvatar === "function") aplicarFotoAvatar("");
   var bsChip = document.getElementById("bsChip");
   if (bsChip) bsChip.classList.add("oculto");
 
@@ -364,8 +374,15 @@ function aplicarEstadoInvitado() {
   });
 }
 
+// Avisa al servidor el cierre para que quede en la auditoría; no espera la respuesta.
+function registrarSalida(motivo) {
+  if (!authStorage.getToken() || CONFIG.MODO_DEMO) return;
+  llamarAPI("/auth/salir", "POST", { motivo: motivo || "manual" }).catch(function () {});
+}
+
 // Cierra la sesión y limpia el almacenamiento local
 function cerrarSesion() {
+  registrarSalida("manual");
   perfilStorage.limpiarTodo();
   academicoStorage.limpiarTodo();
   authStorage.limpiarTodo();
@@ -425,6 +442,47 @@ function aplicarSesion(usuario) {
   }
 
   cargarNotificaciones();
+  cargarReglas();
+  if (typeof cargarFotoAvatar === "function") cargarFotoAvatar();
+}
+
+// Trae las reglas vigentes de Configuración y actualiza los textos que las muestran.
+async function cargarReglas() {
+  if (CONFIG.MODO_DEMO) return;
+  try {
+    var reglas = await llamarAPI("/reglas", "GET");
+    aplicarReglas(reglas);
+    try { localStorage.setItem("cp.reglas", JSON.stringify(reglas)); } catch (e) { /* sin espacio */ }
+  } catch (e) {
+    // Conserva las últimas reglas conocidas.
+  }
+  actualizarTextosReglas();
+}
+
+// Escribe en la pantalla los valores de las reglas que cambian desde Configuración.
+function actualizarTextosReglas() {
+  var horas = document.getElementById("avisoHorasCancelacion");
+  if (horas) horas.textContent = CONFIG.HORAS_CANCELACION;
+  var cupo = document.getElementById("cupoMaxTutor");
+  if (cupo) cupo.textContent = CONFIG.MAX_ESTUDIANTES;
+}
+
+// Indica si pasó el tiempo máximo sin actividad que fija RNF02.
+function sesionInactivaVencida() {
+  const ultima = authStorage.getUltimaActividad();
+  return ultima > 0 && (Date.now() - ultima) / 60000 > CONFIG.MINUTOS_INACTIVIDAD;
+}
+
+// Cierra la sesión por inactividad y deja el aviso en el inicio de sesión.
+function cerrarSesionPorInactividad() {
+  registrarSalida("inactividad");
+  perfilStorage.limpiarTodo();
+  academicoStorage.limpiarTodo();
+  authStorage.limpiarTodo();
+  aplicarEstadoInvitado();
+  irAPagina("inicio-sesion");
+  const aviso = document.getElementById("avisoSesionExpirada");
+  if (aviso) aviso.style.display = "block";
 }
 
 // Verifica si hay una sesión válida guardada al cargar la app
@@ -472,4 +530,5 @@ function seleccionarRolLogin(btn) {
       b.classList.remove("seleccionada");
     });
   btn.classList.add("seleccionada");
+  btn.closest("#selectorRolLogin").dataset.elegido = "1";
 }

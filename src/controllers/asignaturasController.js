@@ -1,5 +1,13 @@
 const { db } = require('../config/db');
 
+// Nombre de materia de 2 a 80 caracteres sin < > " ` ni barra invertida, que terminaban como HTML en las páginas.
+const NOMBRE_MATERIA_VALIDO = /^[^<>"`\\\u0000-\u001f]{2,80}$/;
+
+// Indica si el nombre de la materia se puede guardar.
+function nombreMateriaValido(nombre) {
+  return typeof nombre === 'string' && NOMBRE_MATERIA_VALIDO.test(nombre.trim());
+}
+
 // Busca asignaturas por nombre o devuelve las primeras si no hay término.
 async function buscar(req, res) {
   const { q } = req.query;
@@ -54,6 +62,9 @@ async function crearOBuscar(req, res) {
     return res.status(400).json({ error: 'El nombre de la materia es requerido' });
   }
   const nombreLimpio = nombre.trim();
+  if (!nombreMateriaValido(nombreLimpio)) {
+    return res.status(400).json({ error: 'El nombre de la materia debe tener entre 2 y 80 caracteres y no puede llevar < > " ` ni \\' });
+  }
   const areaLimpia = (area || 'General').trim();
   const programaLimpio = (programa || 'General').trim();
 
@@ -85,4 +96,4 @@ async function obtenerOCrearId(nombre, area, programa) {
   return result.id;
 }
 
-module.exports = { buscar, listarTodas, listarPorAreas, crearOBuscar, obtenerOCrearId };
+module.exports = { buscar, listarTodas, listarPorAreas, crearOBuscar, obtenerOCrearId, nombreMateriaValido };

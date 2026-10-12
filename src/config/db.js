@@ -1,8 +1,12 @@
 const { Pool } = require('pg');
 
+// Cada conexión arranca en la hora de Colombia: con UTC, auditoría y notificaciones quedaban 5 horas adelante (DEF-12).
+const ZONA_HORARIA = (process.env.ZONA_HORARIA || 'America/Bogota').replace(/[^A-Za-z_/+-]/g, '');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  options: `-c TimeZone=${ZONA_HORARIA}`
 });
 
 // Convierte los ? del SQL en los marcadores $1, $2, $3 de PostgreSQL.

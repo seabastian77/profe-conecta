@@ -18,6 +18,7 @@ router.post('/registro',  limiteAuth, ctrl.reglasRegistro, ctrl.registro);
 router.post('/login',     limiteAuth, ctrl.reglasLogin,    ctrl.login);
 router.post('/recuperar', limiteAuth, ctrl.recuperar);
 router.get('/yo',         autenticar, ctrl.yo);
+router.post('/salir',     autenticar, ctrl.salir);
 
 // Indica al frontend si el botón de Google debe mostrarse.
 router.get('/google/estado', (req, res) => res.json({ disponible: oauthActivo }));
