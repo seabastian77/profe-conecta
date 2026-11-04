@@ -148,14 +148,17 @@ async function exportarLogAuditoria() {
     const eventos = [];
     let total = 0;
     try {
-      for (let pagina = 1; eventos.length < MAX_FILAS_EXPORTACION; pagina++) {
+      let pagina = 1;
+      let hayMas = true;
+      while (hayMas && eventos.length < MAX_FILAS_EXPORTACION) {
         const consulta = consultaAuditoria();
         consulta.set('limite', LOTE_EXPORTACION);
         consulta.set('pagina', pagina);
         const lote = await llamarAPIConTotal('/admin/auditoria?' + consulta);
         total = lote.total;
         eventos.push(...lote.datos);
-        if (lote.datos.length < LOTE_EXPORTACION || eventos.length >= total) break;
+        hayMas = lote.datos.length >= LOTE_EXPORTACION && eventos.length < total;
+        pagina++;
       }
     } catch (err) {
       mostrarTostada(err.mensaje || 'No se pudo exportar el registro', 'error');

@@ -192,7 +192,7 @@ function renderProximas() {
     (grupos[clave] = grupos[clave] || []).push(t);
   });
 
-  contenedor.innerHTML = Object.keys(grupos).sort().map((iso) => {
+  contenedor.innerHTML = Object.keys(grupos).sort((x, y) => x.localeCompare(y)).map((iso) => {
     const [anio, mes, dia] = iso.split('-').map(Number);
     const festivo = festivosColombia(anio)[iso] || '';
     const titulo = iso === hoy ? 'Hoy' : iso === manana ? 'Mañana' : dia + ' de ' + MESES[mes - 1].toLowerCase();

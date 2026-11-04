@@ -177,7 +177,7 @@ describeSiHayBase('Correcciones de defectos', () => {
         .send({ ...datos, promedio: 4.2 });
       expect(bueno.status).toBe(200);
       const fila = await db.pool.query('SELECT promedio FROM perfiles_estudiante WHERE usuario_id=$1', [nuevo.id]);
-      expect(Number(fila.rows[0].promedio)).toBe(4.2);
+      expect(Number(fila.rows[0].promedio)).toBeCloseTo(4.2, 2);
     });
 
     test('el docente recibe el promedio real de sus estudiantes', async () => {

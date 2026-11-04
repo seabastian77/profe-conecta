@@ -232,7 +232,7 @@ describeSiHayBase('Respaldo y restauración', () => {
       for (const n of ['a_20260101_000000', 'a_20260102_000000', 'a_20260103_000000', 'b_20260101_000000']) fs.writeFileSync(path.join(rotacion, `${n}.json.gz`), 'x');
       const borrados = rotarRespaldos(rotacion, 'a', 2);
       expect(borrados).toEqual(['a_20260101_000000.json.gz']);
-      expect(fs.readdirSync(rotacion).sort()).toEqual(['a_20260102_000000.json.gz', 'a_20260103_000000.json.gz', 'b_20260101_000000.json.gz']);
+      expect(fs.readdirSync(rotacion).sort((x, y) => x.localeCompare(y))).toEqual(['a_20260102_000000.json.gz', 'a_20260103_000000.json.gz', 'b_20260101_000000.json.gz']);
       expect(rotarRespaldos(rotacion, 'a', 0)).toEqual(['a_20260102_000000.json.gz']);
     } finally {
       fs.rmSync(rotacion, { recursive: true, force: true });
@@ -379,7 +379,7 @@ describeSiHayBase('Reparación guiada de datos', () => {
   test('el plan elige qué conservar y qué cancelar, y deja para decisión humana lo que no puede resolver solo', async () => {
     const plan = await planificarReparaciones(c);
 
-    expect(plan.acciones.map(a => a.reparacion).sort()).toEqual([
+    expect(plan.acciones.map(a => a.reparacion).sort((x, y) => x.localeCompare(y))).toEqual([
       'asignaciones-repetidas', 'tutorias-invalidas', 'tutorias-invalidas', 'tutorias-repetidas', 'tutorias-repetidas', 'tutorias-repetidas'
     ]);
     expect(plan.acciones.map(a => a.resumen).join('\n')).toMatch(/Cancelar la tutoría #\d+ de Cálculo .*repetía la tutoría #/);

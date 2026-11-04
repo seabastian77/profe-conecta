@@ -37,7 +37,7 @@ describeSiHayBase('Reservas de tutorías', () => {
     const franja = franjaUnica();
 
     const respuestas = await Promise.all(estudiantes.map(e => reservar(e, datosBase(franja))));
-    const estados = respuestas.map(r => r.status).sort();
+    const estados = respuestas.map(r => r.status).sort((x, y) => x - y);
 
     expect(estados.filter(s => s === 201)).toHaveLength(1);
     expect(estados.filter(s => s === 409)).toHaveLength(9);
@@ -58,7 +58,7 @@ describeSiHayBase('Reservas de tutorías', () => {
       reservar(estudiante, { ...datosBase(franja), docente_id: otro.id, asignatura: otro.materias[0] })
     ]);
 
-    expect([a.status, b.status].sort()).toEqual([201, 409]);
+    expect([a.status, b.status].sort((x, y) => x - y)).toEqual([201, 409]);
   });
 
   test('la hora con segundos choca con la misma hora sin segundos', async () => {

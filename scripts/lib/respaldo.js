@@ -222,7 +222,7 @@ async function verificarRespaldo(archivo) {
       conteo[objeto.t] = (conteo[objeto.t] || 0) + 1;
     }
   } catch (err) {
-    if (/^Z_|incorrect header check|unexpected end of file|invalid/i.test(`${err.code} ${err.message}`)) {
+    if (/(?:^Z_)|incorrect header check|unexpected end of file|invalid/i.test(`${err.code} ${err.message}`)) {
       throw new Error('El archivo está dañado o incompleto: no se pudo descomprimir');
     }
     throw err;
@@ -344,8 +344,7 @@ function rotarRespaldos(carpeta, etiqueta, conservar) {
   if (!fs.existsSync(carpeta)) return [];
   const archivos = fs.readdirSync(carpeta)
     .filter(n => n.startsWith(`${etiqueta}_`) && n.endsWith('.json.gz'))
-    .sort()
-    .reverse();
+    .sort((x, y) => y.localeCompare(x));
   const sobrantes = archivos.slice(Math.max(1, conservar));
   sobrantes.forEach(n => fs.rmSync(path.join(carpeta, n), { force: true }));
   return sobrantes;

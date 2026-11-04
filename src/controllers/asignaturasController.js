@@ -55,9 +55,9 @@ async function listarPorAreas(req, res) {
     if (!areasMap[area][prog]) areasMap[area][prog] = [];
     areasMap[area][prog].push({ id: a.id, nombre: a.nombre });
   }
-  const resultado = Object.keys(areasMap).sort().map(area => ({
+  const resultado = Object.keys(areasMap).sort((x, y) => x.localeCompare(y, 'es')).map(area => ({
     area,
-    programas: Object.keys(areasMap[area]).sort().map(prog => ({
+    programas: Object.keys(areasMap[area]).sort((x, y) => x.localeCompare(y, 'es')).map(prog => ({
       programa: prog,
       materias: areasMap[area][prog]
     }))

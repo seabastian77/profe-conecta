@@ -224,7 +224,7 @@ async function planManuales(c, opciones) {
 // Calcula todo lo que se haría, sin modificar nada.
 async function planificarReparaciones(c, { limpiarDocumentos = false, notificar = true } = {}) {
   const opciones = { limpiarDocumentos, notificar };
-  const partes = [await planTutoriasRepetidas(c, opciones), await planTutoriasInvalidas(c, opciones), await planAsignacionesRepetidas(c, opciones)];
+  const partes = [await planTutoriasRepetidas(c, opciones), await planTutoriasInvalidas(c, opciones), await planAsignacionesRepetidas(c)];
   if (limpiarDocumentos) partes.push(await planDocumentosRepetidos(c, opciones));
 
   // Una tutoría marcada por dos reglas se cancela una sola vez.
