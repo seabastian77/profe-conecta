@@ -5,6 +5,8 @@ const { db } = require("./config/db");
 
 const PORT = process.env.PORT || 3000;
 const INTENTOS_MAX = 10;
+const ESPERA_CIERRE_MS = 10000;
+const HORA_MS = 60 * 60 * 1000;
 
 const esperar = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -52,15 +54,56 @@ function explicarFallo(err) {
   console.error('   Detalle técnico:', err?.message || err);
 }
 
+// Cierra el servidor y el pool de conexiones de forma ordenada al recibir una señal de apagado.
+function apagar(servidor, senal) {
+  console.log(`\n${senal} recibida: cerrando el servidor…`);
+  const forzado = setTimeout(() => {
+    console.error('Cierre forzado: las conexiones no terminaron a tiempo');
+    process.exit(1);
+  }, ESPERA_CIERRE_MS);
+  forzado.unref();
+
+  servidor.close(async () => {
+    try { await db.cerrar(); } catch { /* el pool ya estaba cerrado */ }
+    process.exit(0);
+  });
+  servidor.closeIdleConnections?.();
+}
+
+// Borra cada hora los intentos de login de más de un día para que la tabla no crezca sin control.
+function programarLimpiezaDeIntentos() {
+  const limpiar = () => db.pool
+    .query("DELETE FROM intentos_login WHERE creado_en < NOW() - INTERVAL '1 day'")
+    .catch((err) => console.warn('No se pudo limpiar intentos_login:', err.message));
+  setInterval(limpiar, HORA_MS).unref();
+}
+
+process.on('unhandledRejection', (motivo) => {
+  console.error('Promesa rechazada sin manejar:', motivo instanceof Error ? motivo.message : motivo);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Excepción no capturada, el proceso se reinicia:', err);
+  process.exit(1);
+});
+
 // Espera la base, corre la migración y levanta el servidor.
 (async () => {
   try {
     await esperarBase();
     await migrar();
 
-    app.listen(PORT, () => {
+    const servidor = app.listen(PORT, () => {
       console.log(`\n🚀 ConectaProfe corriendo en puerto ${PORT}`);
     });
+
+    // El proxy de Railway reutiliza conexiones: el servidor debe esperar más que él para no cortarlas.
+    servidor.keepAliveTimeout = 65000;
+    servidor.headersTimeout = 66000;
+
+    programarLimpiezaDeIntentos();
+    process.on('SIGTERM', () => apagar(servidor, 'SIGTERM'));
+    process.on('SIGINT', () => apagar(servidor, 'SIGINT'));
   } catch (err) {
     explicarFallo(err);
     process.exit(1);

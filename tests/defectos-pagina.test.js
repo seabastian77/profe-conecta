@@ -10,6 +10,7 @@ const bcrypt  = require('bcrypt');
 const app = require('../src/app');
 const { db } = require('../src/config/db');
 const { generarToken } = require('../src/config/jwt');
+const { unico, documentoUnico, franjaUnica } = require('./ayudas');
 
 // Devuelve fecha y hora de Colombia desplazadas las horas pedidas desde ahora.
 function enColombia(horas) {
@@ -17,16 +18,6 @@ function enColombia(horas) {
   return { fecha: iso.slice(0, 10), hora: iso.slice(11, 16) };
 }
 
-// Genera una franja futura distinta en cada corrida para no chocar con datos viejos.
-function franjaUnica() {
-  const n = Date.now() % 1000000;
-  return {
-    fecha: `${2040 + (n % 9)}-${String(1 + (n % 12)).padStart(2, '0')}-${String(1 + (n % 28)).padStart(2, '0')}`,
-    hora: `${String(6 + (n % 14)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`
-  };
-}
-
-const unico = () => `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
 // Pruebas de los defectos encontrados al recorrer la página como usuario; cada una falla con el código anterior.
 describeSiHayBase('Defectos encontrados recorriendo la página', () => {
@@ -43,7 +34,7 @@ describeSiHayBase('Defectos encontrados recorriendo la página', () => {
       nombres: 'Prueba', apellidos: 'Pagina', correo, contrasena: 'Password123', rol: 'estudiante'
     });
     await request(app).post('/api/perfil/estudiante').set('Authorization', `Bearer ${res.body.token}`)
-      .send({ documento: '1098765432', programa, semestre: '3', telefono: '3001234567' });
+      .send({ documento: documentoUnico(), programa, semestre: '3', telefono: '3001234567' });
     return { id: res.body.usuario.id, correo, token: res.body.token };
   }
 
@@ -54,7 +45,7 @@ describeSiHayBase('Defectos encontrados recorriendo la página', () => {
       .send({ nombres: 'Docente', apellidos: 'Prueba', correo, rol: 'docente', contrasena: 'Password123' });
     const token = generarToken({ id: creado.body.id, correo, rol: 'docente' });
     await request(app).post('/api/perfil/docente').set('Authorization', `Bearer ${token}`)
-      .send({ cedula: '1023456999', facultad: 'Facultad de Ingenierías', telefono: '3001234567', asignaturas: [asignatura] });
+      .send({ cedula: documentoUnico(), facultad: 'Facultad de Ingenierías', telefono: '3001234567', asignaturas: [asignatura] });
     return { id: creado.body.id, token };
   }
 
@@ -348,8 +339,9 @@ describeSiHayBase('Defectos encontrados recorriendo la página', () => {
 
     test('la cédula del docente solo admite números y exige una materia', async () => {
       const tutor = await docenteNuevo('cedula', materia);
+      const cedula = documentoUnico();
       const guardar = (datos) => request(app).post('/api/perfil/docente').set('Authorization', `Bearer ${tutor.token}`)
-        .send({ cedula: '1023456999', facultad: 'Facultad de Ingenierías', asignaturas: [materia], ...datos });
+        .send({ cedula, facultad: 'Facultad de Ingenierías', asignaturas: [materia], ...datos });
       expect((await guardar({ cedula: 'CC 10234' })).status).toBe(400);
       expect((await guardar({ asignaturas: [] })).status).toBe(400);
       expect((await guardar({})).status).toBe(200);

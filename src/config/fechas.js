@@ -2,6 +2,7 @@
 const DESFASE_COLOMBIA = '-05:00';
 const HORAS_DESFASE = 5;
 const MODALIDADES = ['Presencial', 'Virtual', 'Híbrida'];
+const DIAS_MAXIMOS_ANTICIPACION = 730;
 
 // Indica si el texto es una fecha que existe, con formato AAAA-MM-DD.
 function esFechaValida(fecha) {
@@ -27,15 +28,24 @@ function hoyColombia(ahora = new Date()) {
   return new Date(ahora.getTime() - HORAS_DESFASE * 3600000).toISOString().slice(0, 10);
 }
 
-// Valida fecha, hora y modalidad de una sesión y aplica RRN06 (desde mañana); devuelve el error o null.
+// Devuelve la fecha AAAA-MM-DD que queda la cantidad de días indicada después de otra.
+function sumarDias(fecha, dias) {
+  const [a, m, d] = fecha.split('-').map(Number);
+  return new Date(Date.UTC(a, m - 1, d + dias)).toISOString().slice(0, 10);
+}
+
+// Valida fecha, hora y modalidad de una sesión y aplica RRN06 (desde mañana y hasta dos años); devuelve el error o null.
 function errorDatosSesion({ fecha, hora, modalidad }) {
   if (!esFechaValida(fecha)) return 'La fecha no es válida (formato AAAA-MM-DD)';
   if (!esHoraValida(hora)) return 'La hora no es válida (formato HH:MM)';
   if (fecha <= hoyColombia()) return 'La fecha debe ser a partir de mañana (RN06)';
+  if (fecha > sumarDias(hoyColombia(), DIAS_MAXIMOS_ANTICIPACION)) {
+    return 'La fecha no puede superar los dos años desde hoy';
+  }
   if (modalidad !== undefined && modalidad !== null && modalidad !== '' && !MODALIDADES.includes(modalidad)) {
     return 'Modalidad inválida: usa Presencial, Virtual o Híbrida';
   }
   return null;
 }
 
-module.exports = { MODALIDADES, esFechaValida, esHoraValida, instanteColombia, hoyColombia, errorDatosSesion };
+module.exports = { MODALIDADES, esFechaValida, esHoraValida, instanteColombia, hoyColombia, sumarDias, errorDatosSesion };

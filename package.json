@@ -12,15 +12,20 @@
     "dev": "nodemon src/server.js",
     "build": "npm install --omit=dev",
     "db:init": "node src/config/migrate.js",
+    "db:respaldo": "node scripts/respaldo.js",
+    "db:restaurar": "node scripts/restaurar.js",
+    "db:diagnostico": "node scripts/diagnostico-bd.js",
+    "db:reparar": "node scripts/reparar-datos.js",
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch",
     "test:cobertura": "jest --coverage --runInBand --forceExit",
     "auditoria": "npm audit --audit-level=high",
-    "lint": "eslint src tests",
-    "lint:fix": "eslint src tests --fix"
+    "lint": "eslint src tests scripts frontend/js",
+    "lint:fix": "eslint src tests scripts frontend/js --fix"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "compression": "^1.8.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^5.2.1",
@@ -46,6 +51,7 @@
     ],
     "collectCoverageFrom": [
       "src/**/*.js",
+      "scripts/**/*.js",
       "!src/config/migrate.js"
     ]
   }

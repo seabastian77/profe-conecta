@@ -10,6 +10,7 @@ const bcrypt  = require('bcrypt');
 const app = require('../src/app');
 const { db } = require('../src/config/db');
 const { generarToken } = require('../src/config/jwt');
+const { documentoUnico, franjaUnica } = require('./ayudas');
 
 // Prueba de extremo a extremo de todos los endpoints contra una base real.
 describeSiHayBase('Integración de endpoints', () => {
@@ -76,7 +77,7 @@ describeSiHayBase('Integración de endpoints', () => {
       const antes = await db.pool.query('SELECT promedio FROM perfiles_estudiante WHERE usuario_id=$1', [estId]);
       const res = await request(app).post('/api/perfil/estudiante')
         .set('Authorization', `Bearer ${estToken}`)
-        .send({ documento: '1098765432', programa: 'Sistemas', semestre: '5', telefono: '3000000000', promedio: 5.0 });
+        .send({ documento: documentoUnico(), programa: 'Sistemas', semestre: '5', telefono: '3000000000', promedio: 5.0 });
       expect(res.status).toBe(200);
       const despues = await db.pool.query('SELECT promedio FROM perfiles_estudiante WHERE usuario_id=$1', [estId]);
       expect(Number(despues.rows[0].promedio)).not.toBe(5.0);
@@ -101,16 +102,12 @@ describeSiHayBase('Integración de endpoints', () => {
     test('programar con docente inexistente devuelve 404, no 500', async () => {
       const res = await request(app).post('/api/tutorias')
         .set('Authorization', `Bearer ${estToken}`)
-        .send({ docente_id: 999999, asignatura: 'X', modalidad: 'Virtual', fecha: '2027-01-01', hora: '10:00' });
+        .send({ docente_id: 999999, asignatura: 'X', modalidad: 'Virtual', ...franjaUnica() });
       expect(res.status).toBe(404);
     });
 
     test('programar una tutoría válida devuelve 201 con id', async () => {
       // Franja horaria única para no chocar con corridas anteriores.
-      const n = Date.now() % 100000;
-      const anio = 2030 + (n % 5);
-      const hh = String(6 + (n % 12)).padStart(2, '0');
-      const mm = String(n % 60).padStart(2, '0');
       // Usa una materia que el docente dicta: la API ya no acepta asignaturas ajenas al tutor.
       const materia = await db.pool.query(
         `SELECT a.nombre FROM docente_asignaturas da JOIN perfiles_docente pd ON pd.id = da.docente_id
@@ -118,7 +115,7 @@ describeSiHayBase('Integración de endpoints', () => {
       const materiaDoc = materia.rows[0].nombre;
       const res = await request(app).post('/api/tutorias')
         .set('Authorization', `Bearer ${estToken}`)
-        .send({ docente_id: docId, asignatura: materiaDoc, modalidad: 'Virtual', fecha: `${anio}-03-15`, hora: `${hh}:${mm}` });
+        .send({ docente_id: docId, asignatura: materiaDoc, modalidad: 'Virtual', ...franjaUnica() });
       expect(res.status).toBe(201);
       expect(res.body.id).toBeDefined();
     });

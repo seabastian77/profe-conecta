@@ -1,50 +1,60 @@
 const router = require('express').Router();
 const { autenticar } = require('../middlewares/autenticar');
 const { soloRol }    = require('../middlewares/soloRol');
+const { conIdValidado } = require('../middlewares/validarId');
 const { envolverControlador } = require('../middlewares/envolver');
-const ctrl = envolverControlador(require('../controllers/adminController'));
+
+const usuarios      = envolverControlador(require('../controllers/admin/usuariosController'));
+const panel         = envolverControlador(require('../controllers/admin/panelController'));
+const notificaciones = envolverControlador(require('../controllers/admin/notificacionesAdminController'));
+const auditoria     = envolverControlador(require('../controllers/admin/auditoriaController'));
+const asignaciones  = envolverControlador(require('../controllers/admin/asignacionesController'));
+const configuracion = envolverControlador(require('../controllers/admin/configuracionController'));
+const periodos      = envolverControlador(require('../controllers/admin/periodosController'));
+const clases        = envolverControlador(require('../controllers/admin/clasesController'));
 
 router.use(autenticar, soloRol('admin'));
+conIdValidado(router);
 
 // Usuarios
-router.get('/usuarios',              ctrl.listarUsuarios);
-router.post('/usuarios',             ctrl.crearUsuario);
-router.patch('/usuarios/:id/estado', ctrl.cambiarEstado);
-router.delete('/usuarios/:id',       ctrl.eliminarUsuario);
+router.get('/usuarios',              usuarios.listarUsuarios);
+router.post('/usuarios',             usuarios.crearUsuario);
+router.put('/usuarios/:id',          usuarios.actualizarUsuario);
+router.patch('/usuarios/:id/estado', usuarios.cambiarEstado);
+router.delete('/usuarios/:id',       usuarios.eliminarUsuario);
+router.get('/buscar-usuario',        usuarios.buscarUsuario);
 
-// Estadísticas
-router.get('/estadisticas',          ctrl.estadisticas);
-router.get('/reportes',              ctrl.reportes);
-router.get('/programas',             ctrl.listarProgramas);
+// Estadísticas y reportes
+router.get('/estadisticas',          panel.estadisticas);
+router.get('/reportes',              panel.reportes);
+router.get('/programas',             panel.listarProgramas);
 
 // Notificaciones
-router.post('/notificaciones',       ctrl.enviarNotificacion);
-router.get('/notificaciones/historial', ctrl.historialNotificaciones);
+router.post('/notificaciones',          notificaciones.enviarNotificacion);
+router.get('/notificaciones/historial', notificaciones.historialNotificaciones);
 
 // Auditoría
-router.get('/auditoria',             ctrl.verAuditoria);
-router.post('/auditoria/archivar',   ctrl.archivarAuditoria);
+router.get('/auditoria',             auditoria.verAuditoria);
+router.post('/auditoria/archivar',   auditoria.archivarAuditoria);
 
 // Asignaciones
-router.get('/asignaciones',          ctrl.listarAsignaciones);
-router.post('/asignaciones',         ctrl.crearAsignacion);
-router.delete('/asignaciones/:id',   ctrl.eliminarAsignacion);
+router.get('/asignaciones',          asignaciones.listarAsignaciones);
+router.post('/asignaciones',         asignaciones.crearAsignacion);
+router.delete('/asignaciones/:id',   asignaciones.eliminarAsignacion);
 
 // Configuración
-router.get('/configuracion',         ctrl.obtenerConfiguracion);
-router.post('/configuracion',        ctrl.guardarConfiguracion);
-router.post('/configuracion/reset',  ctrl.resetearConfiguracion);
+router.get('/configuracion',         configuracion.obtenerConfiguracion);
+router.post('/configuracion',        configuracion.guardarConfiguracion);
+router.post('/configuracion/reset',  configuracion.resetearConfiguracion);
 
 // Períodos
-router.get('/periodos',              ctrl.listarPeriodos);
-router.post('/periodos',             ctrl.crearPeriodo);
-router.patch('/periodos/:id/cerrar', ctrl.cerrarPeriodo);
-router.patch('/periodos/:id/activar', ctrl.activarPeriodo);
+router.get('/periodos',               periodos.listarPeriodos);
+router.post('/periodos',              periodos.crearPeriodo);
+router.patch('/periodos/:id/cerrar',  periodos.cerrarPeriodo);
+router.patch('/periodos/:id/activar', periodos.activarPeriodo);
 
-// Buscar usuario + Programar clase (admin)
-router.get('/buscar-usuario',        ctrl.buscarUsuario);
-router.put('/usuarios/:id',          ctrl.actualizarUsuario);
-router.post('/programar-clase',      ctrl.programarClase);
-router.get('/clases-programadas',    ctrl.listarClasesAdmin);
+// Asesorías programadas por el administrador
+router.post('/programar-clase',      clases.programarClase);
+router.get('/clases-programadas',    clases.listarClasesAdmin);
 
 module.exports = router;

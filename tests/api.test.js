@@ -7,6 +7,8 @@ const describeSiHayBase = hayBase ? describe : describe.skip;
 const request = require('supertest');
 const app = require('../src/app');
 const { generarToken } = require('../src/config/jwt');
+const { db } = require('../src/config/db');
+const { crearUsuario, crearAdmin, borrarUsuarios, unico } = require('./ayudas');
 
 describe('Rutas públicas', () => {
   test('GET /api/ping responde ok', async () => {
@@ -44,14 +46,6 @@ describe('Control de acceso', () => {
       .get('/api/admin/estadisticas')
       .set('Authorization', 'Bearer esto-no-es-un-token');
     expect(res.status).toBe(401);
-  });
-
-  test('un estudiante NO puede entrar a rutas de admin', async () => {
-    const token = generarToken({ id: 999, correo: 'est@amigo.edu.co', rol: 'estudiante' });
-    const res = await request(app)
-      .get('/api/admin/estadisticas')
-      .set('Authorization', `Bearer ${token}`);
-    expect(res.status).toBe(403);
   });
 });
 
@@ -94,59 +88,177 @@ describe('Canje de código OAuth', () => {
   });
 });
 
-describe('Errores en handlers async no tumban el proceso', () => {
-  // Comprueba que un error en un handler async se convierta en un 500 normal.
-  test('un id inválido devuelve 500 en JSON, no derriba el servidor', async () => {
-    const token = generarToken({ id: 1, correo: 'a@amigo.edu.co', rol: 'admin' });
-    const res = await request(app)
-      .patch('/api/tutorias/no-es-un-numero/cancelar')
-      .set('Authorization', `Bearer ${token}`);
+describe('Errores controlados con una base simulada', () => {
+  // Carga la app con una base que falla de la forma indicada, en modo producción o de prueba.
+  function appConBaseQueFalla(error, produccion) {
+    const anterior = process.env.NODE_ENV;
+    process.env.NODE_ENV = produccion ? 'production' : 'test';
+    let appSimulada;
+    jest.isolateModules(() => {
+      jest.doMock('../src/config/db', () => {
+        const falla = async () => { throw error; };
+        return {
+          db: {
+            prepare: () => ({ get: falla, all: falla, run: falla }),
+            verificar: async () => false,
+            pool: { query: falla }
+          }
+        };
+      });
+      appSimulada = require('../src/app');
+    });
+    process.env.NODE_ENV = anterior;
+    jest.dontMock('../src/config/db');
+    return appSimulada;
+  }
 
-    expect([400, 404, 500]).toContain(res.status);
-    expect(res.body.error).toBeDefined();
+  const token = () => generarToken({ id: 1, correo: 'a@amigo.edu.co', rol: 'admin' });
+
+  test('en PRODUCCIÓN un error de SQL no filtra detalles internos y trae una referencia', async () => {
+    const error = Object.assign(new Error('relation "usuarios" does not exist'), { code: '42P01' });
+    const res = await request(appConBaseQueFalla(error, true))
+      .get('/api/admin/estadisticas')
+      .set('Authorization', `Bearer ${token()}`);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Error interno del servidor');
+    expect(res.body.referencia).toMatch(/^[0-9a-f]{6}$/);
+    expect(JSON.stringify(res.body)).not.toMatch(/usuarios|relation|42P01/);
   });
 
-  test('en PRODUCCIÓN el error no filtra detalles internos al cliente', async () => {
-    // Carga una instancia en modo producción para ver el error genérico.
-    const anterior = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
-    process.env.FRONTEND_URL = 'http://localhost:3000';
+  const fallosDeConexion = {
+    'conexión rechazada (TCP)': Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:5432'), { code: 'ECONNREFUSED', syscall: 'connect' }),
+    'socket local que no existe': Object.assign(new Error('connect ENOENT /tmp/.s.PGSQL.5433'), { code: 'ENOENT', syscall: 'connect' }),
+    'tiempo de espera agotado': Object.assign(new Error('connect ETIMEDOUT 10.0.0.5:5432'), { code: 'ETIMEDOUT', syscall: 'connect' }),
+    'servidor apagándose (57P01)': Object.assign(new Error('terminating connection due to administrator command'), { code: '57P01' }),
+    'conexión cortada por el servidor': new Error('Connection terminated unexpectedly'),
+    'host inalcanzable': Object.assign(new Error('connect EHOSTUNREACH 10.0.0.5:5432'), { code: 'EHOSTUNREACH', syscall: 'connect' }),
+    'localhost con IPv4 e IPv6 (AggregateError)': Object.assign(new Error('AggregateError'), { errors: [{ code: 'ECONNREFUSED', syscall: 'connect' }, { code: 'ECONNREFUSED', syscall: 'connect' }] })
+  };
 
-    let appProd;
-    jest.isolateModules(() => { appProd = require('../src/app'); });
+  test.each(Object.entries(fallosDeConexion))('si la base no responde (%s) devuelve 503 con Retry-After, no un 500', async (_nombre, error) => {
+    const res = await request(appConBaseQueFalla(error, true))
+      .get('/api/admin/estadisticas')
+      .set('Authorization', `Bearer ${token()}`);
 
-    const token = generarToken({ id: 1, correo: 'a@amigo.edu.co', rol: 'admin' });
-    const res = await request(appProd)
-      .patch('/api/tutorias/no-es-un-numero/cancelar')
-      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(503);
+    expect(res.headers['retry-after']).toBe('5');
+    expect(res.body.error).toMatch(/servicio de datos/);
+    expect(JSON.stringify(res.body)).not.toMatch(/ENOENT|ECONN|PGSQL|127\.0\.0\.1|10\.0\.0/);
+  });
 
-    // eslint-disable-next-line require-atomic-updates
-    process.env.NODE_ENV = anterior;
+  test('un ENOENT que no es de conexión (por ejemplo de un archivo) sigue siendo un 500 genérico', async () => {
+    const error = Object.assign(new Error("ENOENT: no such file or directory, open 'x'"), { code: 'ENOENT', syscall: 'open' });
+    const res = await request(appConBaseQueFalla(error, true))
+      .get('/api/admin/estadisticas')
+      .set('Authorization', `Bearer ${token()}`);
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Error interno del servidor');
+  });
 
-    if (res.status === 500) {
-      expect(res.body.error).toBe('Error interno del servidor');
-      expect(res.body.error).not.toMatch(/syntax|column|relation|postgres/i);
-    }
+  test('/api/salud avisa que la base está caída con 503 y /api/ping sigue respondiendo', async () => {
+    const appSimulada = appConBaseQueFalla(new Error('caída'), false);
+    const salud = await request(appSimulada).get('/api/salud');
+    expect(salud.status).toBe(503);
+    expect(salud.body).toMatchObject({ estado: 'degradado', base: 'sin conexión' });
+
+    const ping = await request(appSimulada).get('/api/ping');
+    expect(ping.status).toBe(200);
+  });
+});
+
+describe('Cuerpos de petición inválidos', () => {
+  test('un JSON mal formado devuelve 400 en JSON', async () => {
+    const res = await request(app).post('/api/auth/login')
+      .set('Content-Type', 'application/json').send('{"correo":');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/JSON/);
+  });
+
+  test('un cuerpo de más de 100 KB devuelve 413', async () => {
+    const res = await request(app).post('/api/auth/login')
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify({ correo: 'a@amigo.edu.co', contrasena: 'x'.repeat(150 * 1024) }));
+    expect(res.status).toBe(413);
+  });
+
+  test('un login sin cuerpo no rompe: responde 400', async () => {
+    const res = await request(app).post('/api/auth/login');
+    expect(res.status).toBe(400);
   });
 });
 
 describeSiHayBase('Con base de datos', () => {
+  afterAll(async () => {
+    await borrarUsuarios(creados);
+    await db.pool.end();
+  });
+
+  const creados = [];
+
+  test('/api/salud responde 200 con la base conectada', async () => {
+    const res = await request(app).get('/api/salud');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ estado: 'ok', base: 'ok' });
+  });
+
+  test('un estudiante NO puede entrar a rutas de admin (403)', async () => {
+    const estudiante = await crearUsuario('estudiante');
+    creados.push(estudiante.id);
+    const res = await request(app).get('/api/admin/estadisticas').set('Authorization', `Bearer ${estudiante.token}`);
+    expect(res.status).toBe(403);
+  });
+
+  test('un token de un usuario que ya no existe se rechaza (401)', async () => {
+    const res = await request(app).get('/api/admin/estadisticas')
+      .set('Authorization', `Bearer ${generarToken({ id: 2147483000, correo: 'fantasma@amigo.edu.co', rol: 'admin' })}`);
+    expect(res.status).toBe(401);
+  });
+
+  test('una cuenta desactivada pierde el acceso al instante aunque su token siga vigente', async () => {
+    const estudiante = await crearUsuario('estudiante');
+    creados.push(estudiante.id);
+    const antes = await request(app).get('/api/perfil').set('Authorization', `Bearer ${estudiante.token}`);
+    expect(antes.status).toBe(200);
+
+    await db.pool.query('UPDATE usuarios SET activo = 0 WHERE id = $1', [estudiante.id]);
+    const despues = await request(app).get('/api/perfil').set('Authorization', `Bearer ${estudiante.token}`);
+    expect(despues.status).toBe(401);
+  });
+
+  test('el rol sale de la base y no del token: un token de admin de un estudiante no sirve', async () => {
+    const estudiante = await crearUsuario('estudiante');
+    creados.push(estudiante.id);
+    const tokenFalso = generarToken({ id: estudiante.id, correo: estudiante.correo, rol: 'admin' });
+    const res = await request(app).get('/api/admin/estadisticas').set('Authorization', `Bearer ${tokenFalso}`);
+    expect(res.status).toBe(403);
+  });
+
+  test('un identificador que no es número devuelve 400 en JSON', async () => {
+    const estudiante = await crearUsuario('estudiante');
+    creados.push(estudiante.id);
+    const res = await request(app).patch('/api/tutorias/no-es-un-numero/cancelar')
+      .set('Authorization', `Bearer ${estudiante.token}`);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/identificador/);
+  });
+
   test('login con credenciales falsas devuelve 401 genérico', async () => {
     const res = await request(app).post('/api/auth/login').send({
-      correo: 'noexiste@amigo.edu.co', contrasena: 'loquesea123'
+      correo: `noexiste.${unico()}@amigo.edu.co`, contrasena: 'loquesea123'
     });
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('Correo o contraseña incorrectos');
   });
 
   test('las estadísticas devuelven números, no strings', async () => {
-    const token = generarToken({ id: 1, correo: 'admin@amigo.edu.co', rol: 'admin' });
+    const admin = await crearAdmin();
+    creados.push(admin.id);
     const res = await request(app)
       .get('/api/admin/estadisticas')
-      .set('Authorization', `Bearer ${token}`);
-    if (res.status === 200) {
-      expect(typeof res.body.total_usuarios).toBe('number');
-      expect(typeof res.body.total_tutorias).toBe('number');
-    }
+      .set('Authorization', `Bearer ${admin.token}`);
+    expect(res.status).toBe(200);
+    expect(typeof res.body.total_usuarios).toBe('number');
+    expect(typeof res.body.total_tutorias).toBe('number');
   });
 });

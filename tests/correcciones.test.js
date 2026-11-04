@@ -11,6 +11,7 @@ const app = require('../src/app');
 const { db } = require('../src/config/db');
 const { generarToken } = require('../src/config/jwt');
 const { hoyColombia } = require('../src/config/fechas');
+const { unico, documentoUnico, franjaUnica, crearDocente, borrarUsuarios } = require('./ayudas');
 
 // Devuelve fecha y hora de Colombia desplazadas las horas pedidas desde ahora.
 function enColombia(horas) {
@@ -18,30 +19,10 @@ function enColombia(horas) {
   return { fecha: iso.slice(0, 10), hora: iso.slice(11, 16) };
 }
 
-// Genera una franja futura distinta en cada corrida para no chocar con datos viejos.
-function franjaUnica() {
-  const n = Date.now() % 1000000;
-  const anio = 2031 + (n % 7);
-  const mes = String(1 + (n % 12)).padStart(2, '0');
-  const dia = String(1 + (n % 28)).padStart(2, '0');
-  const hh = String(6 + (n % 14)).padStart(2, '0');
-  const mm = String(n % 60).padStart(2, '0');
-  return { fecha: `${anio}-${mes}-${dia}`, hora: `${hh}:${mm}` };
-}
-
 // Pruebas de las correcciones de los defectos del Entregable 2; cada una falla con el código anterior.
 describeSiHayBase('Correcciones de defectos', () => {
   let adminToken, doc1, doc2, mat1, mat2, docToken, est, estToken;
-
-  // Devuelve una asignatura que el docente tiene registrada; las tutorías solo se aceptan en sus materias.
-  async function materiaDe(docenteId) {
-    const r = await db.pool.query(
-      `SELECT a.nombre FROM docente_asignaturas da
-       JOIN perfiles_docente pd ON pd.id = da.docente_id
-       JOIN asignaturas a ON a.id = da.asignatura_id
-       WHERE pd.usuario_id = $1 ORDER BY a.nombre LIMIT 1`, [docenteId]);
-    return r.rows[0].nombre;
-  }
+  const creados = [];
 
   // Crea un estudiante nuevo con perfil y devuelve su id y su token.
   async function estudianteNuevo(prefijo) {
@@ -51,7 +32,8 @@ describeSiHayBase('Correcciones de defectos', () => {
     });
     const token = res.body.token;
     await request(app).post('/api/perfil/estudiante').set('Authorization', `Bearer ${token}`)
-      .send({ documento: '1098765432', programa: 'Ingeniería de Sistemas', semestre: '5', telefono: '3001234567' });
+      .send({ documento: documentoUnico(), programa: 'Ingeniería de Sistemas', semestre: '5', telefono: '3001234567' });
+    creados.push(res.body.usuario.id);
     return { id: res.body.usuario.id, correo, token };
   }
 
@@ -63,16 +45,15 @@ describeSiHayBase('Correcciones de defectos', () => {
        ON CONFLICT (correo) DO UPDATE SET rol='admin', activo=1 RETURNING id`, [hash]);
     adminToken = generarToken({ id: adm.rows[0].id, correo: 'admin.correcciones@amigo.edu.co', rol: 'admin' });
 
-    const docs = await db.pool.query(
-      `SELECT DISTINCT u.id, u.correo FROM usuarios u
-       JOIN perfiles_docente pd ON pd.usuario_id = u.id
-       JOIN docente_asignaturas da ON da.docente_id = pd.id
-       WHERE u.rol='docente' AND u.activo=1 ORDER BY u.id LIMIT 2`);
-    doc1 = docs.rows[0].id;
-    doc2 = docs.rows[1].id;
-    mat1 = await materiaDe(doc1);
-    mat2 = await materiaDe(doc2);
-    docToken = generarToken({ id: doc1, correo: docs.rows[0].correo, rol: 'docente' });
+    // Docentes propios de esta corrida: así las franjas fijas de las pruebas no chocan con corridas anteriores.
+    const d1 = await crearDocente([`Materia correcciones A ${unico()}`]);
+    const d2 = await crearDocente([`Materia correcciones B ${unico()}`]);
+    creados.push(d1.id, d2.id);
+    doc1 = d1.id;
+    doc2 = d2.id;
+    mat1 = d1.materias[0];
+    mat2 = d2.materias[0];
+    docToken = d1.token;
 
     const nuevo = await estudianteNuevo('correcciones');
     est = nuevo.id;
@@ -80,6 +61,7 @@ describeSiHayBase('Correcciones de defectos', () => {
   });
 
   afterAll(async () => {
+    await borrarUsuarios(creados);
     await db.pool.end();
   });
 
