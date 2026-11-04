@@ -35,7 +35,7 @@ if (oauthActivo) {
         const apellidos = profile.name?.familyName || '';
 
         let usuario = await db
-          .prepare('SELECT * FROM usuarios WHERE correo = ? OR google_id = ?')
+          .prepare('SELECT * FROM usuarios WHERE lower(correo) = ? OR google_id = ?')
           .get(correo, googleId);
 
         if (!usuario) {

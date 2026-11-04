@@ -1,141 +1,137 @@
-// Calcula la acción más importante para el usuario y la pinta en su panel.
+// Calcula el mensaje destacado de cada panel y lo dibuja arriba de los indicadores.
 
-// Devuelve la próxima tutoría pendiente (fecha futura), o null.
+// Devuelve la próxima tutoría activa que todavía no ocurre, o null.
 function proximaTutoria(tutorias) {
   const ahora = new Date();
   const futuras = (tutorias || [])
-    .filter((t) => t.estado === "pendiente" || t.estado === "confirmada")
-    .map((t) => ({ ...t, cuando: new Date(`${t.fecha}T${(t.hora || "00:00").slice(0, 5)}`) }))
-    .filter((t) => !isNaN(t.cuando) && t.cuando >= ahora)
+    .filter((t) => ['pendiente', 'confirmada'].includes(normalizarEstado(t.estado)))
+    .map((t) => ({ tutoria: t, cuando: instanteTutoria(t) }))
+    .filter((x) => x.cuando && x.cuando >= ahora)
     .sort((a, b) => a.cuando - b.cuando);
-  return futuras[0] || null;
+  return futuras.length ? futuras[0].tutoria : null;
 }
 
-// Formatea una fecha ISO (yyyy-mm-dd) como "jueves 4 de septiembre".
-function fechaLegible(iso) {
-  if (!iso) return "";
-  const d = new Date(`${iso}T00:00`);
-  if (isNaN(d)) return iso;
-  return d.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
-}
+const INSIGNIA_CHIP = { pend: 'aviso', ok: 'ok', aler: 'error', info: 'marca' };
 
-// Pinta la tarjeta. `datos` define tono, textos, chips y (opcional) el botón.
+// Dibuja la tarjeta destacada; los datos definen el tono, los textos, las etiquetas y el botón.
 function renderAccion(idContenedor, datos) {
-  const cont = document.getElementById(idContenedor);
-  if (!cont) return;
-
-  const tono = datos.tono || "info"; // alerta | info | ok
-  const chips = (datos.chips || [])
-    .map((c) => `<span class="accion-chip accion-chip--${c.tipo}">${c.texto}</span>`)
-    .join("");
-
+  const contenedor = document.getElementById(idContenedor);
+  if (!contenedor) return;
+  const chips = (datos.chips || []).map((c) => '<span class="insignia insignia--' + INSIGNIA_CHIP[c.tipo] + '">' + escaparHtml(c.texto) + '</span>').join('');
   const boton = datos.boton
-    ? `<button type="button" class="accion-destacada__boton"
-         onclick="irAPagina('${datos.boton.pagina}')">${datos.boton.texto}</button>`
-    : "";
+    ? '<button type="button" class="btn btn--primario" onclick="irAPagina(\'' + datos.boton.pagina + '\')">' + escaparHtml(datos.boton.texto) + '</button>'
+    : '';
 
-  cont.className = `accion-destacada accion-destacada--${tono}`;
-  cont.hidden = false;
-  cont.innerHTML = `
-    <div class="accion-destacada__icono">${datos.icono || "📌"}</div>
-    <div class="accion-destacada__texto">
-      <span class="accion-destacada__eyebrow">${datos.eyebrow || ""}</span>
-      <h2 class="accion-destacada__titulo">${datos.titulo}</h2>
-      ${datos.sub ? `<p class="accion-destacada__sub">${datos.sub}</p>` : ""}
-      ${chips ? `<div class="accion-chips">${chips}</div>` : ""}
-    </div>
-    ${boton}
-  `;
+  contenedor.className = 'destacado' + (datos.tono === 'alerta' || datos.tono === 'ok' ? ' destacado--' + datos.tono : '');
+  contenedor.hidden = false;
+  contenedor.innerHTML =
+    '<span class="destacado__icono">' + icono(datos.icono || 'info', 'l') + '</span>' +
+    '<div class="destacado__texto">' +
+      '<span class="destacado__etiqueta">' + escaparHtml(datos.etiqueta || '') + '</span>' +
+      '<h2 class="destacado__titulo">' + escaparHtml(datos.titulo) + '</h2>' +
+      (datos.sub ? '<p class="destacado__sub">' + escaparHtml(datos.sub) + '</p>' : '') +
+      (chips ? '<div class="destacado__chips">' + chips + '</div>' : '') +
+    '</div>' + boton;
+}
+
+// Calcula el mensaje destacado cuando faltan datos obligatorios del perfil.
+function accionPerfilIncompleto(rol) {
+  return {
+    tono: 'info', icono: 'usuario', etiqueta: 'Falta un paso',
+    titulo: 'Completa tu perfil',
+    sub: rol === 'docente'
+      ? 'Agrega tu cédula, facultad y materias para que los estudiantes puedan programar tutorías contigo.'
+      : 'Agrega tu documento, programa y semestre para que tus docentes te identifiquen al programar tutorías.',
+    chips: [], boton: { texto: 'Completar perfil', pagina: 'completar-perfil' },
+  };
 }
 
 // Calcula la acción destacada del estudiante.
-function accionEstudiante({ promedio, tutorias, tutoriasMes }) {
+function accionEstudiante({ promedio, tutorias }) {
   const enAlerta = promedio > 0 && promedio < CONFIG.PROMEDIO_MINIMO;
-  const prox = proximaTutoria(tutorias);
-  const pendientes = (tutorias || []).filter((t) => t.estado === "pendiente").length;
-  const hechas = (tutorias || []).filter((t) => t.estado === "completada").length;
+  const proxima = proximaTutoria(tutorias);
+  const pendientes = tutorias.filter((t) => normalizarEstado(t.estado) === 'pendiente').length;
+  const hechas = tutorias.filter((t) => normalizarEstado(t.estado) === 'completada').length;
 
   const chips = [];
-  if (pendientes) chips.push({ tipo: "pend", texto: `${pendientes} pendiente${pendientes > 1 ? "s" : ""}` });
-  if (hechas) chips.push({ tipo: "ok", texto: `${hechas} realizada${hechas > 1 ? "s" : ""}` });
-  if (enAlerta) chips.push({ tipo: "aler", texto: "Alerta académica" });
+  if (pendientes) chips.push({ tipo: 'pend', texto: pendientes + (pendientes > 1 ? ' pendientes' : ' pendiente') });
+  if (hechas) chips.push({ tipo: 'ok', texto: hechas + (hechas > 1 ? ' realizadas' : ' realizada') });
+  if (enAlerta) chips.push({ tipo: 'aler', texto: 'Alerta académica' });
 
   if (enAlerta) {
     return {
-      tono: "alerta", icono: "⚠️", eyebrow: "Requiere tu atención",
-      titulo: "Tu promedio está por debajo del mínimo",
-      sub: "Programa una tutoría para recuperar antes del corte académico.",
-      chips, boton: { texto: "+ Programar tutoría", pagina: "programar-tutoria" },
+      tono: 'alerta', icono: 'escudo-alerta', etiqueta: 'Requiere tu atención',
+      titulo: 'Tu promedio está por debajo del mínimo',
+      sub: 'Programa una tutoría con tus docentes para recuperar antes del corte académico.',
+      chips, boton: { texto: 'Programar tutoría', pagina: 'programar-tutoria' },
     };
   }
-  if (prox) {
+  if (proxima) {
     return {
-      tono: "info", icono: "📅", eyebrow: "Tu próxima tutoría",
-      titulo: `${prox.asignatura || "Tutoría"} · ${fechaLegible(prox.fecha)}`,
-      sub: `A las ${(prox.hora || "").slice(0, 5)} · ${prox.modalidad || "por definir"}.`,
-      chips, boton: { texto: "Ver mi calendario", pagina: "mi-calendario" },
+      tono: 'info', icono: 'calendario', etiqueta: 'Tu próxima tutoría',
+      titulo: (proxima.asignatura || 'Tutoría') + ' · ' + fechaLegible(proxima.fecha),
+      sub: 'A las ' + String(proxima.hora || '').slice(0, 5) + ' · ' + (proxima.modalidad || 'modalidad por definir'),
+      chips, boton: { texto: 'Ver mi calendario', pagina: 'mi-calendario' },
     };
   }
   return {
-    tono: "ok", icono: "✅", eyebrow: "Todo al día",
-    titulo: "No tienes alertas ni tutorías pendientes",
-    sub: "Cuando lo necesites, programa una tutoría con tus docentes.",
-    chips, boton: { texto: "+ Programar tutoría", pagina: "programar-tutoria" },
+    tono: 'ok', icono: 'escudo-ok', etiqueta: 'Todo al día',
+    titulo: 'No tienes alertas ni tutorías pendientes',
+    sub: 'Cuando lo necesites, programa una tutoría con tus docentes.',
+    chips, boton: { texto: 'Programar tutoría', pagina: 'programar-tutoria' },
   };
 }
 
 // Calcula la acción destacada del docente.
 function accionDocente({ enAlerta, tutorias, tutoriasMes }) {
-  const prox = proximaTutoria(tutorias);
-  const nAlerta = enAlerta || 0;
-
+  const proxima = proximaTutoria(tutorias);
   const chips = [];
-  if (nAlerta) chips.push({ tipo: "aler", texto: `${nAlerta} en alerta` });
-  if (tutoriasMes) chips.push({ tipo: "info", texto: `${tutoriasMes} este mes` });
+  if (enAlerta) chips.push({ tipo: 'aler', texto: enAlerta + ' en alerta' });
+  if (tutoriasMes) chips.push({ tipo: 'info', texto: tutoriasMes + (tutoriasMes > 1 ? ' tutorías este mes' : ' tutoría este mes') });
 
-  if (nAlerta > 0) {
+  if (enAlerta > 0) {
     return {
-      tono: "alerta", icono: "🎯", eyebrow: "Requiere tu atención",
-      titulo: `${nAlerta} estudiante${nAlerta > 1 ? "s" : ""} en alerta académica`,
-      sub: "Revisa la lista y programa tutorías de apoyo para quienes lo necesitan.",
-      chips, boton: { texto: "Programar tutoría", pagina: "programar-tutoria" },
+      tono: 'alerta', icono: 'objetivo', etiqueta: 'Requiere tu atención',
+      titulo: enAlerta + (enAlerta > 1 ? ' estudiantes en alerta académica' : ' estudiante en alerta académica'),
+      sub: 'Revisa la lista y programa tutorías de apoyo para quienes lo necesitan.',
+      chips, boton: { texto: 'Programar tutoría', pagina: 'programar-tutoria' },
     };
   }
-  if (prox) {
+  if (proxima) {
     return {
-      tono: "info", icono: "📅", eyebrow: "Tu próxima sesión",
-      titulo: `${prox.asignatura || "Tutoría"} · ${fechaLegible(prox.fecha)}`,
-      sub: `Con ${prox.nombre_estudiante || "tu estudiante"} a las ${(prox.hora || "").slice(0, 5)}.`,
-      chips, boton: { texto: "Ver mi calendario", pagina: "mi-calendario" },
+      tono: 'info', icono: 'calendario', etiqueta: 'Tu próxima sesión',
+      titulo: (proxima.asignatura || 'Tutoría') + ' · ' + fechaLegible(proxima.fecha),
+      sub: 'Con ' + (proxima.nombre_estudiante || 'tu estudiante') + ' a las ' + String(proxima.hora || '').slice(0, 5),
+      chips, boton: { texto: 'Ver mis tutorías', pagina: 'mi-calendario' },
     };
   }
   return {
-    tono: "ok", icono: "✅", eyebrow: "Todo al día",
-    titulo: "Ningún estudiante en alerta por ahora",
-    sub: "Puedes programar tutorías de seguimiento cuando quieras.",
-    chips, boton: { texto: "Programar tutoría", pagina: "programar-tutoria" },
+    tono: 'ok', icono: 'escudo-ok', etiqueta: 'Todo al día',
+    titulo: 'Ningún estudiante en alerta por ahora',
+    sub: 'Puedes programar tutorías de seguimiento cuando quieras.',
+    chips, boton: { texto: 'Programar tutoría', pagina: 'programar-tutoria' },
   };
 }
 
 // Calcula la acción destacada del administrador.
 function accionAdmin({ alertas, totalUsuarios, totalAsignaciones }) {
   const chips = [];
-  if (totalUsuarios != null) chips.push({ tipo: "info", texto: `${totalUsuarios} usuarios` });
-  if (totalAsignaciones != null) chips.push({ tipo: "ok", texto: `${totalAsignaciones} asignaciones` });
-  if (alertas) chips.push({ tipo: "aler", texto: `${alertas} en alerta` });
+  if (totalUsuarios != null) chips.push({ tipo: 'info', texto: totalUsuarios + (totalUsuarios === 1 ? ' usuario' : ' usuarios') });
+  if (totalAsignaciones != null) chips.push({ tipo: 'ok', texto: totalAsignaciones + (totalAsignaciones === 1 ? ' asignación' : ' asignaciones') });
+  if (alertas) chips.push({ tipo: 'aler', texto: alertas + ' en alerta' });
 
   if (alertas > 0) {
     return {
-      tono: "alerta", icono: "📊", eyebrow: "Atención del sistema",
-      titulo: `${alertas} estudiante${alertas > 1 ? "s" : ""} en alerta académica`,
-      sub: "Revisa las asignaciones estudiante–tutor y envía notificaciones si hace falta.",
-      chips, boton: { texto: "Ver asignaciones", pagina: "admin-asignacion" },
+      tono: 'alerta', icono: 'reportes', etiqueta: 'Atención del sistema',
+      titulo: alertas + (alertas > 1 ? ' estudiantes en alerta académica' : ' estudiante en alerta académica'),
+      sub: 'Revisa las asignaciones estudiante–tutor y envía notificaciones si hace falta.',
+      chips, boton: { texto: 'Ver asignaciones', pagina: 'admin-asignacion' },
     };
   }
   return {
-    tono: "ok", icono: "✅", eyebrow: "Sistema al día",
-    titulo: "No hay alertas académicas activas",
-    sub: "Todo en orden. Puedes revisar reportes o gestionar usuarios.",
-    chips, boton: { texto: "Gestionar usuarios", pagina: "admin-usuarios" },
+    tono: 'ok', icono: 'escudo-ok', etiqueta: 'Sistema al día',
+    titulo: 'No hay alertas académicas activas',
+    sub: 'Todo en orden. Puedes revisar reportes o gestionar usuarios.',
+    chips, boton: { texto: 'Gestionar usuarios', pagina: 'admin-usuarios' },
   };
 }

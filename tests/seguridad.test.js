@@ -21,8 +21,10 @@ describe('JWT', () => {
   });
 
   test('rechaza el algoritmo "none" (token sin firma)', () => {
-    const sinFirma = jwt.sign({ id: 1, rol: 'admin' }, '', { algorithm: 'none' });
-    expect(() => verificarToken(sinFirma)).toThrow();
+    const codificar = (objeto) => Buffer.from(JSON.stringify(objeto)).toString('base64url');
+    const cabecera = codificar({ alg: 'none', typ: 'JWT' });
+    const carga = codificar({ id: 1, rol: 'admin', iss: 'conectaprofe', aud: 'conectaprofe-app' });
+    expect(() => verificarToken(`${cabecera}.${carga}.`)).toThrow();
   });
 
   test('rechaza un token con emisor distinto', () => {

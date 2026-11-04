@@ -34,8 +34,8 @@ async function getConfigNum(clave, defecto) {
 
 // Devuelve la clave oficial de una regla o null si no es una regla configurable.
 function claveRegla(clave) {
-  const oficial = CLAVES_ANTERIORES[clave] || clave;
-  return REGLAS[oficial] ? oficial : null;
+  const oficial = Object.hasOwn(CLAVES_ANTERIORES, clave) ? CLAVES_ANTERIORES[clave] : clave;
+  return Object.hasOwn(REGLAS, oficial) ? oficial : null;
 }
 
 // Valida el valor de una regla y lo devuelve normalizado, o un mensaje de error.
