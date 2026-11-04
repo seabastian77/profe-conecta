@@ -1,340 +1,317 @@
-// Procesa el envío del formulario de tutoría.
-async function alEnviarTutoria(e) {
-  e.preventDefault();
+// Tutorías: carga de datos, tarjetas, acciones de cancelar y completar, pestañas y formulario para programar.
 
-  const asignatura = document.getElementById("tutAsignatura").value;
-  const modalidad = document.getElementById("tutModalidad").value;
-  const fecha = document.getElementById("tutFecha").value;
-  const hora = document.getElementById("tutHora").value;
-  const observaciones = document.getElementById("tutObservaciones").value;
-  let hayError = false;
+let tutoriasActuales = [];
+const estadoListasTutorias = {};
+const LIMITE_LISTA_TUTORIAS = 20;
 
-  [
-    "tutAsignatura",
-    "tutModalidad",
-    "tutFecha",
-    "tutHora",
-    "tutEstudiante",
-    "tutTutor",
-  ].forEach((id) => quitarError(id));
+registrarLimpieza(() => {
+  tutoriasActuales = [];
+  Object.keys(estadoListasTutorias).forEach((clave) => delete estadoListasTutorias[clave]);
+});
 
-  if (!asignatura) {
-    ponerError("tutAsignatura", "Selecciona una asignatura");
-    hayError = true;
-  }
-  if (!modalidad) {
-    ponerError("tutModalidad", "Selecciona la modalidad");
-    hayError = true;
-  }
-  if (!fecha) {
-    ponerError("tutFecha", "La fecha es obligatoria");
-    hayError = true;
-  }
-  if (!hora) {
-    ponerError("tutHora", "La hora es obligatoria");
-    hayError = true;
-  }
-
-  // Valida que la fecha sea posterior a hoy (RN06).
-  if (fecha) {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const fTut = new Date(fecha + "T00:00");
-    if (fTut <= hoy) {
-      ponerError(
-        "tutFecha",
-        "La fecha debe ser a partir de mañana (RN06)",
-      );
-      hayError = true;
-    }
-  }
-
-  let docente_id = null;
-  let estudiante_id = null;
-
-  // Lee los datos del demo para buscar los IDs reales.
-  let usuarios = [];
-  let perfiles = {};
-  try {
-    usuarios = JSON.parse(localStorage.getItem("cp_demo.usuarios") || "[]");
-    perfiles = JSON.parse(localStorage.getItem("cp_demo.perfiles") || "{}");
-  } catch (e) {}
-
-  if (sesion.rol === "estudiante") {
-    const tutorSelect = document.getElementById("tutTutor");
-    const idSel = parseInt(tutorSelect.value);
-    if (!idSel) {
-      ponerError("tutTutor", "Selecciona un tutor");
-      hayError = true;
-    } else {
-      docente_id = idSel;
-    }
-  }
-
-  if (sesion.rol === "docente") {
-    const documento = document.getElementById("tutEstudiante").value.trim();
-    if (!documento) {
-      ponerError("tutEstudiante", "Escribe el número de documento del estudiante");
-      hayError = true;
-    } else if (!CONFIG.MODO_DEMO) {
-      // Modo real: busca en el backend por documento.
-      try {
-        const resultados = await llamarAPI("/tutorias/buscar-estudiante?q=" + encodeURIComponent(documento), "GET");
-        if (!resultados || resultados.length === 0) {
-          ponerError("tutEstudiante", "No existe un estudiante con ese documento");
-          hayError = true;
-        } else {
-          estudiante_id = resultados[0].id;
-        }
-      } catch(e) {
-        ponerError("tutEstudiante", "Error al buscar el estudiante");
-        hayError = true;
-      }
-    } else {
-      // Modo demo: busca por documento en los perfiles locales.
-      let perfiles = {};
-      let usuarios = [];
-      try {
-        perfiles = JSON.parse(localStorage.getItem("cp_demo.perfiles") || "{}");
-        usuarios = JSON.parse(localStorage.getItem("cp_demo.usuarios") || "[]");
-      } catch (e) {}
-      let encontrado = null;
-      for (const [uid, p] of Object.entries(perfiles)) {
-        if (p.tipo === "estudiante" && (String(p.documento) === documento || String(p.codigo) === documento)) {
-          encontrado = parseInt(uid);
-          break;
-        }
-      }
-      if (!encontrado) {
-        ponerError("tutEstudiante", "No existe un estudiante con documento " + documento);
-        hayError = true;
-      } else {
-        estudiante_id = encontrado;
-      }
-    }
-  }
-
-  if (sesion.rol === "admin") {
-    const tutorSelect = document.getElementById("tutTutor");
-    const idSel = parseInt(tutorSelect.value);
-    if (idSel) docente_id = idSel;
-    else { ponerError("tutTutor", "Selecciona un tutor"); hayError = true; }
-
-    const docEst = document.getElementById("tutEstudiante").value.trim();
-    if (!docEst) {
-      ponerError("tutEstudiante", "Escribe el número de documento");
-      hayError = true;
-    } else if (!CONFIG.MODO_DEMO) {
-      try {
-        const res = await llamarAPI("/tutorias/buscar-estudiante?q=" + encodeURIComponent(docEst), "GET");
-        if (!res || res.length === 0) { ponerError("tutEstudiante", "Estudiante no encontrado"); hayError = true; }
-        else estudiante_id = res[0].id;
-      } catch(e) { ponerError("tutEstudiante", "Error buscando estudiante"); hayError = true; }
-    } else {
-      let perfiles = {}, usuarios = [];
-      try {
-        perfiles = JSON.parse(localStorage.getItem("cp_demo.perfiles") || "{}");
-        usuarios = JSON.parse(localStorage.getItem("cp_demo.usuarios") || "[]");
-      } catch (e) {}
-      for (const [uid, p] of Object.entries(perfiles)) {
-        if (p.tipo === "estudiante" && (String(p.documento) === docEst || String(p.codigo) === docEst)) {
-          estudiante_id = parseInt(uid); break;
-        }
-      }
-      if (!estudiante_id) { ponerError("tutEstudiante", "Documento de estudiante inválido"); hayError = true; }
-    }
-  }
-
-  if (hayError) return;
-
-  try {
-    await llamarAPI("/tutorias", "POST", {
-      docente_id,
-      estudiante_id,
-      asignatura,
-      modalidad,
-      fecha,
-      hora,
-      observaciones,
-    });
-
-    mostrarTostada("¡Tutoría programada correctamente!", "exito");
-    document.getElementById("formularioTutoria").reset();
-    cargarNotificaciones();
-    const panelDestino = sesion.rol === "admin" ? "panel-admin" : sesion.rol === "docente" ? "panel-docente" : "panel-estudiante";
-    irAPagina(panelDestino);
-  } catch (err) {
-    mostrarTostada(err.mensaje || "No se pudo programar la tutoría", "error");
-  }
-}
-
-// Prepara el formulario de tutoría según el rol del usuario.
-async function prepararFormTutoria() {
-  const selectTutor = document.getElementById("tutTutor");
-  const campoEstudiante = document.getElementById("tutEstudiante");
-
-  // En modo real, carga los docentes del backend con sus materias.
-  if (!CONFIG.MODO_DEMO && selectTutor) {
-    try {
-      const docentes = await obtenerDocentesConMaterias(true);
-      selectTutor.innerHTML =
-        '<option value="">— Selecciona tutor —</option>' +
-        docentes.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)} · ${escaparHtml(d.facultad)}</option>`).join("");
-    } catch(e) {
-      selectTutor.innerHTML = '<option value="">Sin tutores disponibles</option>';
-    }
-    // El docente programa en sus propias materias; los demás ven las del tutor que elijan.
-    if (sesion.rol === "docente") cargarMateriasDeDocente("tutAsignatura", sesion.id);
-    else cargarMateriasDeDocente("tutAsignatura", "");
-  } else {
-    // Modo demo: usa los datos locales.
-    let usuarios = [];
-    try { usuarios = JSON.parse(localStorage.getItem("cp_demo.usuarios") || "[]"); } catch (e) {}
-    const docentes = usuarios.filter(u => u.rol === "docente" && u.activo);
-    if (selectTutor) {
-      selectTutor.innerHTML =
-        '<option value="">— Selecciona tutor —</option>' +
-        docentes.map(d => `<option value="${d.id}">${escaparHtml(d.nombres)} ${escaparHtml(d.apellidos)}</option>`).join("");
-    }
-  }
-
-  const contEst = campoEstudiante?.closest(".campo");
-  const contTut = selectTutor?.closest(".campo");
-
-  if (sesion.rol === "estudiante") {
-    if (contEst) contEst.style.display = "none";
-    if (contTut) contTut.style.display = "";
-  } else if (sesion.rol === "docente") {
-    if (contEst) contEst.style.display = "";
-    if (contTut) contTut.style.display = "none";
-    if (campoEstudiante) {
-      campoEstudiante.placeholder = "Número de documento del estudiante (cédula o TI)";
-    }
-  } else {
-    if (contEst) contEst.style.display = "";
-    if (contTut) contTut.style.display = "";
-  }
-}
-
-// Cambia la lista de asignaturas cuando se elige otro tutor.
-function actualizarMateriasTutoria() {
-  const tutor = document.getElementById("tutTutor");
-  quitarError("tutAsignatura");
-  cargarMateriasDeDocente("tutAsignatura", tutor ? tutor.value : "");
-}
-
-// Carga las tutorías del panel desde la API.
+// Trae las tutorías del usuario y las deja en memoria y en la caché local.
 async function cargarTutorias() {
-  try {
-    const tutorias = await llamarAPI("/tutorias", "GET");
-    academicoStorage.setTutorias(tutorias);
-    return tutorias;
-  } catch (err) {
-    console.error("Error cargando tutorías:", err);
-    return academicoStorage.getTutorias(); // Retorna la caché si falla el servidor.
-  }
+  const tutorias = await llamarAPI('/tutorias', 'GET');
+  tutoriasActuales = Array.isArray(tutorias) ? tutorias : [];
+  academicoStorage.setTutorias(tutoriasActuales);
+  return tutoriasActuales;
 }
 
-// Construye el HTML de una tarjeta de tutoría.
-function tarjetaTutoriaHTML(t, vistaRol) {
-  const esEstudiante = vistaRol === "estudiante";
-  const nombre = esEstudiante
-    ? t.nombre_docente || "Tutor"
-    : t.nombre_estudiante || "Estudiante";
-  const etiqueta = esEstudiante ? "Tutor" : "Estudiante";
-
-  const colores = {
-    pendiente: "#007b99",
-    confirmada: "#0ea5e9",
-    completada: "#22c55e",
-    realizada: "#22c55e",
-    cancelada: "#ef4444",
-  };
-  const color = colores[t.estado] || "#007b99";
-
-  return `
-    <div class="tarjeta-tutoria">
-      <div class="tarjeta-tutoria__estado" style="background:${color}">
-        ${t.estado.charAt(0).toUpperCase() + t.estado.slice(1)}
-      </div>
-      <div class="tarjeta-tutoria__cuerpo">
-        <div class="tarjeta-tutoria__asig">${escaparHtml(t.asignatura)}</div>
-        <div class="tarjeta-tutoria__meta">${etiqueta}: <strong>${escaparHtml(nombre)}</strong></div>
-        <div class="tarjeta-tutoria__fecha">📅 ${formatearFecha(t.fecha)} · ⏰ ${t.hora?.slice(0, 5)}</div>
-        <div class="tarjeta-tutoria__modo">${iconoModalidad(t.modalidad)} ${escaparHtml(t.modalidad)}</div>
-      </div>
-      ${botonAccionTutoria(t, vistaRol)}
-    </div>
-  `;
+// Busca una tutoría ya cargada por su id.
+function buscarTutoria(id) {
+  return tutoriasActuales.find((t) => Number(t.id) === Number(id)) || null;
 }
 
-// Indica si la tutoría ya ocurrió.
-function tutoriaYaPaso(t) {
-  if (!t.fecha) return false;
-  const cuando = new Date(`${t.fecha}T${(t.hora || "00:00").slice(0, 5)}`);
-  return !isNaN(cuando) && cuando < new Date();
+// Devuelve el marcado de una persona con su ícono.
+function personaTutoria(iconoNombre, nombre) {
+  return '<span>' + icono(iconoNombre, 's') + escaparHtml(nombre) + '</span>';
 }
 
-// Genera el botón o la nota de acción de la tutoría según su estado y rol.
-function botonAccionTutoria(t, vistaRol) {
-  const activa = t.estado === "pendiente" || t.estado === "confirmada";
-  if (!activa) return "";
+// Genera el botón o la nota de acción de una tutoría según su estado, la hora y el rol.
+function accionTutoriaHTML(tutoria, vistaRol) {
+  const estado = normalizarEstado(tutoria.estado);
+  if (estado !== 'pendiente' && estado !== 'confirmada') return '';
+  const id = Number(tutoria.id);
 
-  if (tutoriaYaPaso(t)) {
-    if (vistaRol === "docente" || vistaRol === "admin") {
-      return `
-    <button class="tarjeta-tutoria__btn" onclick="marcarTutoriaRealizada(${t.id})" type="button">
-      Marcar realizada
-    </button>`;
+  if (tutoriaYaPaso(tutoria)) {
+    if (vistaRol === 'docente' || vistaRol === 'admin') {
+      return '<button type="button" class="btn btn--s" onclick="marcarTutoriaRealizada(' + id + ')">' + icono('ok', 's') + 'Marcar realizada</button>';
     }
-    return `<div class="tarjeta-tutoria__nota">Sesión vencida · pendiente de registrar</div>`;
+    return '<span class="tutoria__nota">La sesión ya pasó; el docente debe registrarla.</span>';
   }
-
-  return `
-    <button class="tarjeta-tutoria__btn" onclick="cancelarTutoria(${t.id})" type="button">
-      Cancelar
-    </button>`;
+  if (tutoriaCancelable(tutoria, vistaRol)) {
+    return '<button type="button" class="btn btn--s btn--contorno-peligro" onclick="cancelarTutoria(' + id + ')">Cancelar</button>';
+  }
+  return '<span class="tutoria__nota">Faltan menos de ' + CONFIG.HORAS_CANCELACION + ' h: ya no se puede cancelar.</span>';
 }
 
+// Construye la tarjeta de una tutoría; la variante es lista (por defecto), compacta o detalle.
+function tarjetaTutoriaHTML(tutoria, vistaRol, variante) {
+  const estado = normalizarEstado(tutoria.estado);
+  const [, mes, dia] = String(tutoria.fecha).slice(0, 10).split('-');
+  const hora = String(tutoria.hora || '').slice(0, 5);
+
+  let personas = '';
+  if (vistaRol === 'estudiante') personas = personaTutoria('usuario', tutoria.nombre_docente || 'Tutor');
+  else if (vistaRol === 'docente') personas = personaTutoria('birrete', tutoria.nombre_estudiante || 'Estudiante');
+  else personas = personaTutoria('birrete', tutoria.nombre_estudiante || 'Estudiante') + personaTutoria('usuario', tutoria.nombre_docente || 'Docente');
+
+  const meta = '<span class="tutoria__meta">' + personas +
+    '<span>' + icono('reloj', 's') + escaparHtml(hora) + '</span>' +
+    '<span>' + icono(iconoModalidad(tutoria.modalidad), 's') + escaparHtml(tutoria.modalidad || '') + '</span></span>';
+  const fecha = '<span class="tutoria__fecha"><span class="tutoria__dia">' + Number(dia) + '</span><span class="tutoria__mes">' + MESES_CORTOS[Number(mes) - 1] + '</span></span>';
+
+  if (variante === 'compacta') {
+    return '<button type="button" class="tutoria tutoria--compacta estado-' + estado + '" onclick="calIrAFecha(\'' + String(tutoria.fecha).slice(0, 10) + '\')">' +
+      fecha + '<span class="tutoria__cuerpo"><span class="tutoria__titulo">' + escaparHtml(tutoria.asignatura) + '</span>' + meta + '</span></button>';
+  }
+
+  const observaciones = variante === 'detalle' && tutoria.observaciones
+    ? '<span class="tutoria__nota-texto">' + escaparHtml(tutoria.observaciones) + '</span>' : '';
+  return '<article class="tutoria estado-' + estado + (variante === 'detalle' ? ' tutoria--detalle' : '') + '">' + fecha +
+    '<div class="tutoria__cuerpo"><span class="tutoria__titulo">' + escaparHtml(tutoria.asignatura) + '</span>' + meta + observaciones + '</div>' +
+    '<div class="tutoria__lado">' + insigniaEstado(estado) + accionTutoriaHTML(tutoria, vistaRol) + '</div></article>';
+}
+
+// Separa las tutorías en próximas (activas) e historial (completadas y canceladas), cada grupo ordenado.
+function agruparTutorias(tutorias) {
+  const porInstante = (a, b) => (instanteTutoria(a) || 0) - (instanteTutoria(b) || 0);
+  const activas = tutorias.filter((t) => ['pendiente', 'confirmada'].includes(normalizarEstado(t.estado)));
+  const cerradas = tutorias.filter((t) => !['pendiente', 'confirmada'].includes(normalizarEstado(t.estado)));
+  return { proximas: activas.sort(porInstante), historial: cerradas.sort((a, b) => porInstante(b, a)) };
+}
+
+// Dibuja la lista de tutorías de un panel según la pestaña elegida y actualiza los contadores.
+function pintarListaTutorias(idLista, vistaRol) {
+  const lista = document.getElementById(idLista);
+  const pestanas = document.querySelector('[data-lista="' + idLista + '"]');
+  if (!lista) return;
+  const estado = estadoListasTutorias[idLista] || (estadoListasTutorias[idLista] = { filtro: 'proximas', limite: LIMITE_LISTA_TUTORIAS });
+  const grupos = agruparTutorias(tutoriasActuales);
+
+  if (pestanas) {
+    pestanas.querySelectorAll('.pestana').forEach((p) => {
+      const filtro = p.dataset.filtro;
+      p.setAttribute('aria-selected', filtro === estado.filtro ? 'true' : 'false');
+      p.textContent = (filtro === 'proximas' ? 'Próximas' : 'Historial') + ' · ' + grupos[filtro].length;
+    });
+  }
+
+  const visibles = grupos[estado.filtro];
+  if (!visibles.length) {
+    const esProximas = estado.filtro === 'proximas';
+    lista.innerHTML = estadoVacio({
+      icono: esProximas ? 'calendario' : 'archivo',
+      titulo: esProximas ? 'No tienes tutorías próximas' : 'Todavía no hay historial',
+      texto: esProximas ? 'Cuando programes una, aparecerá aquí con su fecha y su estado.' : 'Las tutorías completadas o canceladas se guardan aquí.',
+      compacto: true,
+      accion: esProximas ? { texto: 'Programar tutoría', onclick: "irAPagina('programar-tutoria')" } : null,
+    });
+    return;
+  }
+
+  const mostradas = visibles.slice(0, estado.limite);
+  lista.innerHTML = mostradas.map((t) => tarjetaTutoriaHTML(t, vistaRol)).join('') +
+    (visibles.length > mostradas.length
+      ? '<button type="button" class="btn btn--s" onclick="verMasTutorias(\'' + idLista + '\')">Ver más (' + (visibles.length - mostradas.length) + ' restantes)</button>'
+      : '');
+}
+
+// Cambia entre las pestañas Próximas e Historial de una lista de tutorías.
+function cambiarPestanaTutorias(boton) {
+  const contenedor = boton.closest('[data-lista]');
+  const idLista = contenedor.dataset.lista;
+  estadoListasTutorias[idLista] = { filtro: boton.dataset.filtro, limite: LIMITE_LISTA_TUTORIAS };
+  pintarListaTutorias(idLista, contenedor.dataset.rol);
+}
+
+// Muestra más tutorías en la lista cuando hay muchas.
+function verMasTutorias(idLista) {
+  const contenedor = document.querySelector('[data-lista="' + idLista + '"]');
+  estadoListasTutorias[idLista].limite += LIMITE_LISTA_TUTORIAS;
+  pintarListaTutorias(idLista, contenedor.dataset.rol);
+}
+
+// Pide confirmación y cancela una tutoría.
 async function cancelarTutoria(id) {
-  if (!confirm("¿Cancelar esta tutoría?")) return;
-
+  const tutoria = buscarTutoria(id);
+  const detalle = tutoria ? tutoria.asignatura + ' · ' + fechaLegible(tutoria.fecha) + ' a las ' + String(tutoria.hora).slice(0, 5) + '. ' : '';
+  const acepta = await confirmarAccion({
+    titulo: '¿Cancelar esta tutoría?',
+    texto: detalle + 'Se avisará a la otra persona y no podrás deshacerlo.',
+    confirmar: 'Sí, cancelar',
+    cancelar: 'Mantenerla',
+    tipo: 'peligro',
+    icono: 'calendario-x',
+  });
+  if (!acepta) return;
   try {
-    await llamarAPI(`/tutorias/${id}/cancelar`, "PATCH");
-    mostrarTostada("Tutoría cancelada", "exito");
+    await llamarAPI('/tutorias/' + id + '/cancelar', 'PATCH');
+    mostrarTostada('Tutoría cancelada', 'exito');
     recargarVistaTutorias();
   } catch (err) {
-    mostrarTostada(err.mensaje || "No se pudo cancelar", "error");
+    mostrarTostada(err.mensaje || 'No se pudo cancelar la tutoría', 'error');
   }
 }
 
-// Marca una tutoría como realizada (docente o admin) y recarga el panel.
+// Pide confirmación y marca una tutoría como realizada (docente o administrador).
 async function marcarTutoriaRealizada(id) {
-  if (!confirm("¿Marcar esta tutoría como realizada?")) return;
-
+  const tutoria = buscarTutoria(id);
+  const detalle = tutoria ? tutoria.asignatura + ' · ' + fechaLegible(tutoria.fecha) + '. ' : '';
+  const acepta = await confirmarAccion({
+    titulo: '¿Marcar como realizada?',
+    texto: detalle + 'Quedará en el historial y ya no se podrá cancelar.',
+    confirmar: 'Sí, marcar realizada',
+    tipo: 'info',
+    icono: 'calendario-ok',
+  });
+  if (!acepta) return;
   try {
-    await llamarAPI(`/tutorias/${id}/realizada`, "PATCH");
-    mostrarTostada("Tutoría marcada como realizada", "exito");
+    await llamarAPI('/tutorias/' + id + '/realizada', 'PATCH');
+    mostrarTostada('Tutoría marcada como realizada', 'exito');
     recargarVistaTutorias();
   } catch (err) {
-    mostrarTostada(err.mensaje || "No se pudo marcar", "error");
+    mostrarTostada(err.mensaje || 'No se pudo marcar la tutoría', 'error');
   }
 }
 
-// Recarga la vista donde estaba el usuario (calendario o su panel) y la campana.
+// Recarga la vista donde estaba la persona (calendario o su panel) y la campana.
 function recargarVistaTutorias() {
-  const enCalendario = document.getElementById("pagina-mi-calendario")?.classList.contains("activa");
-  if (enCalendario && typeof iniciarCalendario === "function") iniciarCalendario(true);
-  else if (sesion.rol === "estudiante") cargarPanelEstudiante();
-  else if (sesion.rol === "docente") cargarPanelDocente();
+  if (document.getElementById('pagina-mi-calendario').classList.contains('activa')) iniciarCalendario(true);
+  else if (sesion.rol === 'estudiante') cargarPanelEstudiante();
+  else if (sesion.rol === 'docente') cargarPanelDocente();
   cargarNotificaciones();
 }
 
-function iconoModalidad(m) {
-  if (!m) return "";
-  var ml = m.toLowerCase();
-  if (ml.includes("presencial")) return "🏫";
-  if (ml.includes("virtual"))    return "💻";
-  if (ml.includes("h")) return "🔀";
-  return "";
+let estudianteEncontrado = null;
+
+// Busca por documento exacto al estudiante que se va a programar; devuelve el registro o null.
+async function resolverEstudiante(documento) {
+  if (estudianteEncontrado && estudianteEncontrado.documento === documento) return estudianteEncontrado;
+  const resultados = await llamarAPI('/tutorias/buscar-estudiante?q=' + encodeURIComponent(documento), 'GET');
+  estudianteEncontrado = resultados.find((r) => r.documento === documento) || null;
+  return estudianteEncontrado;
+}
+
+// Muestra bajo el campo el nombre del estudiante que coincide con el documento escrito.
+const mostrarEstudianteEncontrado = debounce(async () => {
+  const ayuda = document.getElementById('ayudaTutEstudiante');
+  const documento = document.getElementById('tutEstudiante').value.trim();
+  estudianteEncontrado = null;
+  if (!/^\d{6,11}$/.test(documento)) {
+    ayuda.textContent = '';
+    return;
+  }
+  try {
+    const estudiante = await resolverEstudiante(documento);
+    ayuda.textContent = estudiante ? 'Estudiante: ' + estudiante.nombre + ' · ' + estudiante.programa : '';
+  } catch (err) {
+    ayuda.textContent = '';
+  }
+}, 450);
+
+// Prepara el formulario de tutoría según el rol de quien lo abre.
+async function prepararFormTutoria() {
+  const formulario = document.getElementById('formularioTutoria');
+  const selectTutor = document.getElementById('tutTutor');
+  formulario.reset();
+  limpiarErrores(formulario);
+  estudianteEncontrado = null;
+  document.getElementById('ayudaTutEstudiante').textContent = '';
+  document.getElementById('tutFecha').min = fechaMananaISO();
+  actualizarTextosReglas();
+
+  const rol = sesion.rol;
+  document.getElementById('campoTutEstudiante').classList.toggle('oculto', rol === 'estudiante');
+  document.getElementById('campoTutTutor').classList.toggle('oculto', rol === 'docente');
+
+  if (rol === 'docente') {
+    cargarMateriasDeDocente('tutAsignatura', sesion.id);
+    return;
+  }
+
+  cargarMateriasDeDocente('tutAsignatura', '');
+  selectTutor.innerHTML = '<option value="">Cargando tutores…</option>';
+  try {
+    const docentes = await obtenerDocentesConMaterias(true);
+    selectTutor.innerHTML = docentes.length
+      ? '<option value="">Selecciona un tutor</option>' + docentes.map((d) =>
+        '<option value="' + Number(d.id) + '">' + escaparHtml(d.nombre) + ' · ' + escaparHtml(d.facultad) + '</option>').join('')
+      : '<option value="">No hay tutores disponibles</option>';
+  } catch (err) {
+    selectTutor.innerHTML = '<option value="">No se pudieron cargar los tutores</option>';
+    mostrarTostada(err.mensaje || 'No se pudieron cargar los tutores', 'error');
+  }
+}
+
+// Actualiza la lista de materias cuando se elige otro tutor.
+function actualizarMateriasTutoria() {
+  quitarError('tutAsignatura');
+  cargarMateriasDeDocente('tutAsignatura', document.getElementById('tutTutor').value);
+}
+
+// Lleva el mensaje de error del servidor al campo que lo causó.
+function mostrarErrorTutoria(err) {
+  const m = (err.mensaje || '').toLowerCase();
+  if (err.status === 409) ponerError('tutHora', err.mensaje);
+  else if (m.includes('asignatura')) ponerError('tutAsignatura', err.mensaje);
+  else if (m.includes('modalidad')) ponerError('tutModalidad', err.mensaje);
+  else if (m.includes('fecha')) ponerError('tutFecha', err.mensaje);
+  else if (m.includes('hora')) ponerError('tutHora', err.mensaje);
+  else mostrarTostada(err.mensaje || 'No se pudo programar la tutoría', 'error');
+}
+
+// Valida y envía el formulario para programar una tutoría.
+async function alEnviarTutoria(e) {
+  e.preventDefault();
+  const formulario = e.target;
+  const boton = document.getElementById('btnProgramarTutoria');
+  const rol = sesion.rol;
+  const asignatura = document.getElementById('tutAsignatura').value;
+  const modalidad = document.getElementById('tutModalidad').value;
+  const fecha = document.getElementById('tutFecha').value;
+  const hora = document.getElementById('tutHora').value;
+  const observaciones = document.getElementById('tutObservaciones').value.trim();
+  const documento = document.getElementById('tutEstudiante').value.trim();
+  const docenteId = rol === 'docente' ? null : Number(document.getElementById('tutTutor').value) || null;
+
+  limpiarErrores(formulario);
+  let hayError = false;
+  if (rol !== 'docente' && !docenteId) { ponerError('tutTutor', 'Selecciona un tutor'); hayError = true; }
+  if (rol !== 'estudiante') {
+    if (!documento) { ponerError('tutEstudiante', 'Escribe el documento del estudiante'); hayError = true; }
+    else if (!/^\d{6,11}$/.test(documento)) { ponerError('tutEstudiante', 'Solo números, entre 6 y 11 dígitos'); hayError = true; }
+  }
+  if (!asignatura) { ponerError('tutAsignatura', 'Selecciona una asignatura'); hayError = true; }
+  if (!modalidad) { ponerError('tutModalidad', 'Selecciona la modalidad'); hayError = true; }
+  if (!fecha) { ponerError('tutFecha', 'La fecha es obligatoria'); hayError = true; }
+  else if (problemaFechaSesion(fecha)) { ponerError('tutFecha', problemaFechaSesion(fecha)); hayError = true; }
+  if (!hora) { ponerError('tutHora', 'La hora es obligatoria'); hayError = true; }
+  if (hayError) {
+    enfocarPrimerError(formulario);
+    return;
+  }
+
+  await conOcupado(boton, async () => {
+    try {
+      let estudianteId = null;
+      if (rol !== 'estudiante') {
+        const estudiante = await resolverEstudiante(documento);
+        if (!estudiante) {
+          ponerError('tutEstudiante', 'No existe un estudiante activo con ese documento');
+          enfocarPrimerError(formulario);
+          return;
+        }
+        estudianteId = estudiante.id;
+      }
+      await llamarAPI('/tutorias', 'POST', { docente_id: docenteId, estudiante_id: estudianteId, asignatura, modalidad, fecha, hora, observaciones });
+      mostrarTostada('Tutoría programada. Se avisó a las dos personas.', 'exito');
+      formulario.reset();
+      cargarNotificaciones();
+      irAlPanel();
+    } catch (err) {
+      mostrarErrorTutoria(err);
+      enfocarPrimerError(formulario);
+    }
+  });
 }

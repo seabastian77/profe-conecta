@@ -1,30 +1,19 @@
-// Manejo de sesión y autenticación en localStorage.
-
+// Sesión guardada en el navegador: token, datos básicos del usuario y marca de última actividad.
 const authStorage = {
-  // Token JWT del usuario autenticado
-  getToken()          { return localStorage.getItem('cp.token'); },
-  setToken(t)         { localStorage.setItem('cp.token', t); },
-  removeToken()       { localStorage.removeItem('cp.token'); },
+  getToken() { return leerTexto('cp.token'); },
+  setToken(token) { guardarClave('cp.token', token); },
+  removeToken() { borrarClaves(['cp.token']); },
 
-  // Datos básicos de la sesión (id, nombre, rol, correo)
-  getSesion()         {
-    const s = localStorage.getItem('cp.sesion');
-    return s ? JSON.parse(s) : null;
-  },
-  setSesion(datos)    { localStorage.setItem('cp.sesion', JSON.stringify(datos)); },
-  removeSesion()      { localStorage.removeItem('cp.sesion'); },
+  getSesion() { return leerJSON('cp.sesion', null); },
+  setSesion(datos) { guardarClave('cp.sesion', datos); },
+  removeSesion() { borrarClaves(['cp.sesion']); },
 
-  // Correo a recordar en el login
-  getCorreoRecordado()  { return localStorage.getItem('cp.recordar') || ''; },
-  setCorreoRecordado(c) { localStorage.setItem('cp.recordar', c); },
-  clearCorreoRecordado(){ localStorage.removeItem('cp.recordar'); },
+  getCorreoRecordado() { return leerTexto('cp.recordar'); },
+  setCorreoRecordado(correo) { guardarClave('cp.recordar', correo); },
+  clearCorreoRecordado() { borrarClaves(['cp.recordar']); },
 
-  // Tiempo de la última actividad del usuario (para expirar sesión)
-  getUltimaActividad()  { return parseInt(localStorage.getItem('cp.actividad') || '0'); },
-  setUltimaActividad()  { localStorage.setItem('cp.actividad', Date.now().toString()); },
+  getUltimaActividad() { return parseInt(leerTexto('cp.actividad') || '0', 10) || 0; },
+  setUltimaActividad() { guardarClave('cp.actividad', String(Date.now())); },
 
-  // Limpia todo lo de autenticación al cerrar sesión
-  limpiarTodo() {
-    ['cp.token','cp.sesion','cp.actividad'].forEach(k => localStorage.removeItem(k));
-  }
+  limpiarTodo() { borrarClaves(['cp.token', 'cp.sesion', 'cp.actividad']); },
 };

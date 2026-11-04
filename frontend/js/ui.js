@@ -1,637 +1,205 @@
-// Carga y renderiza el panel del estudiante.
+// Paneles del estudiante y del docente: indicadores, rendimiento, tutorías y estudiantes en alerta.
+
+// Cuenta las tutorías no canceladas del mes en curso.
+function tutoriasDelMes(tutorias) {
+  const mes = hoyColombiaISO().slice(0, 7);
+  return tutorias.filter((t) => String(t.fecha).slice(0, 7) === mes && normalizarEstado(t.estado) !== 'cancelada');
+}
+
+// Escribe un texto en el elemento con ese id si existe.
+function ponerTexto(id, texto) {
+  const elemento = document.getElementById(id);
+  if (elemento) elemento.textContent = texto;
+}
+
+// Devuelve el nivel de rendimiento según el promedio: texto, color del texto y color de la barra.
+function estadoRendimiento(promedio) {
+  if (!promedio) return { texto: 'Sin calificaciones registradas', clase: 'texto-tenue', relleno: '' };
+  if (promedio < CONFIG.PROMEDIO_MINIMO) return { texto: 'En alerta académica', clase: 'texto-peligro', relleno: 'error' };
+  if (promedio < 3.8) return { texto: 'Rendimiento aceptable', clase: 'texto-aviso', relleno: 'aviso' };
+  if (promedio < 4.5) return { texto: 'Buen rendimiento', clase: 'texto-ok', relleno: 'ok' };
+  return { texto: 'Excelente rendimiento', clase: 'texto-ok', relleno: 'ok' };
+}
+
+// Dibuja el promedio frente al mínimo aprobatorio y el resumen de sesiones.
+function renderizarRendimiento(promedio, tutorias) {
+  const envoltorio = document.getElementById('estGraficaWrap');
+  const resumen = document.getElementById('estGraficaPie');
+  if (!envoltorio || !resumen) return;
+
+  const estado = estadoRendimiento(promedio);
+  const minimo = CONFIG.PROMEDIO_MINIMO;
+  const posicionMinimo = (minimo / 5) * 100;
+  const relleno = estado.relleno ? ' progreso__relleno--' + estado.relleno : '';
+
+  envoltorio.innerHTML =
+    '<div class="rendimiento">' +
+      '<div class="rendimiento__cifra">' +
+        '<span class="rendimiento__valor ' + estado.clase + '">' + (promedio ? numeroCO(promedio, 1) : '—') + '</span>' +
+        '<span class="rendimiento__estado ' + estado.clase + '">' + estado.texto + '</span>' +
+      '</div>' +
+      '<div class="rendimiento__escala">' +
+        '<div class="progreso" role="meter" aria-label="Promedio acumulado" aria-valuemin="0" aria-valuemax="5" aria-valuenow="' + promedio + '" aria-valuetext="' + (promedio ? numeroCO(promedio, 1) + ' de 5,0' : 'Sin calificaciones') + '">' +
+          '<div class="progreso__relleno' + relleno + '" data-ancho="' + Math.min(100, (promedio / 5) * 100) + '"></div>' +
+          '<span class="progreso__marca" data-izq="' + posicionMinimo + '" title="Mínimo aprobatorio"></span>' +
+        '</div>' +
+        '<div class="rendimiento__marcas" aria-hidden="true">' +
+          '<span data-izq="0">0,0</span><span class="minimo" data-izq="' + posicionMinimo + '">' + numeroCO(minimo, 1) + ' mínimo</span><span data-izq="100">5,0</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  aplicarAnchos(envoltorio);
+
+  const activas = tutorias.filter((t) => normalizarEstado(t.estado) !== 'cancelada');
+  const completadas = tutorias.filter((t) => normalizarEstado(t.estado) === 'completada').length;
+  const pendientes = tutorias.filter((t) => ['pendiente', 'confirmada'].includes(normalizarEstado(t.estado))).length;
+  const materias = new Set(activas.map((t) => t.asignatura)).size;
+  const dato = (valor, etiqueta) => '<div class="resumen-dato"><span class="resumen-dato__valor">' + valor + '</span><span class="resumen-dato__etiqueta">' + etiqueta + '</span></div>';
+  resumen.innerHTML = '<div class="rendimiento__resumen">' + dato(completadas, 'Sesiones completadas') + dato(pendientes, 'Sesiones pendientes') + dato(materias, 'Materias con apoyo') + '</div>';
+}
+
+// Muestra la tarjeta de alerta del estudiante según su promedio.
+function pintarAlertaEstudiante(promedio) {
+  const tarjeta = document.getElementById('estAlertaTarjeta');
+  const minimo = numeroCO(CONFIG.PROMEDIO_MINIMO, 1);
+  let clase = 'kpi';
+  let valor = 'Sin datos';
+  let detalle = 'Aún no hay promedio registrado';
+  let nombreIcono = 'escudo-ok';
+
+  if (promedio > 0 && promedio < CONFIG.PROMEDIO_MINIMO) {
+    clase = 'kpi kpi--alerta';
+    valor = 'Activa';
+    detalle = 'Promedio por debajo del mínimo (' + minimo + ')';
+    nombreIcono = 'escudo-alerta';
+  } else if (promedio > 0) {
+    clase = 'kpi kpi--ok';
+    valor = 'Ninguna';
+    detalle = 'Promedio sobre el mínimo (' + minimo + ')';
+  }
+  tarjeta.className = clase;
+  document.getElementById('estAlertaIcono').innerHTML = icono(nombreIcono);
+  ponerTexto('estAlertaValor', valor);
+  ponerTexto('estAlertaDetalle', detalle);
+}
+
+// Carga y dibuja el panel del estudiante.
 async function cargarPanelEstudiante() {
-  // Usa el perfil en caché o lo pide al servidor si falta o es de otro usuario.
-  let perfil = perfilStorage.getPerfil();
-  const idSesion = sesion?.id || authStorage.getSesion()?.id;
-  if (!perfil || String(perfil.id) !== String(idSesion) || !perfil.perfil) {
-    try {
-      perfil = await llamarAPI("/perfil", "GET");
-      perfilStorage.setPerfil(perfil);
-    } catch (e) {
-      // Ignora el error: el panel puede cargar sin perfil.
-    }
-  }
-  const nombre = perfil ? `${escaparHtml(perfil.nombres)}` : sesion.nombre.split(" ")[0];
-  const datosPerfil = perfil?.perfil || {};
+  const lista = document.getElementById('estListaTutorias');
+  if (!lista.children.length) lista.innerHTML = esqueletoLista(2);
 
-  document.getElementById("estudianteSaludo").textContent = nombre;
-
-  // Muestra las estadísticas rápidas.
+  const [resultadoPerfil, resultadoTutorias] = await Promise.allSettled([obtenerPerfil(), cargarTutorias()]);
+  const perfil = resultadoPerfil.status === 'fulfilled' ? resultadoPerfil.value : null;
+  const datosPerfil = (perfil && perfil.perfil) || {};
   const promedio = parseFloat(datosPerfil.promedio) || 0;
-  document.getElementById("panelEstPromedio").textContent =
-    promedio > 0 ? promedio.toFixed(1) : "—";
-  document.getElementById("panelEstSemestre").textContent = datosPerfil.semestre
-    ? `${datosPerfil.semestre}°`
-    : "—";
 
-  // Carga las tutorías desde el servidor.
-  const tutorias = await cargarTutorias();
+  ponerTexto('estudianteSaludo', (perfil && perfil.nombres ? perfil.nombres : sesion.nombre).split(' ')[0]);
+  ponerTexto('panelEstPromedio', promedio > 0 ? numeroCO(promedio, 1) : '—');
+  ponerTexto('panelEstSemestre', datosPerfil.semestre ? datosPerfil.semestre + '°' : '—');
+  ponerTexto('panelEstPrograma', datosPerfil.programa || 'Programa sin registrar');
+  pintarAlertaEstudiante(promedio);
 
-  // Cuenta las tutorías del mes en curso.
-  const hoy = new Date();
-  const tutoriasMes = tutorias.filter((t) => {
-    if (!t.fecha) return false;
-    const f = new Date(t.fecha + "T00:00");
-    return (
-      f.getMonth() === hoy.getMonth() && f.getFullYear() === hoy.getFullYear()
-    );
-  }).length;
-  document.getElementById("estTutoriasCount").textContent = tutoriasMes;
-
-  // Actualiza la tarjeta de alerta por promedio bajo.
-  const tarjetaAlerta = document.getElementById("estAlertaTarjeta");
-  const iconoAlerta = document.getElementById("estAlertaIcono");
-  const valorAlerta = document.getElementById("estAlertaValor");
-  const hayAlerta = promedio > 0 && promedio < CONFIG.PROMEDIO_MINIMO;
-  if (hayAlerta) {
-    iconoAlerta.textContent = "⚠️";
-    iconoAlerta.classList.add("naranja");
-    valorAlerta.textContent = "Activa";
-    valorAlerta.style.color = "#ef4444";
-    tarjetaAlerta.style.borderLeft = "4px solid #ef4444";
-  } else {
-    iconoAlerta.textContent = "✅";
-    valorAlerta.textContent = "Sin";
-    valorAlerta.style.color = "";
-    tarjetaAlerta.style.borderLeft = "";
+  if (resultadoTutorias.status === 'rejected') {
+    ponerTexto('estTutoriasCount', '—');
+    ponerTexto('estTutoriasSubtitulo', 'No se pudieron cargar tus tutorías');
+    lista.innerHTML = estadoError(resultadoTutorias.reason.mensaje, 'cargarPanelEstudiante()');
+    renderizarRendimiento(promedio, []);
+    return;
   }
 
-  // Renderiza la acción destacada.
-  renderAccion("accionEstudiante", accionEstudiante({ promedio, tutorias, tutoriasMes }));
-
-  // Muestra las tarjetas de tutorías.
-  const lista = document.getElementById("estListaTutorias");
-  if (tutorias.length === 0) {
-    lista.innerHTML =
-      '<p class="sin-datos">No tienes tutorías programadas. ¡Programa una!</p>';
-    document.getElementById("estTutoriasSubtitulo").textContent =
-      "Sin tutorías";
-  } else {
-    lista.innerHTML = tutorias
-      .map((t) => tarjetaTutoriaHTML(t, "estudiante"))
-      .join("");
-    document.getElementById("estTutoriasSubtitulo").textContent =
-      `${tutorias.length} tutoría(s) registradas — ${tutoriasMes} este mes`;
-  }
-
-  renderizarGrafica(datosPerfil, tutorias);
-  renderizarCalendario("est", tutorias);
+  const tutorias = resultadoTutorias.value;
+  const delMes = tutoriasDelMes(tutorias);
+  ponerTexto('estTutoriasCount', delMes.length);
+  ponerTexto('estTutoriasSubtitulo', tutorias.length
+    ? tutorias.length + (tutorias.length === 1 ? ' tutoría registrada' : ' tutorías registradas') + ' · ' + delMes.length + ' este mes'
+    : 'Aún no tienes tutorías');
+  renderAccion('accionEstudiante', perfil && perfilEstaIncompleto('estudiante', perfil.perfil)
+    ? accionPerfilIncompleto('estudiante')
+    : accionEstudiante({ promedio, tutorias }));
+  renderizarRendimiento(promedio, tutorias);
+  pintarListaTutorias('estListaTutorias', 'estudiante');
 }
 
-
-// Carga y renderiza el panel del docente.
-async function cargarPanelDocente() {
-  const perfil = perfilStorage.getPerfil();
-  const nombre = perfil ? `${escaparHtml(perfil.nombres)}` : sesion.nombre.split(" ")[0];
-
-  document.getElementById("docenteSaludo").textContent = nombre;
-
-  const tutorias = await cargarTutorias();
-
-  // Cuenta las tutorías del mes actual.
-  const hoy = new Date();
-  const tutoriasMes = tutorias.filter((t) => {
-    if (!t.fecha) return false;
-    const f = new Date(t.fecha + "T00:00");
-    return (
-      f.getMonth() === hoy.getMonth() && f.getFullYear() === hoy.getFullYear()
-    );
-  });
-  document.getElementById("docTutoriasMes").textContent = tutoriasMes.length;
-
-  // Cuenta los estudiantes únicos atendidos.
-  const estudiantesUnicos = [...new Set(tutorias.map((t) => t.estudiante_id))];
-  document.getElementById("docEstudiantesCount").textContent =
-    estudiantesUnicos.length;
-
-  // Calcula la tasa de recuperación y la lista de alertas.
-  const estudiantesEnAlerta = obtenerEstudiantesEnAlerta(tutorias);
-  document.getElementById("docAlertasCount").textContent =
-    estudiantesEnAlerta.length;
-
-  const totalEstudiantes = Math.max(estudiantesUnicos.length, 1);
-  const enRecuperacion = totalEstudiantes - estudiantesEnAlerta.length;
-  const tasaRecuperacion = Math.round((enRecuperacion / totalEstudiantes) * 100);
-  document.getElementById("docRecuperacion").textContent =
-    estudiantesUnicos.length > 0 ? tasaRecuperacion + "%" : "—";
-
-  // Muestra las tarjetas de tutorías.
-  const lista = document.getElementById("docListaTutorias");
-  if (tutorias.length === 0) {
-    lista.innerHTML =
-      '<p class="sin-datos">No tienes tutorías programadas.</p>';
-    document.getElementById("docTutoriasSubtitulo").textContent =
-      "Sin tutorías";
-  } else {
-    lista.innerHTML = tutorias
-      .map((t) => tarjetaTutoriaHTML(t, "docente"))
-      .join("");
-    document.getElementById("docTutoriasSubtitulo").textContent =
-      `${tutorias.length} tutoría(s) — ${tutoriasMes.length} este mes`;
-  }
-
-  // Renderiza la acción destacada.
-  renderAccion("accionDocente", accionDocente({
-    enAlerta: estudiantesEnAlerta.length,
-    tutorias,
-    tutoriasMes: tutoriasMes.length,
-  }));
-
-  // Renderiza la lista de alertas.
-  renderizarAlertasDocente(estudiantesEnAlerta);
-
-  renderizarCalendario("doc", tutorias);
-}
-
-// Construye la lista de estudiantes en alerta a partir de las tutorías.
+// Construye la lista de estudiantes del docente que están en alerta, de menor a mayor promedio.
 function obtenerEstudiantesEnAlerta(tutorias) {
-  // Agrupa las tutorías por estudiante.
-  const porEstudiante = {};
+  const porEstudiante = new Map();
   tutorias.forEach((t) => {
     if (!t.estudiante_id) return;
-    if (!porEstudiante[t.estudiante_id]) {
-      porEstudiante[t.estudiante_id] = {
+    if (!porEstudiante.has(t.estudiante_id)) {
+      porEstudiante.set(t.estudiante_id, {
         id: t.estudiante_id,
-        nombre: t.nombre_estudiante || "Estudiante",
+        nombre: t.nombre_estudiante || 'Estudiante',
         sesiones: 0,
-        ultima: null,
-        asignaturas: new Set(),
-        // Usa el promedio real del perfil; antes se inventaba a partir del id del estudiante.
+        materias: new Set(),
         promedio: t.promedio === null || t.promedio === undefined ? null : parseFloat(t.promedio),
-      };
+      });
     }
-    porEstudiante[t.estudiante_id].sesiones++;
-    porEstudiante[t.estudiante_id].asignaturas.add(t.asignatura);
-    if (
-      !porEstudiante[t.estudiante_id].ultima ||
-      t.fecha > porEstudiante[t.estudiante_id].ultima
-    ) {
-      porEstudiante[t.estudiante_id].ultima = t.fecha;
-    }
+    const estudiante = porEstudiante.get(t.estudiante_id);
+    estudiante.sesiones++;
+    estudiante.materias.add(t.asignatura);
   });
-
-  return Object.values(porEstudiante)
+  return [...porEstudiante.values()]
     .filter((e) => e.promedio > 0 && e.promedio < CONFIG.PROMEDIO_MINIMO)
     .sort((a, b) => a.promedio - b.promedio);
 }
 
-// Renderiza la lista visual de estudiantes en alerta.
+// Dibuja las tarjetas de estudiantes en alerta con su nivel de riesgo.
 function renderizarAlertasDocente(estudiantes) {
-  const lista = document.getElementById("docListaAlertas");
-  if (!lista) return;
-
-  if (estudiantes.length === 0) {
-    lista.innerHTML =
-      '<p class="sin-datos">Ningún estudiante en alerta. ¡Buen trabajo!</p>';
+  const contenedor = document.getElementById('docListaAlertas');
+  if (!estudiantes.length) {
+    contenedor.innerHTML = estadoVacio({ icono: 'escudo-ok', titulo: 'Ningún estudiante en alerta', texto: 'Tus estudiantes tienen un promedio igual o superior al mínimo.', compacto: true });
     return;
   }
-
-  lista.innerHTML = estudiantes
-    .map((e) => {
-      // Asigna color y etiqueta según el nivel de riesgo.
-      let nivel, color, etiqueta;
-      if (e.promedio < 2.5) {
-        nivel = "critico";
-        color = "#ef4444";
-        etiqueta = "🔴 Crítico";
-      } else if (e.promedio < 2.8) {
-        nivel = "alto";
-        color = "#f97316";
-        etiqueta = "🟠 Alto";
-      } else {
-        nivel = "moderado";
-        color = "#eab308";
-        etiqueta = "🟡 Moderado";
-      }
-
-      const inicial = (e.nombre[0] || "?").toUpperCase();
-      const asignaturas = [...e.asignaturas].slice(0, 2).join(", ") || "—";
-
-      return `
-        <div class="tarjeta-tutoria" style="border-left:4px solid ${color}">
-          <div class="tarjeta-tutoria__cuerpo">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-              <div style="width:36px;height:36px;border-radius:50%;background:${color};color:white;display:flex;align-items:center;justify-content:center;font-weight:700">${inicial}</div>
-              <div>
-                <div class="tarjeta-tutoria__asig">${escaparHtml(e.nombre)}</div>
-                <div class="tarjeta-tutoria__meta" style="color:${color};font-weight:600">${etiqueta}</div>
-              </div>
-            </div>
-            <div class="tarjeta-tutoria__meta">Promedio: <strong style="color:${color}">${e.promedio.toFixed(1)}</strong></div>
-            <div class="tarjeta-tutoria__meta">${e.sesiones} sesión(es) · ${asignaturas}</div>
-          </div>
-        </div>`;
-    })
-    .join("");
+  contenedor.innerHTML = estudiantes.map((e) => {
+    const nivel = e.promedio < 2.5 ? { clase: 'critico', texto: 'Crítico', insignia: 'error' }
+      : e.promedio < 2.8 ? { clase: 'alto', texto: 'Alto', insignia: 'aviso' }
+        : { clase: 'moderado', texto: 'Moderado', insignia: 'aviso' };
+    const materias = [...e.materias].slice(0, 2).join(', ') || '—';
+    return '<article class="alerta-estudiante alerta-estudiante--' + nivel.clase + '">' +
+      '<span class="avatar">' + escaparHtml(iniciales(e.nombre)) + '</span>' +
+      '<div class="alerta-estudiante__datos">' +
+        '<span class="alerta-estudiante__nombre">' + escaparHtml(e.nombre) + '</span>' +
+        '<span class="alerta-estudiante__detalle">' + e.sesiones + (e.sesiones === 1 ? ' sesión' : ' sesiones') + ' · ' + escaparHtml(materias) + '</span>' +
+        '<span class="insignia insignia--' + nivel.insignia + '">' + nivel.texto + '</span>' +
+      '</div>' +
+      '<div class="alerta-estudiante__promedio">' + numeroCO(e.promedio, 1) + '<small>promedio</small></div>' +
+    '</article>';
+  }).join('');
 }
 
-// Dibuja el medidor de rendimiento del estudiante en SVG.
-function renderizarGrafica(perfil, tutorias) {
-  const wrap = document.getElementById("estGraficaWrap");
-  const pie = document.getElementById("estGraficaPie");
-  if (!wrap || !pie) return;
+// Carga y dibuja el panel del docente.
+async function cargarPanelDocente() {
+  const lista = document.getElementById('docListaTutorias');
+  if (!lista.children.length) lista.innerHTML = esqueletoLista(2);
+  ponerTexto('docenteSaludo', sesion.nombre.split(' ')[0]);
 
-  const promedio = parseFloat(perfil.promedio) || 0;
-  const minimo = CONFIG.PROMEDIO_MINIMO;
-  const maximo = 5.0;
-
-  // Define color y etiqueta según el nivel.
-  let color, etiqueta, icono;
-  if (promedio === 0) {
-    color = "#9ca3af";
-    etiqueta = "Sin calificaciones registradas";
-    icono = "❓";
-  } else if (promedio < minimo) {
-    color = "#ef4444";
-    etiqueta = "En alerta académica";
-    icono = "⚠️";
-  } else if (promedio < 3.8) {
-    color = "#f39200";
-    etiqueta = "Rendimiento aceptable";
-    icono = "📊";
-  } else if (promedio < 4.5) {
-    color = "#22c55e";
-    etiqueta = "Buen rendimiento";
-    icono = "👍";
-  } else {
-    color = "#16a34a";
-    etiqueta = "Excelente rendimiento";
-    icono = "🏆";
-  }
-
-  // Calcula la geometría del medidor.
-  const W = 560,
-    H = 240;
-  const cx = W / 2,
-    cy = 180,
-    r = 130;
-  const angIni = Math.PI;
-  const angFin = 2 * Math.PI;
-
-  function pol(ang) {
-    return { x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) };
-  }
-  function arco(a1, a2) {
-    const p1 = pol(a1),
-      p2 = pol(a2);
-    const largo = a2 - a1 > Math.PI ? 1 : 0;
-    return `M ${p1.x} ${p1.y} A ${r} ${r} 0 ${largo} 1 ${p2.x} ${p2.y}`;
-  }
-
-  const angPromedio = angIni + (promedio / maximo) * Math.PI;
-  const angMinimo = angIni + (minimo / maximo) * Math.PI;
-
-  const pMin = pol(angMinimo);
-  const cosMin = Math.cos(angMinimo);
-  const senMin = Math.sin(angMinimo);
-
-  let svg = `<svg viewBox="0 0 ${W} ${H}" class="grafica-svg">
-    <!-- Arco de fondo (gris claro) -->
-    <path d="${arco(angIni, angFin)}" fill="none" stroke="#e5e7eb" stroke-width="20" stroke-linecap="round"/>
-
-    <!-- Zona de alerta (0 a 3.0) en rojo tenue -->
-    <path d="${arco(angIni, angMinimo)}" fill="none" stroke="#fecaca" stroke-width="20" stroke-linecap="round"/>
-
-    <!-- Arco del promedio actual, solo si hay promedio -->
-    ${
-      promedio > 0
-        ? `<path d="${arco(angIni, angPromedio)}" fill="none" stroke="${color}" stroke-width="20" stroke-linecap="round"/>`
-        : ""
-    }
-
-    <!-- Marca del umbral 3.0 -->
-    <line x1="${pMin.x - 16 * cosMin}" y1="${pMin.y - 16 * senMin}"
-          x2="${pMin.x + 16 * cosMin}" y2="${pMin.y + 16 * senMin}"
-          stroke="#f39200" stroke-width="3"/>
-    <text x="${pMin.x + 28 * cosMin}" y="${pMin.y + 28 * senMin + 4}"
-          font-size="12" fill="#f39200" font-weight="700" text-anchor="middle">${minimo.toFixed(1)}</text>
-
-    <!-- Extremos de escala -->
-    <text x="${pol(angIni).x - 14}" y="${pol(angIni).y + 6}"
-          font-size="13" fill="#9ca3af" text-anchor="end" font-weight="600">0.0</text>
-    <text x="${pol(angFin).x + 14}" y="${pol(angFin).y + 6}"
-          font-size="13" fill="#9ca3af" font-weight="600">5.0</text>
-
-    <!-- Número grande: promedio actual -->
-    <text x="${cx}" y="${cy - 24}" text-anchor="middle"
-          font-size="64" font-weight="800" fill="${color}">${promedio > 0 ? promedio.toFixed(1) : "—"}</text>
-
-    <!-- Subtítulo -->
-    <text x="${cx}" y="${cy + 2}" text-anchor="middle"
-          font-size="13" fill="#6b7280" font-weight="700" letter-spacing="1">PROMEDIO ACTUAL</text>
-    <text x="${cx}" y="${cy + 26}" text-anchor="middle"
-          font-size="13" fill="${color}" font-weight="600">${icono} ${etiqueta}</text>
-  </svg>`;
-
-  wrap.innerHTML = svg;
-
-  // Calcula las estadísticas reales desde las tutorías.
-  const completadas = tutorias.filter(
-    (t) => t.estado === "completada" || t.estado === "realizada",
-  ).length;
-  const pendientes = tutorias.filter((t) => t.estado === "pendiente").length;
-  const canceladas = tutorias.filter((t) => t.estado === "cancelada").length;
-
-  // Cuenta las asignaturas distintas.
-  const asignaturasUnicas = new Set(
-    tutorias.filter((t) => t.estado !== "cancelada").map((t) => t.asignatura),
-  );
-
-  pie.innerHTML = `
-    <div class="grafica-pie__item">
-      <span class="grafica-pie__val" style="color:#22c55e">${completadas}</span>
-      <span class="grafica-pie__lbl">Sesiones completadas</span>
-    </div>
-    <div class="grafica-pie__item">
-      <span class="grafica-pie__val" style="color:#007b99">${pendientes}</span>
-      <span class="grafica-pie__lbl">Pendientes</span>
-    </div>
-    <div class="grafica-pie__item">
-      <span class="grafica-pie__val" style="color:#f39200">${asignaturasUnicas.size}</span>
-      <span class="grafica-pie__lbl">Asignaturas con apoyo</span>
-    </div>
-  `;
-}
-
-const _calEstado = {}; // estado por prefijo ('est' | 'doc')
-
-// Inicializa el estado del calendario y renderiza el mes actual.
-function renderizarCalendario(prefijo, tutorias) {
-  if (!_calEstado[prefijo]) {
-    const hoy = new Date();
-    _calEstado[prefijo] = { anio: hoy.getFullYear(), mes: hoy.getMonth() };
-  }
-  _renderizarMes(prefijo, tutorias);
-}
-
-function navegarCalendario(prefijo, delta) {
-  const estado = _calEstado[prefijo];
-  if (!estado) return;
-
-  estado.mes += delta;
-  if (estado.mes > 11) {
-    estado.mes = 0;
-    estado.anio++;
-  }
-  if (estado.mes < 0) {
-    estado.mes = 11;
-    estado.anio--;
-  }
-
-  const tutorias = academicoStorage.getTutorias();
-  _renderizarMes(prefijo, tutorias);
-}
-
-function _renderizarMes(prefijo, tutorias) {
-  const estado = _calEstado[prefijo];
-  const { anio, mes } = estado;
-
-  const hoy = new Date();
-  const primerDia = new Date(anio, mes, 1);
-  const ultimoDia = new Date(anio, mes + 1, 0);
-  const diaSemana = primerDia.getDay();
-  const nombresMeses = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-  ];
-
-  // Marca los días que tienen tutorías.
-  const diasConTutoria = new Set(
-    tutorias
-      .filter((t) => {
-        const f = new Date(t.fecha + "T00:00");
-        return (
-          f.getFullYear() === anio &&
-          f.getMonth() === mes &&
-          t.estado !== "cancelada"
-        );
-      })
-      .map((t) => new Date(t.fecha + "T00:00").getDate()),
-  );
-
-  // Actualiza el título del calendario.
-  const titulo = document
-    .getElementById(`${prefijo}CalendarioGrilla`)
-    ?.closest(".calendario-wrap")
-    ?.querySelector(".calendario-titulo");
-  if (titulo) titulo.textContent = `📅 ${nombresMeses[mes]} ${anio}`;
-
-  let html = "";
-
-  // Agrega celdas vacías antes del primer día.
-  for (let i = 0; i < diaSemana; i++) {
-    html += '<div class="calendario-celda otro-mes"></div>';
-  }
-
-  for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
-    const esHoy =
-      dia === hoy.getDate() &&
-      mes === hoy.getMonth() &&
-      anio === hoy.getFullYear();
-    const conTut = diasConTutoria.has(dia);
-    const clases = [
-      "calendario-celda",
-      esHoy ? "hoy" : "",
-      conTut ? "con-tutoria" : "",
-    ]
-      .join(" ")
-      .trim();
-
-    html += `
-      <div class="${clases}" onclick="seleccionarDia('${prefijo}', ${dia})">
-        <span class="calendario-celda__num">${dia}</span>
-        ${conTut ? '<span class="calendario-celda__punto"></span>' : ""}
-      </div>`;
-  }
-
-  const grilla = document.getElementById(`${prefijo}CalendarioGrilla`);
-  if (grilla) grilla.innerHTML = html;
-}
-
-function seleccionarDia(prefijo, dia) {
-  const estado = _calEstado[prefijo];
-  const tutorias = academicoStorage.getTutorias();
-  const { anio, mes } = estado;
-
-  // Marca la celda seleccionada.
-  document
-    .querySelectorAll(`#${prefijo}CalendarioGrilla .calendario-celda`)
-    .forEach((c) => c.classList.remove("seleccionada"));
-
-  // Busca las tutorías de ese día.
-  const fechaStr = `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
-  const del_dia = tutorias.filter(
-    (t) => t.fecha === fechaStr && t.estado !== "cancelada",
-  );
-
-  const detalle = document.getElementById(`${prefijo}CalendarioDetalle`);
-  const fechaDiv = document.getElementById(`${prefijo}DetalleFecha`);
-  const listaDiv = document.getElementById(`${prefijo}DetalleLista`);
-
-  if (!detalle) return;
-
-  detalle.classList.remove("oculto");
-  const nombresMeses = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-  ];
-  if (fechaDiv) fechaDiv.textContent = `${dia} de ${nombresMeses[mes]}`;
-
-  if (del_dia.length === 0) {
-    listaDiv.innerHTML = '<p class="sin-datos">Sin tutorías este día</p>';
+  const [resultadoTutorias, resultadoPerfil] = await Promise.allSettled([cargarTutorias(), obtenerPerfil()]);
+  if (resultadoTutorias.status === 'rejected') {
+    ['docEstudiantesCount', 'docAlertasCount', 'docTutoriasMes', 'docRecuperacion'].forEach((id) => ponerTexto(id, '—'));
+    ponerTexto('docTutoriasSubtitulo', 'No se pudieron cargar tus tutorías');
+    lista.innerHTML = estadoError(resultadoTutorias.reason.mensaje, 'cargarPanelDocente()');
     return;
   }
+  const tutorias = resultadoTutorias.value;
+  const perfilIncompleto = resultadoPerfil.status === 'fulfilled' && perfilEstaIncompleto('docente', resultadoPerfil.value.perfil);
 
-  listaDiv.innerHTML = del_dia
-    .map(
-      (t) => `
-    <div class="calendario-evento">
-      <span class="calendario-evento__hora">${escaparHtml(t.hora?.slice(0, 5))}</span>
-      <div class="calendario-evento__info">
-        <div class="calendario-evento__asig">${escaparHtml(t.asignatura)}</div>
-        <div class="calendario-evento__meta">
-          ${escaparHtml(t.nombre_docente || t.nombre_estudiante || "")} · 
-          <span class="calendario-evento__modo">${iconoModalidad(t.modalidad)} ${escaparHtml(t.modalidad)}</span>
-        </div>
-      </div>
-    </div>
-  `,
-    )
-    .join("");
-}
+  const delMes = tutoriasDelMes(tutorias);
+  const estudiantes = new Set(tutorias.map((t) => t.estudiante_id));
+  const enAlerta = obtenerEstudiantesEnAlerta(tutorias);
+  const sinAlerta = estudiantes.size ? Math.round(((estudiantes.size - enAlerta.length) / estudiantes.size) * 100) + '%' : '—';
 
-// Carga las notificaciones del usuario y actualiza el contador.
-async function cargarNotificaciones() {
-  if (!sesion.activa) return;
+  ponerTexto('docEstudiantesCount', estudiantes.size);
+  ponerTexto('docAlertasCount', enAlerta.length);
+  ponerTexto('docTutoriasMes', delMes.length);
+  ponerTexto('docRecuperacion', sinAlerta);
+  document.getElementById('docAlertasTarjeta').className = enAlerta.length ? 'kpi kpi--alerta' : 'kpi';
+  ponerTexto('docTutoriasSubtitulo', tutorias.length
+    ? tutorias.length + (tutorias.length === 1 ? ' tutoría' : ' tutorías') + ' · ' + delMes.length + ' este mes'
+    : 'Aún no tienes tutorías');
 
-  try {
-    const notifs = await llamarAPI("/notificaciones", "GET");
-    const noLeidas = notifs.filter((n) => !n.leida).length;
-    const badge = document.getElementById("campanaBadge");
-
-    if (noLeidas > 0) {
-      badge.textContent = noLeidas > 99 ? "99+" : noLeidas;
-      badge.classList.remove("oculto");
-    } else {
-      badge.classList.add("oculto");
-    }
-
-    // Renderiza las notificaciones en el panel.
-    const lista = document.getElementById("notifLista");
-    if (!lista) return;
-
-    if (notifs.length === 0) {
-      lista.innerHTML =
-        '<div class="notif-vacia">No tienes notificaciones</div>';
-      return;
-    }
-
-    lista.innerHTML = notifs
-      .slice(0, 20)
-      .map(
-        (n) => `
-      <div class="notif-item ${n.leida ? "" : "no-leida"}" onclick="leerNotif(${n.id})">
-        <div class="notif-item__icono">${n.icono || "🔔"}</div>
-        <div class="notif-item__cuerpo">
-          <div class="notif-item__titulo">${escaparHtml(n.titulo)}</div>
-          <div class="notif-item__desc">${escaparHtml(n.descripcion || "")}</div>
-          <div class="notif-item__tiempo">${formatearTiempo(n.creada_en)}</div>
-        </div>
-        ${!n.leida ? '<span class="notif-item__punto"></span>' : ""}
-      </div>
-    `,
-      )
-      .join("");
-  } catch (err) {
-    // Evita romper la app si no hay backend.
-    console.warn("No se pudieron cargar notificaciones:", err);
-  }
-}
-
-// Abre o cierra la campana; al abrirla trae las notificaciones nuevas, que antes solo se cargaban al iniciar sesión.
-function alternarNotificaciones() {
-  const panel = document.getElementById("notifPanel");
-  panel.classList.toggle("oculto");
-
-  if (!panel.classList.contains("oculto")) {
-    cargarNotificaciones();
-    document.addEventListener("click", cerrarNotifFuera, { once: true });
-  }
-}
-
-function cerrarNotifFuera(e) {
-  const panel = document.getElementById("notifPanel");
-  if (!panel.contains(e.target) && e.target.id !== "botonCampana") {
-    panel.classList.add("oculto");
-  }
-}
-
-async function leerNotif(id) {
-  try {
-    await llamarAPI(`/notificaciones/${id}/leer`, "PATCH");
-    cargarNotificaciones();
-  } catch (err) {
-    console.warn("Error marcando notificación:", err);
-  }
-}
-
-async function marcarTodasLeidas() {
-  try {
-    await llamarAPI("/notificaciones/leer-todas", "PATCH");
-    cargarNotificaciones();
-  } catch (err) {
-    console.warn("Error:", err);
-  }
-}
-
-// Muestra un mensaje emergente temporal.
-function mostrarTostada(mensaje, tipo) {
-  const tostada = document.getElementById("tostada");
-  tostada.textContent = mensaje;
-
-  // Usa las clases que define estilos.css; las de estilo «tostada--» no existían y el mensaje nunca se veía (DEF-13).
-  const claseTipo = { exito: "exito", error: "error", alerta: "advertencia", advertencia: "advertencia" }[tipo];
-  tostada.className = "tostada visible" + (claseTipo ? " " + claseTipo : "");
-
-  clearTimeout(window._tostadaTimer);
-  window._tostadaTimer = setTimeout(
-    () => tostada.classList.remove("visible"),
-    tipo === "error" ? 6000 : 3500,
-  );
-}
-
-// Formatea una fecha ISO al formato dd/mm/aaaa.
-function formatearFecha(isoFecha) {
-  if (!isoFecha) return "—";
-  const [y, m, d] = isoFecha.split("T")[0].split("-");
-  return `${d}/${m}/${y}`;
-}
-
-function formatearTiempo(isoFecha) {
-  if (!isoFecha) return "";
-  const diff = Math.floor((Date.now() - new Date(isoFecha).getTime()) / 60000);
-  if (diff < 1) return "Ahora mismo";
-  if (diff < 60) return `Hace ${diff} min`;
-  if (diff < 1440) return `Hace ${Math.floor(diff / 60)}h`;
-  return `Hace ${Math.floor(diff / 1440)} días`;
+  renderAccion('accionDocente', perfilIncompleto
+    ? accionPerfilIncompleto('docente')
+    : accionDocente({ enAlerta: enAlerta.length, tutorias, tutoriasMes: delMes.length }));
+  renderizarAlertasDocente(enAlerta);
+  pintarListaTutorias('docListaTutorias', 'docente');
 }

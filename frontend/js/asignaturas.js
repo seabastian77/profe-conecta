@@ -1,312 +1,270 @@
-// Autocomplete de asignaturas con área y programa, y creación dinámica.
+// Materias: buscador con sugerencias y creación para el docente, y materias por tutor para programar tutorías.
 
-let _asignaturasSeleccionadas = [];
-
-// Mismo patrón que valida el servidor para los nombres de materias nuevas: sin < > " ` ni barra invertida.
+// Mismo patrón que valida el servidor para los nombres de materias: sin < > " ` ni barra invertida.
 const NOMBRE_MATERIA_VALIDO = /^[^<>"`\\\u0000-\u001f]{2,80}$/;
-let _busquedaTimeout = null;
+const MAX_MATERIAS_DOCENTE = 30;
+const MIN_LETRAS_BUSQUEDA = 2;
 
-const AREAS_PROGRAMAS = {
-  'Ingenierías y Arquitectura': ['Sistemas','Industrial','Civil','Arquitectura'],
-  'Ciencias Sociales, Salud y Bienestar': ['Psicología','Trabajo Social','Deporte'],
-  'Derecho y Ciencias Políticas': ['Derecho','Criminalística'],
-  'Ciencias Administrativas, Económicas y Contables': ['Administración y Negocios','Contaduría','Gastronomía'],
-  'Comunicación, Publicidad y Diseño': ['Comunicación Social','Publicidad','Diseño Gráfico'],
-  'Educación y Humanidades': ['Licenciaturas','Filosofía y Teología'],
-  'Ciencias Básicas': ['Matemáticas','Investigación'],
-  'Institucional': ['Obligatorias','Inglés'],
-  'General': ['General']
-};
+let materiasSeleccionadas = [];
+let secuenciaBusquedaMaterias = 0;
+let docentesConMaterias = null;
 
+registrarLimpieza(() => {
+  materiasSeleccionadas = [];
+  docentesConMaterias = null;
+});
+
+// Devuelve los nombres de las materias elegidas para guardarlos en el perfil.
+function getAsignaturasSeleccionadas() {
+  return materiasSeleccionadas.map((materia) => materia.nombre);
+}
+
+// Indica si la materia ya está entre las elegidas, sin distinguir mayúsculas.
+function materiaYaElegida(nombre) {
+  const buscado = String(nombre || '').toLowerCase();
+  return materiasSeleccionadas.some((materia) => materia.nombre.toLowerCase() === buscado);
+}
+
+// Dibuja las materias elegidas como etiquetas que se pueden quitar.
+function renderizarMateriasElegidas() {
+  const contenedor = document.getElementById('docAsignaturasSeleccionadas');
+  if (!contenedor) return;
+  if (!materiasSeleccionadas.length) {
+    contenedor.innerHTML = '<span class="texto-tenue">Aún no agregaste materias</span>';
+    return;
+  }
+  contenedor.innerHTML = materiasSeleccionadas.map((materia) => {
+    const detalle = [materia.area, materia.programa].filter(Boolean).join(' › ');
+    return '<span class="ficha ficha--quitable"' + (detalle ? ' title="' + escaparHtml(detalle) + '"' : '') + '>' + escaparHtml(materia.nombre) +
+      '<button type="button" data-quitar-materia="' + escaparHtml(materia.nombre) + '" aria-label="Quitar ' + escaparHtml(materia.nombre) + '">' + icono('cerrar', 'xs') + '</button></span>';
+  }).join('');
+}
+
+// Reemplaza las materias elegidas por las que el docente ya tenía guardadas.
+function precargarAsignaturas(nombres) {
+  materiasSeleccionadas = (nombres || []).map((nombre) => ({ nombre, area: '', programa: '' }));
+  renderizarMateriasElegidas();
+}
+
+// Cierra la lista de sugerencias.
+function cerrarSugerenciasMaterias() {
+  const lista = document.getElementById('docAsignaturaDropdown');
+  const entrada = document.getElementById('docAsignaturaInput');
+  if (lista) lista.replaceChildren();
+  if (entrada) entrada.setAttribute('aria-expanded', 'false');
+}
+
+// Deja el buscador de materias vacío y cerrado.
 function inicializarAutocompleteAsignaturas() {
-  _asignaturasSeleccionadas = [];
-  renderizarTags();
-  const input = document.getElementById('docAsignaturaInput');
-  if (input) input.value = '';
-  actualizarHiddenJSON();
-  document.addEventListener('click', function(e) {
-    const dropdown = document.getElementById('docAsignaturaDropdown');
-    const input = document.getElementById('docAsignaturaInput');
-    if (dropdown && input && !input.contains(e.target) && !dropdown.contains(e.target)) {
-      dropdown.style.display = 'none';
+  document.getElementById('docAsignaturaInput').value = '';
+  cerrarSugerenciasMaterias();
+  renderizarMateriasElegidas();
+}
+
+// Agrega una materia a las elegidas y deja el buscador listo para otra.
+function seleccionarMateria(materia) {
+  if (materiaYaElegida(materia.nombre)) {
+    mostrarTostada('Esa materia ya está en tu lista', 'info');
+  } else if (materiasSeleccionadas.length >= MAX_MATERIAS_DOCENTE) {
+    mostrarTostada('Puedes registrar hasta ' + MAX_MATERIAS_DOCENTE + ' materias', 'advertencia');
+    return;
+  } else {
+    materiasSeleccionadas.push({ nombre: materia.nombre, area: materia.area || '', programa: materia.programa || '' });
+    renderizarMateriasElegidas();
+    quitarError('docAsignaturaInput');
+  }
+  const entrada = document.getElementById('docAsignaturaInput');
+  entrada.value = '';
+  cerrarSugerenciasMaterias();
+  entrada.focus();
+}
+
+// Quita una materia de las elegidas.
+function quitarAsignatura(nombre) {
+  materiasSeleccionadas = materiasSeleccionadas.filter((materia) => materia.nombre !== nombre);
+  renderizarMateriasElegidas();
+  const entrada = document.getElementById('docAsignaturaInput');
+  if (entrada) entrada.focus();
+}
+
+// Dibuja los resultados de la búsqueda y, si no hay una materia igual, la opción de crear una nueva.
+function pintarSugerenciasMaterias(resultados, texto) {
+  const lista = document.getElementById('docAsignaturaDropdown');
+  const entrada = document.getElementById('docAsignaturaInput');
+  const disponibles = resultados.filter((materia) => !materiaYaElegida(materia.nombre));
+  const hayIgual = resultados.some((materia) => materia.nombre.toLowerCase() === texto.toLowerCase());
+
+  let html = disponibles.map((materia) =>
+    '<button type="button" class="sugerencia" role="option" data-nombre="' + escaparHtml(materia.nombre) + '" data-area="' + escaparHtml(materia.area || '') + '" data-programa="' + escaparHtml(materia.programa || '') + '">' +
+      '<span class="sugerencia__titulo">' + escaparHtml(materia.nombre) + '</span>' +
+      '<span class="sugerencia__detalle">' + escaparHtml([materia.area, materia.programa].filter(Boolean).join(' › ') || 'General') + '</span></button>').join('');
+
+  if (!hayIgual && NOMBRE_MATERIA_VALIDO.test(texto)) {
+    html += '<button type="button" class="sugerencia" role="option" data-crear="' + escaparHtml(texto) + '">' +
+      '<span class="sugerencia__titulo">Crear nueva materia «' + escaparHtml(texto) + '»</span>' +
+      '<span class="sugerencia__detalle">Podrás indicar su área y su programa</span></button>';
+  }
+  if (!html) html = '<div class="sugerencia sugerencia--vacia">' + (resultados.length ? 'Ya agregaste las coincidencias' : 'Sin resultados') + '</div>';
+  lista.innerHTML = html;
+  entrada.setAttribute('aria-expanded', 'true');
+}
+
+// Busca materias por nombre y muestra las sugerencias; descarta respuestas de búsquedas que ya quedaron atrás.
+async function buscarAsignatura(texto) {
+  const consulta = String(texto || '').trim();
+  const secuencia = ++secuenciaBusquedaMaterias;
+  const lista = document.getElementById('docAsignaturaDropdown');
+  if (!lista) return;
+  if (!consulta) {
+    cerrarSugerenciasMaterias();
+    return;
+  }
+  if (consulta.length < MIN_LETRAS_BUSQUEDA) {
+    lista.innerHTML = '<div class="sugerencia sugerencia--vacia">Escribe al menos ' + MIN_LETRAS_BUSQUEDA + ' letras</div>';
+    document.getElementById('docAsignaturaInput').setAttribute('aria-expanded', 'true');
+    return;
+  }
+  try {
+    const resultados = await llamarAPI('/asignaturas?q=' + encodeURIComponent(consulta), 'GET');
+    if (secuencia === secuenciaBusquedaMaterias) pintarSugerenciasMaterias(resultados, consulta);
+  } catch (err) {
+    if (secuencia !== secuenciaBusquedaMaterias) return;
+    lista.innerHTML = '<div class="sugerencia sugerencia--vacia">No se pudo buscar. Revisa tu conexión e intenta de nuevo.</div>';
+  }
+}
+
+const buscarAsignaturaConDemora = debounce(buscarAsignatura, 250);
+
+// Abre la ventana para crear una materia con su área y su programa.
+function abrirModalCrearAsignatura(nombreSugerido) {
+  cerrarSugerenciasMaterias();
+  const formulario = document.getElementById('formularioMateria');
+  formulario.reset();
+  limpiarErrores(formulario);
+  const area = document.getElementById('matArea');
+  if (area.options.length <= 1) Object.keys(AREAS_PROGRAMAS).forEach((nombre) => area.add(new Option(nombre, nombre)));
+  actualizarProgramasMateria();
+  document.getElementById('matNombre').value = nombreSugerido || '';
+  abrirDialogo('dialogoMateria');
+}
+
+// Llena los programas del área elegida en la ventana de nueva materia.
+function actualizarProgramasMateria() {
+  const programas = AREAS_PROGRAMAS[document.getElementById('matArea').value] || [];
+  const selector = document.getElementById('matPrograma');
+  selector.replaceChildren(new Option('General', ''));
+  programas.forEach((programa) => selector.add(new Option(programa, programa)));
+}
+
+// Crea la materia en el servidor y la agrega a la lista; si el servidor la rechaza, deja el motivo a la vista.
+async function confirmarCrearAsignatura(evento) {
+  evento.preventDefault();
+  const formulario = evento.target;
+  limpiarErrores(formulario);
+
+  const nombre = valorCampo('matNombre');
+  if (!NOMBRE_MATERIA_VALIDO.test(nombre)) {
+    ponerError('matNombre', nombre ? 'Entre 2 y 80 caracteres y sin símbolos como < > o comillas' : 'Escribe el nombre de la materia');
+    enfocarPrimerError(formulario);
+    return;
+  }
+  await conOcupado(evento.submitter, async () => {
+    let materia;
+    try {
+      materia = await llamarAPI('/asignaturas', 'POST', { nombre, area: valorCampo('matArea'), programa: valorCampo('matPrograma') });
+    } catch (err) {
+      ponerError('matNombre', err.mensaje || 'No se pudo crear la materia');
+      return;
     }
+    cerrarDialogo('dialogoMateria');
+    seleccionarMateria(materia);
+    mostrarTostada(materia.nueva
+      ? 'Materia «' + materia.nombre + '» creada y disponible para todos'
+      : 'La materia «' + materia.nombre + '» ya existía y se agregó a tu lista', 'exito');
   });
 }
 
-async function buscarAsignatura(q) {
-  clearTimeout(_busquedaTimeout);
-  const dropdown = document.getElementById('docAsignaturaDropdown');
-  if (!dropdown) return;
-  if (!q || q.trim().length === 0) { dropdown.style.display = 'none'; return; }
-
-  _busquedaTimeout = setTimeout(async () => {
-    try {
-      const resultados = await llamarAPI('/asignaturas?q=' + encodeURIComponent(q.trim()), 'GET');
-      const disponibles = resultados.filter(r => !yaSeleccionada(r.id, r.nombre));
-
-      // Agrupa los resultados por área y programa.
-      const grupos = {};
-      for (const r of disponibles) {
-        const key = (r.area || 'General') + ' › ' + (r.programa || 'General');
-        if (!grupos[key]) grupos[key] = { label: key, items: [] };
-        grupos[key].items.push(r);
-      }
-
-      let html = '';
-      for (const key of Object.keys(grupos)) {
-        html += `<div style="padding:4px 12px;font-size:10px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:0.05em;background:#f9f9f9;border-bottom:0.5px solid #eee">${grupos[key].label}</div>`;
-        html += grupos[key].items.map(r => `
-          <div onclick="seleccionarAsignatura(${r.id},'${r.nombre.replace(/'/g,"\\'")}','${(r.area||'').replace(/'/g,"\\'")}','${(r.programa||'').replace(/'/g,"\\'")}' )"
-            style="padding:8px 16px;cursor:pointer;font-size:13px;border-bottom:0.5px solid #f5f5f5;display:flex;align-items:center;gap:8px"
-            onmouseover="this.style.background='#f0f9fb'" onmouseout="this.style.background=''">
-            <span style="color:#007b99">📚</span> ${escaparHtml(r.nombre)}
-          </div>`).join('');
-      }
-
-      const textoExacto = q.trim().toLowerCase();
-      const existeExacto = resultados.some(r => r.nombre.toLowerCase() === textoExacto);
-      const yaSeleccionado = _asignaturasSeleccionadas.some(s => s.nombre.toLowerCase() === textoExacto);
-      if (!existeExacto && !yaSeleccionado && q.trim().length >= 2) {
-        html += `
-          <div onclick="abrirModalCrearAsignatura('${q.trim().replace(/'/g,"\\'")}')"
-            style="padding:10px 16px;cursor:pointer;font-size:13px;background:#f0fdf4;border-top:1px solid #d1fae5;display:flex;align-items:center;gap:8px"
-            onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
-            <span style="color:#16a34a;font-size:16px">✨</span>
-            <div><strong>Crear nueva materia:</strong> "${q.trim()}"<br><span style="font-size:11px;color:#888">Podrás asignarle un área y programa</span></div>
-          </div>`;
-      }
-      if (!html) html = `<div style="padding:10px 14px;font-size:13px;color:#999">Sin resultados para "${q}"</div>`;
-      dropdown.innerHTML = html;
-      dropdown.style.display = 'block';
-    } catch(err) {
-      const q2 = (document.getElementById('docAsignaturaInput') || {}).value || '';
-      if (q2.trim().length >= 2) {
-        dropdown.innerHTML = `
-          <div onclick="abrirModalCrearAsignatura('${q2.trim().replace(/'/g,"\\'")}')"
-            style="padding:10px 16px;cursor:pointer;font-size:13px;background:#f0fdf4;display:flex;align-items:center;gap:8px">
-            <span style="color:#16a34a">✨</span>
-            <strong>Crear "${q2.trim()}"</strong>
-          </div>`;
-        dropdown.style.display = 'block';
-      }
-    }
-  }, 250);
+// Mueve el foco entre las sugerencias con las flechas.
+function moverFocoSugerencias(actual, paso) {
+  const opciones = [...document.querySelectorAll('#docAsignaturaDropdown .sugerencia[data-nombre], #docAsignaturaDropdown .sugerencia[data-crear]')];
+  if (!opciones.length) return;
+  const indice = opciones.indexOf(actual);
+  const siguiente = opciones[Math.max(0, Math.min(opciones.length - 1, indice + paso))];
+  siguiente.focus();
 }
 
-// Indica si la materia ya está entre las etiquetas, por id o por nombre (las precargadas no traen id).
-function yaSeleccionada(id, nombre) {
-  const buscado = String(nombre || '').toLowerCase();
-  return _asignaturasSeleccionadas.some(s => s.id === id || s.nombre.toLowerCase() === buscado);
-}
-
-// Pone como etiquetas las materias que el docente ya tenía guardadas.
-function precargarAsignaturas(nombres) {
-  _asignaturasSeleccionadas = (nombres || []).map((nombre, i) => ({ id: -(i + 1), nombre, area: '', programa: '' }));
-  renderizarTags();
-  actualizarHiddenJSON();
-}
-
-function seleccionarAsignatura(id, nombre, area, programa) {
-  if (yaSeleccionada(id, nombre)) return;
-  _asignaturasSeleccionadas.push({ id, nombre, area: area || '', programa: programa || '' });
-  renderizarTags();
-  actualizarHiddenJSON();
-  const input = document.getElementById('docAsignaturaInput');
-  const dropdown = document.getElementById('docAsignaturaDropdown');
-  if (input) input.value = '';
-  if (dropdown) dropdown.style.display = 'none';
-}
-
-// Abre el modal para crear una materia nueva con área y programa.
-function abrirModalCrearAsignatura(nombreSugerido) {
-  const dropdown = document.getElementById('docAsignaturaDropdown');
-  if (dropdown) dropdown.style.display = 'none';
-
-  const existente = document.getElementById('modalCrearAsignatura');
-  if (existente) existente.remove();
-
-  const areasOpts = Object.keys(AREAS_PROGRAMAS).map(a =>
-    `<option value="${a}">${a}</option>`
-  ).join('');
-
-  const modal = document.createElement('div');
-  modal.id = 'modalCrearAsignatura';
-  modal.className = 'modal-overlay';
-  modal.innerHTML = `
-    <div class="modal-caja" style="max-width:420px">
-      <div class="modal-cabecera">
-        <h3>✨ Nueva Materia</h3>
-        <button class="modal-cerrar" type="button" onclick="document.getElementById('modalCrearAsignatura').remove()">✕</button>
-      </div>
-      <div class="modal-cuerpo" style="display:flex;flex-direction:column;gap:14px">
-        <div class="campo">
-          <label class="campo__etiqueta">Nombre de la materia</label>
-          <input type="text" id="nuevaAsigNombre" class="campo__entrada" value="${nombreSugerido || ''}" placeholder="Ej: Álgebra Abstracta"/>
-        </div>
-        <div class="campo">
-          <label class="campo__etiqueta">Área académica</label>
-          <div class="campo__selector-contenedor">
-            <select id="nuevaAsigArea" class="campo__entrada campo__selector" onchange="actualizarProgramasModal()">
-              <option value="">— Selecciona un área —</option>
-              ${areasOpts}
-            </select>
-            <span class="campo__flecha">▾</span>
-          </div>
-        </div>
-        <div class="campo">
-          <label class="campo__etiqueta">Programa</label>
-          <div class="campo__selector-contenedor">
-            <select id="nuevaAsigPrograma" class="campo__entrada campo__selector">
-              <option value="">— Primero elige el área —</option>
-            </select>
-            <span class="campo__flecha">▾</span>
-          </div>
-        </div>
-        <div style="background:#f0f9fb;border-radius:8px;padding:10px 12px;font-size:12px;color:#007b99">
-          💡 La materia quedará disponible para todos los docentes y estudiantes del sistema.
-        </div>
-      </div>
-      <div class="modal-pie">
-        <button class="btn-secundario" type="button" onclick="document.getElementById('modalCrearAsignatura').remove()">Cancelar</button>
-        <button class="btn-primario" type="button" onclick="confirmarCrearAsignatura()">✨ Crear y Agregar</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-}
-
-function actualizarProgramasModal() {
-  const area = document.getElementById('nuevaAsigArea').value;
-  const sel = document.getElementById('nuevaAsigPrograma');
-  if (!area || !AREAS_PROGRAMAS[area]) {
-    sel.innerHTML = '<option value="">— Primero elige el área —</option>';
+// Elige la sugerencia pulsada: una materia existente o la creación de una nueva.
+function elegirSugerenciaMateria(opcion) {
+  if (opcion.dataset.crear !== undefined) {
+    abrirModalCrearAsignatura(opcion.dataset.crear);
     return;
   }
-  sel.innerHTML = '<option value="">— Selecciona programa —</option>' +
-    AREAS_PROGRAMAS[area].map(p => `<option value="${p}">${p}</option>`).join('');
+  seleccionarMateria({ nombre: opcion.dataset.nombre, area: opcion.dataset.area, programa: opcion.dataset.programa });
 }
 
-async function confirmarCrearAsignatura() {
-  const nombre = (document.getElementById('nuevaAsigNombre') || {}).value.trim();
-  const area = (document.getElementById('nuevaAsigArea') || {}).value;
-  const programa = (document.getElementById('nuevaAsigPrograma') || {}).value;
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'docAsignaturaInput') buscarAsignaturaConDemora(e.target.value);
+});
 
-  if (!nombre) { mostrarTostada('Escribe el nombre de la materia', 'error'); return; }
-  if (!NOMBRE_MATERIA_VALIDO.test(nombre)) {
-    mostrarTostada('El nombre debe tener entre 2 y 80 caracteres y no puede llevar < > " ` ni \\', 'error');
+document.addEventListener('click', (e) => {
+  const quitar = e.target.closest('[data-quitar-materia]');
+  if (quitar) {
+    quitarAsignatura(quitar.dataset.quitarMateria);
     return;
   }
-
-  try {
-    const resultado = await llamarAPI('/asignaturas', 'POST', { nombre, area, programa });
-    document.getElementById('modalCrearAsignatura').remove();
-    seleccionarAsignatura(resultado.id, resultado.nombre, resultado.area, resultado.programa);
-    if (resultado.nueva) {
-      mostrarTostada(`✨ Materia "${escaparHtml(resultado.nombre)}" creada y disponible globalmente`, 'exito');
-    } else {
-      mostrarTostada(`Materia "${escaparHtml(resultado.nombre)}" ya existía — agregada`, 'exito');
-    }
-  } catch(err) {
-    const tempId = -Date.now();
-    document.getElementById('modalCrearAsignatura').remove();
-    seleccionarAsignatura(tempId, nombre, area, programa);
-    mostrarTostada(`Materia "${nombre}" agregada`, 'exito');
-  }
-}
-
-function quitarAsignatura(id) {
-  _asignaturasSeleccionadas = _asignaturasSeleccionadas.filter(s => s.id !== id);
-  renderizarTags();
-  actualizarHiddenJSON();
-}
-
-function renderizarTags() {
-  const contenedor = document.getElementById('docAsignaturasSeleccionadas');
-  if (!contenedor) return;
-  if (_asignaturasSeleccionadas.length === 0) {
-    contenedor.innerHTML = '<span style="font-size:12px;color:#aaa;padding:4px 0">Sin materias seleccionadas</span>';
+  const opcion = e.target.closest('#docAsignaturaDropdown .sugerencia[data-nombre], #docAsignaturaDropdown .sugerencia[data-crear]');
+  if (opcion) {
+    elegirSugerenciaMateria(opcion);
     return;
   }
-  contenedor.innerHTML = _asignaturasSeleccionadas.map(a => `
-    <span title="${a.area || ''} › ${escaparHtml(a.programa || '')}"
-      style="display:inline-flex;align-items:center;gap:5px;background:#e0f4f8;color:#007b99;
-             border-radius:20px;padding:4px 12px;font-size:13px;font-weight:500;cursor:default">
-      📚 ${escaparHtml(a.nombre)}
-      <button type="button" onclick="quitarAsignatura(${a.id})"
-        style="background:none;border:none;cursor:pointer;color:#007b99;font-size:15px;padding:0;opacity:0.7;line-height:1">×</button>
-    </span>`).join('');
-}
+  if (!e.target.closest('.con-sugerencias')) cerrarSugerenciasMaterias();
+});
 
-function actualizarHiddenJSON() {
-  const hidden = document.getElementById('docAsignaturasJSON');
-  if (hidden) hidden.value = JSON.stringify(_asignaturasSeleccionadas.map(a => a.nombre));
-}
+document.addEventListener('keydown', (e) => {
+  const entrada = e.target.id === 'docAsignaturaInput';
+  const opcion = e.target.closest && e.target.closest('#docAsignaturaDropdown .sugerencia');
+  if (!entrada && !opcion) return;
 
-function manejarTeclaAsignatura(e) {
-  const dropdown = document.getElementById('docAsignaturaDropdown');
-  if (e.key === 'Escape') { if (dropdown) dropdown.style.display = 'none'; }
-  if (e.key === 'Enter') {
+  if (e.key === 'Escape') {
+    cerrarSugerenciasMaterias();
+    document.getElementById('docAsignaturaInput').focus();
+  } else if (e.key === 'ArrowDown') {
     e.preventDefault();
-    const q = (document.getElementById('docAsignaturaInput') || {}).value.trim();
-    if (q.length >= 2) abrirModalCrearAsignatura(q);
+    moverFocoSugerencias(opcion, 1);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (opcion) moverFocoSugerencias(opcion, -1);
+  } else if (e.key === 'Enter' && entrada) {
+    e.preventDefault();
+    const primera = document.querySelector('#docAsignaturaDropdown .sugerencia[data-nombre], #docAsignaturaDropdown .sugerencia[data-crear]');
+    if (primera) elegirSugerenciaMateria(primera);
   }
-}
-
-let _docentesConMaterias = null;
+});
 
 // Trae los tutores con la lista de materias que registró cada uno.
 async function obtenerDocentesConMaterias(forzar) {
-  if (!_docentesConMaterias || forzar) {
-    _docentesConMaterias = await llamarAPI('/tutorias/docentes-disponibles', 'GET');
-  }
-  return _docentesConMaterias;
+  if (!docentesConMaterias || forzar) docentesConMaterias = await llamarAPI('/tutorias/docentes-disponibles', 'GET');
+  return docentesConMaterias;
 }
 
-// Llena el select solo con las materias del tutor elegido; antes salían todas las del catálogo.
-async function cargarMateriasDeDocente(selectId, docenteId, textoSinTutor) {
-  const select = document.getElementById(selectId);
-  if (!select) return;
+// Llena el selector solo con las materias del tutor elegido.
+async function cargarMateriasDeDocente(idSelector, docenteId, textoSinTutor) {
+  const selector = document.getElementById(idSelector);
+  if (!selector) return;
+  const ponerOpciones = (primera, materias) => {
+    selector.replaceChildren(new Option(primera, ''));
+    (materias || []).forEach((materia) => selector.add(new Option(materia, materia)));
+  };
   if (!docenteId) {
-    select.innerHTML = `<option value="">${escaparHtml(textoSinTutor || '— Primero elige el tutor —')}</option>`;
+    ponerOpciones(textoSinTutor || 'Primero elige el tutor', []);
     return;
   }
-  let materias = [];
   try {
     const docentes = await obtenerDocentesConMaterias();
-    const docente = docentes.find(d => String(d.id) === String(docenteId));
-    materias = (docente && docente.materias) || [];
+    const docente = docentes.find((d) => String(d.id) === String(docenteId));
+    const materias = (docente && docente.materias) || [];
+    ponerOpciones(materias.length ? 'Selecciona la materia' : 'Este tutor aún no registró materias', materias);
   } catch (err) {
-    materias = [];
-  }
-  select.innerHTML = materias.length
-    ? '<option value="">— Selecciona materia —</option>' +
-      materias.map(m => `<option value="${escaparHtml(m)}">${escaparHtml(m)}</option>`).join('')
-    : '<option value="">Este tutor aún no registró materias</option>';
-}
-
-async function cargarAsignaturasEnSelect(selectId) {
-  const select = document.getElementById(selectId);
-  if (!select) return;
-  try {
-    const asignaturas = await llamarAPI('/asignaturas/todas', 'GET');
-    // Agrupa las asignaturas por área.
-    const grupos = {};
-    for (const a of asignaturas) {
-      const area = a.area || 'General';
-      if (!grupos[area]) grupos[area] = [];
-      grupos[area].push(a);
-    }
-    let html = '<option value="">— Selecciona materia —</option>';
-    for (const area of Object.keys(grupos).sort()) {
-      html += `<optgroup label="${area}">`;
-      for (const a of grupos[area]) {
-        html += `<option value="${escaparHtml(a.nombre)}">${escaparHtml(a.nombre)}</option>`;
-      }
-      html += '</optgroup>';
-    }
-    select.innerHTML = html;
-  } catch(err) {
-    const base = ['Programación I','Bases de Datos','Cálculo Diferencial','Inglés I','Álgebra Lineal','Estadística Descriptiva'];
-    select.innerHTML = '<option value="">— Selecciona materia —</option>' + base.map(n => `<option value="${n}">${n}</option>`).join('');
+    ponerOpciones('No se pudieron cargar las materias', []);
   }
 }

@@ -1,184 +1,49 @@
-// Select de facultad con búsqueda y programas dinámicos.
+// Facultades y programas de la universidad: única fuente para el selector de facultad, las casillas de programas y las áreas de las materias.
 
-// Facultades y programas de FUNLAM; cada facultad mapea a un área.
 const FACULTADES_FUNLAM = [
-  {
-    nombre: 'Facultad de Ingenierías',
-    area: 'Ingenierías y Arquitectura',
-    icono: '⚙️',
-    programas: ['Sistemas', 'Industrial', 'Civil', 'Arquitectura']
-  },
-  {
-    nombre: 'Facultad de Ciencias Sociales, Salud y Bienestar',
-    area: 'Ciencias Sociales, Salud y Bienestar',
-    icono: '🧠',
-    programas: ['Psicología', 'Trabajo Social', 'Deporte']
-  },
-  {
-    nombre: 'Facultad de Derecho y Ciencias Políticas',
-    area: 'Derecho y Ciencias Políticas',
-    icono: '⚖️',
-    programas: ['Derecho', 'Criminalística']
-  },
-  {
-    nombre: 'Facultad de Ciencias Administrativas, Económicas y Contables',
-    area: 'Ciencias Administrativas, Económicas y Contables',
-    icono: '📊',
-    programas: ['Administración y Negocios', 'Contaduría', 'Gastronomía']
-  },
-  {
-    nombre: 'Facultad de Comunicación, Publicidad y Diseño',
-    area: 'Comunicación, Publicidad y Diseño',
-    icono: '🎨',
-    programas: ['Comunicación Social', 'Publicidad', 'Diseño Gráfico']
-  },
-  {
-    nombre: 'Facultad de Educación y Humanidades',
-    area: 'Educación y Humanidades',
-    icono: '📚',
-    programas: ['Licenciaturas', 'Filosofía y Teología']
-  },
-  {
-    nombre: 'Ciencias Básicas (Transversal)',
-    area: 'Ciencias Básicas',
-    icono: '🔬',
-    programas: ['Matemáticas', 'Investigación']
-  },
-  {
-    nombre: 'Área Institucional (Obligatorias)',
-    area: 'Institucional',
-    icono: '🏛️',
-    programas: ['Obligatorias', 'Inglés']
-  }
+  { nombre: 'Facultad de Ingenierías', area: 'Ingenierías y Arquitectura', programas: ['Sistemas', 'Industrial', 'Civil', 'Arquitectura'] },
+  { nombre: 'Facultad de Ciencias Sociales, Salud y Bienestar', area: 'Ciencias Sociales, Salud y Bienestar', programas: ['Psicología', 'Trabajo Social', 'Deporte'] },
+  { nombre: 'Facultad de Derecho y Ciencias Políticas', area: 'Derecho y Ciencias Políticas', programas: ['Derecho', 'Criminalística'] },
+  { nombre: 'Facultad de Ciencias Administrativas, Económicas y Contables', area: 'Ciencias Administrativas, Económicas y Contables', programas: ['Administración y Negocios', 'Contaduría', 'Gastronomía'] },
+  { nombre: 'Facultad de Comunicación, Publicidad y Diseño', area: 'Comunicación, Publicidad y Diseño', programas: ['Comunicación Social', 'Publicidad', 'Diseño Gráfico'] },
+  { nombre: 'Facultad de Educación y Humanidades', area: 'Educación y Humanidades', programas: ['Licenciaturas', 'Filosofía y Teología'] },
+  { nombre: 'Ciencias Básicas (Transversal)', area: 'Ciencias Básicas', programas: ['Matemáticas', 'Investigación'] },
+  { nombre: 'Área Institucional (Obligatorias)', area: 'Institucional', programas: ['Obligatorias', 'Inglés'] },
 ];
 
-let _facultadSeleccionada = null;
-let _opcionesFiltradas = [...FACULTADES_FUNLAM];
+const AREAS_PROGRAMAS = Object.fromEntries(FACULTADES_FUNLAM.map((facultad) => [facultad.area, facultad.programas]));
 
-// Inicializa el select de facultad.
+// Llena el selector de facultad con la lista oficial si todavía no la tiene.
 function inicializarSelectFacultad() {
-  _facultadSeleccionada = null;
-  _opcionesFiltradas = [...FACULTADES_FUNLAM];
-
-  const input = document.getElementById('docFacultadInput');
-  const hidden = document.getElementById('docFacultad');
-  const dropdown = document.getElementById('docFacultadDropdown');
-  const programasCont = document.getElementById('docProgramasContenedor');
-
-  if (input) {
-    input.value = '';
-    input.readOnly = false;
-  }
-  if (hidden) hidden.value = '';
-  if (dropdown) dropdown.style.display = 'none';
-  if (programasCont) programasCont.style.display = 'none';
-
-  // Cierra el dropdown al hacer clic fuera.
-  document.addEventListener('click', function cerrarFacultad(e) {
-    const wrap = document.getElementById('docFacultadWrap');
-    if (wrap && !wrap.contains(e.target)) {
-      const dd = document.getElementById('docFacultadDropdown');
-      if (dd) dd.style.display = 'none';
-    }
-  });
-
-  renderizarOpcionesFacultad(FACULTADES_FUNLAM);
+  const selector = document.getElementById('docFacultad');
+  if (selector.options.length > 1) return;
+  FACULTADES_FUNLAM.forEach((facultad) => selector.add(new Option(facultad.nombre, facultad.nombre)));
 }
 
-// Muestra el dropdown de facultades.
-function mostrarDropdownFacultad() {
-  const input = document.getElementById('docFacultadInput');
-  if (input) input.readOnly = false;
-  filtrarFacultades(input ? input.value : '');
-  const dropdown = document.getElementById('docFacultadDropdown');
-  if (dropdown) dropdown.style.display = 'block';
-}
-
-// Filtra las opciones mientras el usuario escribe.
-function filtrarFacultades(q) {
-  const dropdown = document.getElementById('docFacultadDropdown');
-  if (!dropdown) return;
-
-  const texto = (q || '').toLowerCase().trim();
-  _opcionesFiltradas = texto.length === 0
-    ? [...FACULTADES_FUNLAM]
-    : FACULTADES_FUNLAM.filter(f =>
-        f.nombre.toLowerCase().includes(texto) ||
-        f.programas.some(p => p.toLowerCase().includes(texto))
-      );
-
-  renderizarOpcionesFacultad(_opcionesFiltradas);
-  dropdown.style.display = 'block';
-}
-
-// Renderiza las opciones en el dropdown.
-function renderizarOpcionesFacultad(opciones) {
-  const dropdown = document.getElementById('docFacultadDropdown');
-  if (!dropdown) return;
-
-  if (opciones.length === 0) {
-    dropdown.innerHTML = '<div class="select-buscable__vacio">No se encontró esa facultad</div>';
-    return;
-  }
-
-  dropdown.innerHTML = opciones.map(f => `
-    <div class="select-buscable__opcion ${_facultadSeleccionada === f.area ? 'seleccionada' : ''}"
-      onclick="seleccionarFacultad('${f.area.replace(/'/g, "\\'")}','${f.nombre.replace(/'/g, "\\'")}')">
-      <span style="font-size:18px">${f.icono}</span>
-      <div>
-        <div style="font-weight:${_facultadSeleccionada === f.area ? '600' : '400'}">${escaparHtml(f.nombre)}</div>
-        <div style="font-size:11px;color:#aaa">${f.programas.join(' · ')}</div>
-      </div>
-      ${_facultadSeleccionada === f.area ? '<span style="margin-left:auto;color:#007b99">✓</span>' : ''}
-    </div>`).join('');
-}
-
-// Selecciona una facultad y carga sus programas.
-function seleccionarFacultad(area, nombre) {
-  _facultadSeleccionada = area;
-
-  const input = document.getElementById('docFacultadInput');
-  const hidden = document.getElementById('docFacultad');
-  const dropdown = document.getElementById('docFacultadDropdown');
-
-  if (input) { input.value = nombre; input.readOnly = true; }
-  if (hidden) hidden.value = nombre;
-  if (dropdown) dropdown.style.display = 'none';
-
-  quitarError('docFacultad');
-
-  cargarProgramasPorFacultad(area);
-}
-
-// Carga los programas del área seleccionada.
-function cargarProgramasPorFacultad(area) {
+// Muestra los programas de la facultad como casillas y deja marcados los que ya estaban elegidos.
+function cargarProgramasPorFacultad(nombreFacultad, seleccionados) {
   const contenedor = document.getElementById('docProgramasContenedor');
-  const chipsDiv = document.getElementById('docProgramas');
-  if (!contenedor || !chipsDiv) return;
+  const lista = document.getElementById('docProgramas');
+  const facultad = FACULTADES_FUNLAM.find((f) => f.nombre === nombreFacultad);
+  const elegidos = new Set(seleccionados || []);
+  const base = facultad ? facultad.programas : [];
+  const programas = [...base, ...[...elegidos].filter((programa) => !base.includes(programa))];
 
-  const facultad = FACULTADES_FUNLAM.find(f => f.area === area);
-  if (!facultad || !facultad.programas.length) {
-    contenedor.style.display = 'none';
+  if (!programas.length) {
+    lista.replaceChildren();
+    contenedor.classList.add('oculto');
     return;
   }
-
-  chipsDiv.innerHTML = facultad.programas.map(p => `
-    <label class="chip">
-      <input type="checkbox" value="${p}"/> ${p}
-    </label>`).join('');
-
-  contenedor.style.display = 'block';
-  contenedor.style.opacity = '0';
-  contenedor.style.transform = 'translateY(-8px)';
-  requestAnimationFrame(() => {
-    contenedor.style.transition = 'opacity 0.25s, transform 0.25s';
-    contenedor.style.opacity = '1';
-    contenedor.style.transform = 'translateY(0)';
-  });
+  lista.innerHTML = programas.map((programa) =>
+    '<label class="ficha"><input type="checkbox" value="' + escaparHtml(programa) + '"' + (elegidos.has(programa) ? ' checked' : '') + '>' + escaparHtml(programa) + '</label>').join('');
+  contenedor.classList.remove('oculto');
 }
 
-// Lee los programas seleccionados para guardar el perfil.
+// Lee los programas marcados para guardar el perfil.
 function getProgramasSeleccionados() {
-  return [...document.querySelectorAll('#docProgramas input:checked')]
-    .map(cb => cb.value);
+  return [...document.querySelectorAll('#docProgramas input:checked')].map((casilla) => casilla.value);
 }
+
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'docFacultad') cargarProgramasPorFacultad(e.target.value, []);
+});

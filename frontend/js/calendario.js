@@ -1,317 +1,280 @@
-// Busca un elemento solo dentro de la página activa del calendario.
+// Calendario mensual de tutorías: festivos de Colombia, filtros, detalle del día y próximas actividades.
+
+const calendario = { mes: 0, anio: 0, tutorias: [], seleccion: '', destino: '' };
+
+registrarLimpieza(() => Object.assign(calendario, { tutorias: [], seleccion: '', destino: '' }));
+
+// Busca un elemento del calendario dentro de su página.
 function calEl(nombre) {
-  var pagina = document.querySelector('.pagina.activa');
-  if (!pagina) return null;
-  return pagina.querySelector('[data-cal="' + nombre + '"]');
+  return document.querySelector('#pagina-mi-calendario [data-cal="' + nombre + '"]');
 }
 
-// Cierra el detalle del día.
-function cerrarDetalleCalendario() {
-  var det = calEl('calDetalleDia');
-  if (det) det.style.display = 'none';
+// Calcula el domingo de Pascua de un año con el algoritmo de Meeus, Jones y Butcher; devuelve milisegundos UTC.
+function pascua(anio) {
+  const a = anio % 19;
+  const b = Math.floor(anio / 100);
+  const c = anio % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mes = Math.floor((h + l - 7 * m + 114) / 31);
+  const dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return Date.UTC(anio, mes - 1, dia);
 }
 
-// calendario.js — Calendario dinámico de asesorías
-const CAL_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
-const CAL_FESTIVOS = {
-  '2025-01-01':'Año Nuevo','2025-01-06':'Reyes Magos','2025-03-24':'San José',
-  '2025-04-17':'Jueves Santo','2025-04-18':'Viernes Santo','2025-05-01':'Día del Trabajo',
-  '2025-05-15':'Día del Maestro','2025-06-02':'Ascensión','2025-06-23':'Corpus Christi',
-  '2025-06-29':'San Pedro y San Pablo','2025-07-20':'Independencia',
-  '2025-08-07':'Batalla de Boyacá','2025-08-18':'Asunción',
-  '2025-10-13':'Día de la Raza','2025-11-03':'Todos los Santos',
-  '2025-11-17':'Indep. Cartagena','2025-12-08':'Inmaculada Concepción','2025-12-25':'Navidad',
-  '2026-01-01':'Año Nuevo','2026-01-12':'Reyes Magos','2026-03-23':'San José',
-  '2026-04-02':'Jueves Santo','2026-04-03':'Viernes Santo','2026-05-01':'Día del Trabajo',
-  '2026-05-15':'Día del Maestro','2026-05-18':'Ascensión','2026-06-08':'Corpus Christi',
-  '2026-06-15':'Sagrado Corazón','2026-06-29':'San Pedro y San Pablo',
-  '2026-07-20':'Independencia','2026-08-07':'Batalla de Boyacá','2026-08-17':'Asunción',
-  '2026-10-12':'Día de la Raza','2026-11-02':'Todos los Santos',
-  '2026-11-16':'Indep. Cartagena','2026-12-08':'Inmaculada Concepción','2026-12-25':'Navidad'
-};
-
-const CAL_COLORES_ESTADO = {
-  pendiente:  { bg:'#007b99', texto:'#fff', punto:'#007b99' },
-  confirmada: { bg:'#059669', texto:'#fff', punto:'#059669' },
-  completada: { bg:'#7c3aed', texto:'#fff', punto:'#7c3aed' },
-  cancelada:  { bg:'#dc2626', texto:'#fff', punto:'#dc2626' }
-};
-
-let _cal = { mes: new Date().getMonth(), anio: new Date().getFullYear(), tutorias: [], diaSeleccionado: null };
-
-// Carga las tutorías y dibuja el mes; con «conservar» se queda en el mes y el día que se estaban viendo.
-async function iniciarCalendario(conservar) {
-  if (!conservar) {
-    _cal.mes = new Date().getMonth();
-    _cal.anio = new Date().getFullYear();
-    _cal.diaSeleccionado = null;
-    const detalle = calEl('calDetalleDia');
-    if (detalle) detalle.style.display = 'none';
-  }
-
-  try {
-    const data = await llamarAPI('/tutorias', 'GET');
-    _cal.tutorias = Array.isArray(data) ? data : [];
-  } catch(e) {
-    _cal.tutorias = (typeof academicoStorage !== 'undefined' ? academicoStorage.getTutorias() : []) || [];
-  }
-
-  // Llena el filtro de materias.
-  var selMat = calEl('calFiltroMateria');
-  if (selMat) {
-    var elegida = selMat.value;
-    var mats = [...new Set(_cal.tutorias.map(t => t.asignatura).filter(Boolean))].sort();
-    selMat.innerHTML = '<option value="">📚 Todas las materias</option>' +
-      mats.map(m => '<option value="' + escaparHtml(m) + '">' + escaparHtml(m) + '</option>').join('');
-    if (conservar && mats.includes(elegida)) selMat.value = elegida;
-  }
-
-  renderCalendario();
-  renderProximas();
-  if (conservar && _cal.diaSeleccionado) calClickDia(_cal.diaSeleccionado);
+// Pasa una fecha (milisegundos UTC) al lunes siguiente, o la deja igual si ya es lunes.
+function siguienteLunes(ms) {
+  const diaSemana = new Date(ms).getUTCDay();
+  return ms + ((8 - diaSemana) % 7) * 86400000;
 }
 
-// Dice con quién es la sesión según quién mira: el docente ve al estudiante, el estudiante al docente y el admin a ambos.
-function calPersonas(t) {
-  var rol = (typeof sesion !== 'undefined') ? sesion.rol : '';
-  if (rol === 'docente') return '🎓 Estudiante: <strong>' + escaparHtml(t.nombre_estudiante || 'Estudiante') + '</strong>';
-  if (rol === 'admin') {
-    return '🎓 <strong>' + escaparHtml(t.nombre_estudiante || 'Estudiante') + '</strong> · 👩‍🏫 <strong>' +
-      escaparHtml(t.nombre_docente || 'Docente') + '</strong>';
-  }
-  return '👩‍🏫 Docente: <strong>' + escaparHtml(t.nombre_docente || 'Docente') + '</strong>';
+const festivosCache = {};
+
+// Calcula los festivos de Colombia de un año según la Ley 51 de 1983 (traslado al lunes) y la Semana Santa.
+function festivosColombia(anio) {
+  if (festivosCache[anio]) return festivosCache[anio];
+  const dia = 86400000;
+  const festivos = {};
+  const agregar = (ms, nombre) => {
+    const clave = new Date(ms).toISOString().slice(0, 10);
+    festivos[clave] = festivos[clave] ? festivos[clave] + ' / ' + nombre : nombre;
+  };
+  const fijo = (mes, d, nombre) => agregar(Date.UTC(anio, mes - 1, d), nombre);
+  const trasladado = (mes, d, nombre) => agregar(siguienteLunes(Date.UTC(anio, mes - 1, d)), nombre);
+  const domingoPascua = pascua(anio);
+
+  fijo(1, 1, 'Año Nuevo');
+  trasladado(1, 6, 'Reyes Magos');
+  trasladado(3, 19, 'San José');
+  agregar(domingoPascua - 3 * dia, 'Jueves Santo');
+  agregar(domingoPascua - 2 * dia, 'Viernes Santo');
+  fijo(5, 1, 'Día del Trabajo');
+  agregar(domingoPascua + 43 * dia, 'Ascensión');
+  agregar(domingoPascua + 64 * dia, 'Corpus Christi');
+  agregar(domingoPascua + 71 * dia, 'Sagrado Corazón');
+  trasladado(6, 29, 'San Pedro y San Pablo');
+  fijo(7, 20, 'Independencia');
+  fijo(8, 7, 'Batalla de Boyacá');
+  trasladado(8, 15, 'Asunción');
+  trasladado(10, 12, 'Día de la Raza');
+  trasladado(11, 1, 'Todos los Santos');
+  trasladado(11, 11, 'Indep. de Cartagena');
+  fijo(12, 8, 'Inmaculada Concepción');
+  fijo(12, 25, 'Navidad');
+  festivosCache[anio] = festivos;
+  return festivos;
 }
 
+// Textos del calendario según el rol: el menú lo llama «Mis tutorías» o «Todas las tutorías».
+function tituloCalendario() {
+  if (sesion.rol === 'admin') return { corto: 'Todas las tutorías', titulo: 'Todas las tutorías', subtitulo: 'Todas las sesiones del sistema; filtra por materia o estado.' };
+  if (sesion.rol === 'docente') return { corto: 'Mis tutorías', titulo: 'Mis tutorías', subtitulo: 'Tus sesiones del mes; marca como realizadas las que ya pasaron.' };
+  return { corto: 'Mi calendario', titulo: 'Mi calendario', subtitulo: 'Visualiza y filtra todas tus asesorías del mes.' };
+}
+
+// Devuelve las tutorías que cumplen los filtros de materia y estado.
+function calTutoriasFiltradas() {
+  const materia = calEl('calFiltroMateria').value;
+  const estado = calEl('calFiltroEstado').value;
+  return calendario.tutorias.filter((t) => (!materia || t.asignatura === materia) && (!estado || normalizarEstado(t.estado) === estado));
+}
+
+// Convierte año, mes (0 a 11) y día en una fecha AAAA-MM-DD.
+function calFechaISO(anio, mes, dia) {
+  return anio + '-' + String(mes + 1).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
+}
+
+// Dibuja la cuadrícula del mes con las sesiones, los festivos y el día elegido.
 function renderCalendario() {
-  var celdas = calEl('calCeldas');
-  var titulo = calEl('calTitulo');
-  if (!celdas || !titulo) return;
+  const celdas = calEl('calCeldas');
+  const { mes, anio } = calendario;
+  calEl('calTitulo').textContent = MESES[mes] + ' ' + anio;
 
-  var mes = _cal.mes, anio = _cal.anio;
-  titulo.textContent = CAL_MESES[mes] + ' ' + anio;
-
-  var fMat = (calEl('calFiltroMateria') || {}).value || '';
-  var fEst = (calEl('calFiltroEstado') || {}).value || '';
-  var tutFilt = _cal.tutorias.filter(function(t) {
-    if (fMat && t.asignatura !== fMat) return false;
-    if (fEst && t.estado !== fEst) return false;
-    return true;
+  const porDia = {};
+  calTutoriasFiltradas().forEach((t) => {
+    const clave = String(t.fecha).slice(0, 10);
+    (porDia[clave] = porDia[clave] || []).push(t);
   });
+  Object.values(porDia).forEach((lista) => lista.sort((a, b) => String(a.hora).localeCompare(String(b.hora))));
 
-  // Agrupa las tutorías por día del mes actual.
-  var porDia = {};
-  tutFilt.forEach(function(t) {
-    if (!t.fecha) return;
-    var pts = t.fecha.split('-').map(Number);
-    if (pts[0] === anio && (pts[1]-1) === mes) {
-      if (!porDia[pts[2]]) porDia[pts[2]] = [];
-      porDia[pts[2]].push(t);
-    }
-  });
+  const festivos = festivosColombia(anio);
+  const hoy = hoyColombiaISO();
+  const desfase = (new Date(Date.UTC(anio, mes, 1)).getUTCDay() + 6) % 7;
+  const diasMes = new Date(Date.UTC(anio, mes + 1, 0)).getUTCDate();
+  const vacia = '<div class="cal__celda cal__celda--fuera" aria-hidden="true"></div>';
+  let html = vacia.repeat(desfase);
 
-  var primerDia = new Date(anio, mes, 1);
-  var diasEnMes = new Date(anio, mes + 1, 0).getDate();
-  var offset = primerDia.getDay();
-  offset = offset === 0 ? 6 : offset - 1;
+  for (let dia = 1; dia <= diasMes; dia++) {
+    const iso = calFechaISO(anio, mes, dia);
+    const sesiones = porDia[iso] || [];
+    const festivo = festivos[iso] || '';
+    const clases = ['cal__celda', iso === hoy ? 'cal__celda--hoy' : '', festivo ? 'cal__celda--festivo' : '',
+      (desfase + dia - 1) % 7 >= 5 ? 'cal__celda--fin' : '', iso === calendario.seleccion ? 'cal__celda--seleccion' : ''].filter(Boolean).join(' ');
+    const descripcion = dia + ' de ' + MESES[mes].toLowerCase() + (festivo ? ', festivo: ' + festivo : '') +
+      (sesiones.length ? ', ' + sesiones.length + (sesiones.length === 1 ? ' sesión' : ' sesiones') : ', sin sesiones');
 
-  var hoy = new Date();
-  var esHoyMes = hoy.getMonth() === mes && hoy.getFullYear() === anio;
-  var html = '';
+    const eventos = sesiones.slice(0, 2).map((s) =>
+      '<span class="cal__evento estado-' + normalizarEstado(s.estado) + '">' + escaparHtml(String(s.hora).slice(0, 5)) + ' ' + escaparHtml(s.asignatura) + '</span>').join('');
+    const puntos = sesiones.slice(0, 4).map((s) => '<span class="cal__punto estado-' + normalizarEstado(s.estado) + '"></span>').join('');
 
-  for (var i = 0; i < offset; i++) {
-    html += '<div style="min-height:72px;border-radius:8px;background:#f9fafb"></div>';
+    html += '<button type="button" class="' + clases + '" onclick="calClickDia(\'' + iso + '\')" aria-label="' + escaparHtml(descripcion) + '"' + (iso === hoy ? ' aria-current="date"' : '') + '>' +
+      '<span class="cal__cabecera-dia"><span class="cal__num">' + dia + '</span></span>' +
+      (festivo ? '<span class="cal__festivo">' + escaparHtml(festivo) + '</span>' : '') +
+      (sesiones.length ? '<span class="cal__eventos">' + eventos + '</span>' : '') +
+      (sesiones.length > 2 ? '<span class="cal__mas">+' + (sesiones.length - 2) + ' más</span>' : '') +
+      (sesiones.length ? '<span class="cal__puntos">' + puntos + '</span>' : '') +
+    '</button>';
   }
-
-  for (var dia = 1; dia <= diasEnMes; dia++) {
-    var mm = String(mes+1).padStart(2,'0'), dd = String(dia).padStart(2,'0');
-    var fechaStr = anio + '-' + mm + '-' + dd;
-    var festivo = CAL_FESTIVOS[fechaStr] || '';
-    var sesiones = porDia[dia] || [];
-    var esHoy = esHoyMes && hoy.getDate() === dia;
-    var esSel = _cal.diaSeleccionado === dia;
-    var dSem = new Date(anio, mes, dia).getDay();
-    var esFin = dSem === 0 || dSem === 6;
-
-    var bg = festivo ? '#fffbeb' : esHoy ? '#e0f4f8' : esSel ? '#dbeafe' : esFin ? '#fafafa' : '#fff';
-    var border = esHoy ? '2px solid #007b99' : esSel ? '2px solid #3b82f6' : '0.5px solid #e5e7eb';
-    var numColor = esFin ? '#ef4444' : esHoy ? '#007b99' : '#1f2937';
-
-    var puntos = sesiones.slice(0,5).map(function(s) {
-      var col = (CAL_COLORES_ESTADO[s.estado] || CAL_COLORES_ESTADO.pendiente).punto;
-      return '<span title="' + escaparHtml(s.asignatura||'') + '" style="width:7px;height:7px;border-radius:50%;background:' + col + ';display:inline-block;flex-shrink:0"></span>';
-    }).join('') + (sesiones.length > 5 ? '<span style="font-size:9px;color:#999">+' + (sesiones.length-5) + '</span>' : '');
-
-    var tooltip = escaparHtml(sesiones.length > 0
-      ? sesiones.length + ' asesoría' + (sesiones.length>1?'s':'') + ': ' + sesiones.map(function(s){return s.asignatura;}).join(', ')
-      : festivo);
-
-    html += '<div onclick="calClickDia(' + dia + ')" title="' + tooltip + '"' +
-      ' style="min-height:72px;border-radius:8px;border:' + border + ';background:' + bg + ';' +
-      'padding:6px 5px;cursor:' + (sesiones.length||festivo?'pointer':'default') + ';transition:transform 0.12s"' +
-      ' onmouseover="this.style.transform=\'scale(1.04)\';this.style.zIndex=\'10\'"' +
-      ' onmouseout="this.style.transform=\'\';this.style.zIndex=\'\'">' +
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
-      '<span style="font-size:13px;font-weight:' + (esHoy?'700':'500') + ';color:' + numColor + '">' + dia + '</span>' +
-      (esHoy ? '<span style="font-size:8px;background:#007b99;color:#fff;border-radius:4px;padding:1px 4px">HOY</span>' : '') +
-      '</div>' +
-      (festivo ? '<div style="font-size:8px;color:#92400e;margin-top:2px;line-height:1.2;font-weight:500">🎉 ' + festivo + '</div>' : '') +
-      (sesiones.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:4px">' + puntos + '</div>' +
-        '<div style="font-size:9px;color:#666;margin-top:2px">' + sesiones.length + ' ses.</div>' : '') +
-      '</div>';
-  }
-
+  html += vacia.repeat((7 - ((desfase + diasMes) % 7)) % 7);
   celdas.innerHTML = html;
 }
 
-function calClickDia(dia) {
-  _cal.diaSeleccionado = dia;
+// Dibuja el detalle de las sesiones del día elegido.
+function pintarDetalleDia() {
+  const iso = calendario.seleccion;
+  const detalle = calEl('calDetalleDia');
+  if (!iso) {
+    detalle.classList.add('oculto');
+    return;
+  }
+  const [anio, mes, dia] = iso.split('-').map(Number);
+  const festivo = festivosColombia(anio)[iso] || '';
+  const sesiones = calTutoriasFiltradas().filter((t) => String(t.fecha).slice(0, 10) === iso).sort((a, b) => String(a.hora).localeCompare(String(b.hora)));
+
+  calEl('calDetalleTitulo').textContent = 'Sesiones del ' + dia + ' de ' + MESES[mes - 1].toLowerCase() + ' de ' + anio;
+  calEl('calDetalleContenido').innerHTML =
+    (festivo ? '<div class="aviso aviso--aviso">' + icono('calendario') + '<p><strong>Festivo:</strong> ' + escaparHtml(festivo) + '</p></div>' : '') +
+    (sesiones.length
+      ? '<div class="tutorias">' + sesiones.map((s) => tarjetaTutoriaHTML(s, sesion.rol, 'detalle')).join('') + '</div>'
+      : estadoVacio({ icono: 'calendario', titulo: 'Sin asesorías este día', texto: 'No hay sesiones programadas con los filtros actuales.', compacto: true }));
+  detalle.classList.remove('oculto');
+}
+
+// Selecciona un día del calendario y muestra sus sesiones.
+function calClickDia(iso) {
+  calendario.seleccion = iso;
   renderCalendario();
-
-  var mes = _cal.mes, anio = _cal.anio;
-  var fechaStr = anio + '-' + String(mes+1).padStart(2,'0') + '-' + String(dia).padStart(2,'0');
-  var festivo = CAL_FESTIVOS[fechaStr] || '';
-
-  var fMat = (calEl('calFiltroMateria') || {}).value || '';
-  var fEst = (calEl('calFiltroEstado') || {}).value || '';
-  var sesiones = _cal.tutorias.filter(function(t) {
-    if (t.fecha !== fechaStr) return false;
-    if (fMat && t.asignatura !== fMat) return false;
-    if (fEst && t.estado !== fEst) return false;
-    return true;
-  });
-
-  var detalle = calEl('calDetalleDia');
-  var cabecera = calEl('calDetalleTitulo');
-  var tituloEl = cabecera ? cabecera.querySelector('h3') : null;
-  var contenido = calEl('calDetalleContenido');
-  if (!detalle || !contenido) return;
-
-  var diaFmt = dia + ' de ' + CAL_MESES[mes] + ' ' + anio;
-  if (tituloEl) tituloEl.textContent = '📅 Sesiones del ' + diaFmt;
-
-  var rolActual = (typeof sesion !== 'undefined') ? sesion.rol : '';
-
-  var html = '';
-  if (festivo) html += '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px">🎉 <strong>Festivo:</strong> ' + festivo + '</div>';
-
-  if (sesiones.length === 0) {
-    html += '<p class="sin-datos">Sin asesorías programadas para este día.</p>';
-  } else {
-    sesiones.forEach(function(s) {
-      var col = CAL_COLORES_ESTADO[s.estado] || CAL_COLORES_ESTADO.pendiente;
-      var hora = (s.hora || '').slice(0,5);
-      var iconMod = (s.modalidad||'').toLowerCase().includes('virtual') ? '💻' : '🏫';
-      html += '<div style="border:0.5px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px;border-left:4px solid ' + col.punto + '">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-        '<span style="font-weight:600;font-size:14px;color:#1f2937">' + escaparHtml(s.asignatura||'—') + '</span>' +
-        '<span style="font-size:11px;background:' + col.bg + ';color:' + col.texto + ';padding:3px 10px;border-radius:20px;font-weight:500">' + escaparHtml(s.estado||'pendiente') + '</span>' +
-        '</div>' +
-        '<div style="font-size:12px;color:#555;display:flex;flex-direction:column;gap:4px">' +
-        '<span>' + calPersonas(s) + '</span>' +
-        '<span>' + iconMod + ' ' + escaparHtml(hora) + ' · 🖥️ ' + escaparHtml(s.modalidad||'Virtual') + '</span>' +
-        (s.observaciones ? '<span>📝 ' + escaparHtml(s.observaciones) + '</span>' : '') +
-        '</div>' +
-        calAccionSesion(s, rolActual) +
-        '</div>';
-    });
-  }
-
-  contenido.innerHTML = html;
-  detalle.style.display = 'block';
-  detalle.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  pintarDetalleDia();
+  calEl('calDetalleDia').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Ofrece cancelar las sesiones futuras y marcar como realizadas las que ya pasaron (docente o admin).
-function calAccionSesion(s, rol) {
-  if (s.estado !== 'pendiente' && s.estado !== 'confirmada') return '';
-  var estilo = 'margin-top:10px;font-size:11px;padding:5px 12px';
-  if (typeof tutoriaYaPaso === 'function' && tutoriaYaPaso(s)) {
-    return rol === 'docente' || rol === 'admin'
-      ? '<button class="btn-secundario" onclick="marcarTutoriaRealizada(' + s.id + ')" type="button" style="' + estilo + '">Marcar realizada</button>'
-      : '<p class="tarjeta-tutoria__nota" style="margin-top:8px">Sesión vencida · pendiente de registrar</p>';
-  }
-  return '<button class="btn-secundario" onclick="cancelarTutoria(' + s.id + ')" type="button" style="' + estilo + ';color:#ef4444;border-color:#fca5a5">Cancelar asesoría</button>';
+// Cierra el detalle del día y quita la selección.
+function cerrarDetalleCalendario() {
+  calendario.seleccion = '';
+  calEl('calDetalleDia').classList.add('oculto');
+  renderCalendario();
 }
 
+// Dibuja las próximas sesiones agrupadas por día.
 function renderProximas() {
-  var cont = calEl('calProximas');
-  if (!cont) return;
-  var hoy = new Date(); hoy.setHours(0,0,0,0);
-  // Usa la fecha local: toISOString está en UTC y después de las 7 p. m. marcaba «Hoy» el día siguiente.
-  var todayStr = fechaLocalISO(hoy);
-  var tom = new Date(hoy); tom.setDate(tom.getDate()+1);
-  var tomStr = fechaLocalISO(tom);
-
-  var proximas = _cal.tutorias
-    .filter(function(t) {
-      if (!t.fecha || t.estado === 'cancelada') return false;
-      return new Date(t.fecha + 'T00:00') >= hoy;
-    })
-    .sort(function(a,b){ return (a.fecha+a.hora).localeCompare(b.fecha+b.hora); })
+  const contenedor = calEl('calProximas');
+  const hoy = hoyColombiaISO();
+  const manana = sumarDiasISO(hoy, 1);
+  const proximas = calendario.tutorias
+    .filter((t) => String(t.fecha).slice(0, 10) >= hoy && ['pendiente', 'confirmada'].includes(normalizarEstado(t.estado)))
+    .sort((a, b) => (String(a.fecha) + String(a.hora)).localeCompare(String(b.fecha) + String(b.hora)))
     .slice(0, 15);
 
-  if (proximas.length === 0) {
-    cont.innerHTML = '<p class="sin-datos" style="font-size:12px">Sin asesorías próximas</p>'; return;
+  if (!proximas.length) {
+    contenedor.innerHTML = estadoVacio({ icono: 'calendario', titulo: 'Sin actividades próximas', texto: 'Las sesiones pendientes aparecerán aquí.', compacto: true });
+    return;
   }
 
-  var grupos = {};
-  proximas.forEach(function(t) {
-    if (!grupos[t.fecha]) grupos[t.fecha] = [];
-    grupos[t.fecha].push(t);
+  const grupos = {};
+  proximas.forEach((t) => {
+    const clave = String(t.fecha).slice(0, 10);
+    (grupos[clave] = grupos[clave] || []).push(t);
   });
 
-  var html = '';
-
-  Object.keys(grupos).sort().forEach(function(fecha) {
-    var pts = fecha.split('-').map(Number);
-    var festivo = CAL_FESTIVOS[fecha] || '';
-    var label;
-    if (fecha === todayStr) label = '🔴 Hoy';
-    else if (fecha === tomStr) label = '🟡 Mañana';
-    else label = '📅 ' + pts[2] + ' de ' + CAL_MESES[pts[1]-1];
-
-    html += '<div style="margin-bottom:14px"><div style="font-size:10px;font-weight:600;color:#007b99;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;padding-bottom:4px;border-bottom:0.5px solid #e5e7eb">' +
-      label + (festivo ? ' · 🎉 ' + festivo : '') + '</div>';
-
-    grupos[fecha].forEach(function(t) {
-      var col = (CAL_COLORES_ESTADO[t.estado] || CAL_COLORES_ESTADO.pendiente).punto;
-      var hora = (t.hora||'').slice(0,5);
-      var iconMod = (t.modalidad||'').toLowerCase().includes('virtual') ? '💻' : '🏫';
-      html += '<div style="padding:8px 10px;border-radius:8px;background:#f9fafb;border-left:3px solid ' + col + ';margin-bottom:5px;font-size:12px;cursor:pointer" onclick="calIrAFecha(\'' + fecha + '\')">' +
-        '<div style="font-weight:600;color:#1f2937">' + escaparHtml(t.asignatura||'—') + '</div>' +
-        '<div style="color:#666;margin-top:2px">' + iconMod + ' ' + escaparHtml(hora) + ' · ' + calPersonas(t) + '</div></div>';
-    });
-    html += '</div>';
-  });
-
-  cont.innerHTML = html;
+  contenedor.innerHTML = Object.keys(grupos).sort().map((iso) => {
+    const [anio, mes, dia] = iso.split('-').map(Number);
+    const festivo = festivosColombia(anio)[iso] || '';
+    const titulo = iso === hoy ? 'Hoy' : iso === manana ? 'Mañana' : dia + ' de ' + MESES[mes - 1].toLowerCase();
+    return '<section class="proximas-grupo"><h3 class="proximas-grupo__titulo">' + titulo +
+      (festivo ? '<span class="insignia insignia--morado insignia--sin-punto">' + escaparHtml(festivo) + '</span>' : '') + '</h3>' +
+      grupos[iso].map((t) => tarjetaTutoriaHTML(t, sesion.rol, 'compacta')).join('') + '</section>';
+  }).join('');
 }
 
+// Llena el filtro de materias con las que aparecen en las tutorías, conservando la elegida.
+function llenarFiltroMaterias() {
+  const selector = calEl('calFiltroMateria');
+  const elegida = selector.value;
+  const materias = [...new Set(calendario.tutorias.map((t) => t.asignatura).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  selector.innerHTML = '<option value="">Todas las materias</option>' + materias.map((m) => '<option value="' + escaparHtml(m) + '">' + escaparHtml(m) + '</option>').join('');
+  if (materias.includes(elegida)) selector.value = elegida;
+}
+
+// Abre el calendario: con «conservar» se queda en el mes y el día que se estaban viendo.
+async function iniciarCalendario(conservar) {
+  const textos = tituloCalendario();
+  document.getElementById('calTituloPagina').textContent = textos.titulo;
+  document.getElementById('calSubtituloPagina').textContent = textos.subtitulo;
+  document.getElementById('calAcciones').classList.toggle('oculto', sesion.rol === 'admin');
+
+  const destino = calendario.destino;
+  calendario.destino = '';
+  if (!conservar) {
+    const [anio, mes] = hoyColombiaISO().split('-').map(Number);
+    Object.assign(calendario, { anio, mes: mes - 1, seleccion: '' });
+    calEl('calFiltroMateria').value = '';
+    calEl('calFiltroEstado').value = '';
+    calEl('calDetalleDia').classList.add('oculto');
+  }
+  if (destino) {
+    const [anio, mes] = destino.split('-').map(Number);
+    Object.assign(calendario, { anio, mes: mes - 1, seleccion: destino });
+  }
+  renderCalendario();
+
+  try {
+    calendario.tutorias = await cargarTutorias();
+  } catch (err) {
+    calEl('calProximas').innerHTML = estadoError(err.mensaje, 'iniciarCalendario(true)');
+    mostrarTostada(err.mensaje || 'No se pudieron cargar las tutorías', 'error');
+    return;
+  }
+  llenarFiltroMaterias();
+  renderCalendario();
+  renderProximas();
+  pintarDetalleDia();
+  if (destino) calEl('calDetalleDia').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Pasa al mes anterior o siguiente.
 function calNavegar(delta) {
-  _cal.mes += delta;
-  if (_cal.mes > 11) { _cal.mes = 0; _cal.anio++; }
-  if (_cal.mes < 0)  { _cal.mes = 11; _cal.anio--; }
-  _cal.diaSeleccionado = null;
-  var det = calEl('calDetalleDia');
-  if (det) det.style.display = 'none';
+  const fecha = new Date(Date.UTC(calendario.anio, calendario.mes + delta, 1));
+  Object.assign(calendario, { anio: fecha.getUTCFullYear(), mes: fecha.getUTCMonth(), seleccion: '' });
+  calEl('calDetalleDia').classList.add('oculto');
   renderCalendario();
 }
 
-function calBuscarMesInput(q) {
-  if (!q || q.trim().length < 2) return;
-  var idx = CAL_MESES.findIndex(function(m){ return m.toLowerCase().startsWith(q.trim().toLowerCase()); });
-  if (idx !== -1) {
-    _cal.mes = idx; _cal.diaSeleccionado = null;
-    renderCalendario();
-    setTimeout(function(){ var el = calEl('calBuscarMes'); if(el) el.value=''; }, 800);
+// Salta al mes cuyo nombre empieza con el texto escrito.
+function calBuscarMesInput(texto) {
+  const buscado = String(texto || '').trim().toLowerCase();
+  if (buscado.length < 2) return;
+  const indice = MESES.findIndex((m) => m.toLowerCase().startsWith(buscado));
+  if (indice === -1) return;
+  Object.assign(calendario, { mes: indice, seleccion: '' });
+  calEl('calDetalleDia').classList.add('oculto');
+  renderCalendario();
+  setTimeout(() => { calEl('calBuscarMes').value = ''; }, 900);
+}
+
+// Abre el detalle de un día; si el calendario no está a la vista, navega hacia él y deja el día para cuando cargue.
+function calIrAFecha(iso) {
+  if (!document.getElementById('pagina-mi-calendario').classList.contains('activa')) {
+    calendario.destino = iso;
+    irAPagina('mi-calendario');
+    return;
   }
-}
-
-function calIrAFecha(fechaStr) {
-  var pts = fechaStr.split('-').map(Number);
-  _cal.anio = pts[0]; _cal.mes = pts[1] - 1;
-  renderCalendario();
-  setTimeout(function(){ calClickDia(pts[2]); }, 80);
+  const [anio, mes] = iso.split('-').map(Number);
+  Object.assign(calendario, { anio, mes: mes - 1 });
+  calClickDia(iso);
 }

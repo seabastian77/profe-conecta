@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" fill="none">
+  <defs><clipPath id="izq"><circle cx="230" cy="190" r="180"/></clipPath></defs>
+  <circle cx="230" cy="190" r="180" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="2"/>
+  <circle cx="400" cy="190" r="180" stroke="#F39200" stroke-opacity="0.6" stroke-width="2"/>
+  <circle cx="400" cy="190" r="180" fill="#FFFFFF" fill-opacity="0.06" clip-path="url(#izq)"/>
+</svg>

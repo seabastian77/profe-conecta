@@ -1,0 +1,123 @@
+/* Variables de diseño de ConectaProfe: color, tipografía, espacio, forma y movimiento. */
+:root {
+  color-scheme: light;
+
+  /* Marca: el azul petróleo y el naranja del escudo de la universidad. */
+  --marca-950: #00303c;
+  --marca-900: #003f50;
+  --marca-800: #00536a;
+  --marca-700: #006783;
+  --marca-600: #007b99;
+  --marca-500: #1b92b0;
+  --marca-300: #7fc2d3;
+  --marca-200: #b9dde7;
+  --marca-100: #dcedf2;
+  --marca-50: #f0f8fa;
+
+  --acento-700: #8f5300;
+  --acento-600: #b86a00;
+  --acento-500: #f39200;
+  --acento-300: #f8c470;
+  --acento-100: #fdebd0;
+  --acento-50: #fff7ea;
+
+  /* Neutros con un matiz verdeazulado muy leve. */
+  --tinta-950: #0e1c22;
+  --tinta-900: #172a31;
+  --tinta-800: #243a42;
+  --tinta-700: #364e57;
+  --tinta-600: #4a616a;
+  --tinta-500: #62767e;
+  --tinta-400: #8798a0;
+  --tinta-300: #b2bfc5;
+  --tinta-200: #d5dde1;
+  --tinta-150: #e3e9ec;
+  --tinta-100: #edf1f3;
+  --tinta-50: #f5f7f9;
+  --papel: #ffffff;
+
+  /* Estados. */
+  --ok-700: #136a3b;
+  --ok-600: #1a8048;
+  --ok-100: #dcf2e4;
+  --ok-50: #f1faf5;
+  --aviso-700: #8a5200;
+  --aviso-500: #d98a00;
+  --aviso-100: #fcefcd;
+  --aviso-50: #fffaeb;
+  --error-700: #a0262b;
+  --error-600: #c4323a;
+  --error-100: #fbe1e2;
+  --error-50: #fff4f4;
+  --info-700: #0a587f;
+  --info-100: #dbeefa;
+  --info-50: #f2f9fe;
+  --morado-700: #5b3a9e;
+  --morado-100: #ebe3f9;
+  --morado-50: #f7f3fd;
+
+  /* Roles semánticos. */
+  --fondo: var(--tinta-50);
+  --superficie: var(--papel);
+  --borde: var(--tinta-150);
+  --borde-fuerte: var(--tinta-200);
+  --texto: var(--tinta-900);
+  --texto-suave: var(--tinta-600);
+  --texto-tenue: var(--tinta-500);
+  --primario: var(--marca-600);
+  --primario-hover: var(--marca-700);
+  --primario-activo: var(--marca-800);
+  --enfoque: var(--marca-500);
+
+  /* Tipografía. */
+  --fuente: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fuente-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --t-xs: 0.75rem;
+  --t-s: 0.8125rem;
+  --t-base: 0.9375rem;
+  --t-m: 1rem;
+  --t-l: 1.125rem;
+  --t-xl: 1.375rem;
+  --t-2xl: 1.75rem;
+  --t-3xl: 2.25rem;
+
+  /* Espacio (múltiplos de 4 px). */
+  --e-1: 0.25rem;
+  --e-2: 0.5rem;
+  --e-3: 0.75rem;
+  --e-4: 1rem;
+  --e-5: 1.25rem;
+  --e-6: 1.5rem;
+  --e-8: 2rem;
+  --e-10: 2.5rem;
+  --e-12: 3rem;
+  --e-16: 4rem;
+
+  /* Forma. */
+  --r-s: 4px;
+  --r-m: 8px;
+  --r-l: 12px;
+  --r-pildora: 999px;
+
+  --sombra-s: 0 1px 2px rgb(14 28 34 / 0.06), 0 1px 1px rgb(14 28 34 / 0.04);
+  --sombra-m: 0 4px 14px rgb(14 28 34 / 0.09);
+  --sombra-l: 0 16px 40px rgb(14 28 34 / 0.2);
+
+  /* Estructura. */
+  --ancho-lateral: 17rem;
+  --alto-barra: 3.75rem;
+  --ancho-contenido: 76rem;
+
+  /* Capas. */
+  --z-barra: 30;
+  --z-lateral: 40;
+  --z-telon: 45;
+  --z-popover: 60;
+  --z-modal: 70;
+  --z-tostada: 90;
+
+  /* Movimiento. */
+  --rapido: 120ms;
+  --normal: 200ms;
+  --curva: cubic-bezier(0.2, 0.7, 0.2, 1);
+}

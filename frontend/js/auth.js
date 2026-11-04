@@ -1,534 +1,430 @@
-// Maneja login, registro, cierre de sesión y Google OAuth
+// Comunicación con la API, inicio de sesión, registro, recuperación, Google y ciclo de vida de la sesión.
 
-async function llamarAPI(ruta, metodo, cuerpo) {
-  var token = authStorage.getToken();
+const ESPERA_MAXIMA_API = 30000;
 
-  // En modo demo responde sin conectarse al backend
-  if (CONFIG.MODO_DEMO) {
-    return await llamarAPIDemo(ruta, metodo || "GET", cuerpo || null, token);
+// Envía la petición al backend y devuelve la respuesta ya leída junto con los datos.
+async function pedirAPI(ruta, metodo, cuerpo) {
+  const token = authStorage.getToken();
+  const opciones = { method: metodo || 'GET', headers: {} };
+  if (token) opciones.headers.Authorization = 'Bearer ' + token;
+  if (cuerpo) {
+    opciones.headers['Content-Type'] = 'application/json';
+    opciones.body = JSON.stringify(cuerpo);
   }
 
-  // En modo real hace fetch al backend
-  var opciones = {
-    method: metodo || "GET",
-    headers: { "Content-Type": "application/json" },
-  };
+  const control = new AbortController();
+  const limite = setTimeout(() => control.abort(), ESPERA_MAXIMA_API);
+  opciones.signal = control.signal;
 
-  if (token) opciones.headers["Authorization"] = "Bearer " + token;
-  if (cuerpo) opciones.body = JSON.stringify(cuerpo);
-
-  var resp;
+  let resp;
   try {
     resp = await fetch(API_URL + ruta, opciones);
   } catch (e) {
-    var esLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const enLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
     throw {
-      mensaje: esLocal
-        ? "No se pudo conectar al servidor. ¿Está corriendo el backend en localhost:3000?"
-        : "No se pudo conectar al servidor. Revisa tu conexión e intenta de nuevo.",
+      mensaje: e.name === 'AbortError'
+        ? 'El servidor tardó demasiado en responder. Intenta de nuevo.'
+        : enLocal
+          ? 'No se pudo conectar al servidor. ¿Está corriendo el backend en localhost:3000?'
+          : 'No se pudo conectar al servidor. Revisa tu conexión e intenta de nuevo.',
     };
+  } finally {
+    clearTimeout(limite);
   }
 
-  // El servidor puede responder algo que no es JSON (p. ej. mientras "despierta").
-  var data = null;
+  let datos = null;
   try {
-    data = await resp.json();
+    datos = await resp.json();
   } catch (e) {
-    data = null;
+    datos = null;
   }
 
   if (!resp.ok) {
-    var msg = (data && data.error)
-      || (resp.status >= 500
-            ? "El servidor no está disponible en este momento. Espera unos segundos e intenta de nuevo."
-            : "Error del servidor");
-    throw { status: resp.status, mensaje: msg };
+    if (resp.status === 401 && token && !ruta.startsWith('/auth/login')) sesionRechazada();
+    throw {
+      status: resp.status,
+      mensaje: (datos && datos.error)
+        || (resp.status >= 500
+          ? 'El servidor no está disponible en este momento. Espera unos segundos e intenta de nuevo.'
+          : 'Error del servidor'),
+    };
   }
-
-  if (data === null) {
-    throw { status: resp.status, mensaje: "Respuesta inesperada del servidor. Intenta de nuevo." };
-  }
-
-  return data;
+  if (datos === null) throw { status: resp.status, mensaje: 'Respuesta inesperada del servidor. Intenta de nuevo.' };
+  return { resp, datos };
 }
 
-// Valida que el correo tenga arroba y el dominio permitido
+// Llama a la API y devuelve los datos; si falla lanza un objeto con status y mensaje.
+async function llamarAPI(ruta, metodo, cuerpo) {
+  return (await pedirAPI(ruta, metodo, cuerpo)).datos;
+}
+
+// Llama a una lista paginada y devuelve los datos con el total que informa el servidor.
+async function llamarAPIConTotal(ruta) {
+  const { resp, datos } = await pedirAPI(ruta, 'GET');
+  const total = Number(resp.headers.get('X-Total-Count'));
+  return { datos, total: Number.isFinite(total) && total > 0 ? total : (Array.isArray(datos) ? datos.length : 0) };
+}
+
+// Cierra la sesión local cuando el servidor deja de aceptar el token (cuenta desactivada o token vencido).
+function sesionRechazada() {
+  if (!sesion.activa) return;
+  cerrarSesionLocal();
+  mostrarTostada('Tu sesión ya no es válida. Ingresa de nuevo.', 'advertencia');
+}
+
+// Valida que el correo tenga arroba y el dominio institucional.
 function esCorreoValido(correo) {
-  return correo.includes("@") && correo.endsWith(CONFIG.DOMINIO_CORREO);
+  return correo.includes('@') && correo.toLowerCase().endsWith(CONFIG.DOMINIO_CORREO);
 }
 
-// Valida y envía el formulario de inicio de sesión
+// Valida las reglas de contraseña que aplica el backend y devuelve el primer problema o una cadena vacía.
+function problemaContrasena(contrasena) {
+  if (contrasena.length < 8) return 'Mínimo 8 caracteres';
+  if (!/[A-Za-z]/.test(contrasena)) return 'Debe incluir al menos una letra';
+  if (!/[0-9]/.test(contrasena)) return 'Debe incluir al menos un número';
+  if (new TextEncoder().encode(contrasena).length > 72) return 'Máximo 72 caracteres';
+  return '';
+}
+
+// Muestra el nivel de seguridad de la contraseña mientras se escribe.
+function medirFortaleza(valor) {
+  const envoltorio = document.getElementById('fortalezaWrap');
+  const barra = document.getElementById('fortalezaBarra');
+  const texto = document.getElementById('fortalezaTexto');
+  if (!envoltorio) return;
+  envoltorio.classList.toggle('oculto', !valor);
+  if (!valor) return;
+
+  let puntos = 0;
+  if (valor.length >= 8) puntos++;
+  if (/[A-Z]/.test(valor)) puntos++;
+  if (/[0-9]/.test(valor)) puntos++;
+  if (/[^A-Za-z0-9]/.test(valor)) puntos++;
+
+  const niveles = [
+    { texto: 'Muy débil', color: 'var(--error-600)', ancho: '20%' },
+    { texto: 'Débil', color: 'var(--acento-500)', ancho: '40%' },
+    { texto: 'Regular', color: 'var(--aviso-500)', ancho: '60%' },
+    { texto: 'Buena', color: 'var(--ok-600)', ancho: '80%' },
+    { texto: 'Muy fuerte', color: 'var(--ok-700)', ancho: '100%' },
+  ];
+  const nivel = niveles[Math.min(puntos, 4)];
+  barra.style.width = nivel.ancho;
+  barra.style.background = nivel.color;
+  texto.textContent = nivel.texto;
+  texto.style.color = nivel.color;
+}
+
+// Guarda el token y los datos del usuario que devuelve el servidor y deja la interfaz lista.
+function iniciarSesionLocal(datos) {
+  authStorage.setToken(datos.token);
+  authStorage.setSesion(datos.usuario);
+  authStorage.setUltimaActividad();
+  aplicarSesion(datos.usuario);
+}
+
+// Valida y envía el formulario de inicio de sesión.
 async function alEnviarLogin(e) {
   e.preventDefault();
+  const boton = document.getElementById('btnLogin');
+  const correo = document.getElementById('loginCorreo').value.trim();
+  const contrasena = document.getElementById('loginContrasena').value;
+  const recordar = document.getElementById('loginRecordar').checked;
 
-  var correo = document.getElementById("loginCorreo").value.trim();
-  var contrasena = document.getElementById("loginContrasena").value;
-  var recordar = document.getElementById("loginRecordar").checked;
-  var hayError = false;
+  quitarError('loginCorreo');
+  quitarError('loginContrasena');
+  document.getElementById('avisoBloqueo').classList.add('oculto');
 
-  quitarError("loginCorreo");
-  quitarError("loginContrasena");
-
+  let hayError = false;
   if (!correo) {
-    ponerError("loginCorreo", "El correo es obligatorio");
+    ponerError('loginCorreo', 'El correo es obligatorio');
     hayError = true;
   } else if (!esCorreoValido(correo)) {
-    ponerError("loginCorreo", "Solo correos " + CONFIG.DOMINIO_CORREO);
+    ponerError('loginCorreo', 'Solo correos ' + CONFIG.DOMINIO_CORREO);
     hayError = true;
   }
-
   if (!contrasena) {
-    ponerError("loginContrasena", "La contraseña es obligatoria");
+    ponerError('loginContrasena', 'La contraseña es obligatoria');
     hayError = true;
   }
-
-  if (hayError) return;
-
-  var btnTexto = document.getElementById("btnLoginTexto");
-  var btnCargando = document.getElementById("btnLoginCargando");
-  btnTexto.classList.add("oculto");
-  btnCargando.classList.remove("oculto");
-
-  try {
-    var data = await llamarAPI("/auth/login", "POST", { correo, contrasena });
-
-    authStorage.setToken(data.token);
-    authStorage.setSesion(data.usuario);
-    authStorage.setUltimaActividad();
-
-    if (recordar) {
-      authStorage.setCorreoRecordado(correo);
-    } else {
-      authStorage.clearCorreoRecordado();
-    }
-
-    aplicarSesion(data.usuario);
-
-    var paneles = {
-      estudiante: "panel-estudiante",
-      docente: "panel-docente",
-      admin: "panel-admin",
-    };
-    irAPagina(paneles[data.usuario.rol] || "panel-estudiante");
-
-    // El rol lo define la cuenta: si eligió a mano otra tarjeta, se lo dice en vez de ignorarlo en silencio.
-    var selector = document.getElementById("selectorRolLogin");
-    var rolElegido = selector?.dataset.elegido === "1" ? selector.querySelector(".tarjeta-rol.seleccionada")?.dataset.rol : null;
-    if (rolElegido && rolElegido !== data.usuario.rol) {
-      var nombresRol = { estudiante: "Estudiante", docente: "Docente", admin: "Administrador" };
-      mostrarTostada("Tu cuenta es de " + (nombresRol[data.usuario.rol] || data.usuario.rol) + ": entraste a ese panel", "advertencia");
-    }
-  } catch (err) {
-    if (err.status === 429) {
-      document.getElementById("avisoBloqueo").classList.remove("oculto");
-    } else {
-      ponerError(
-        "loginCorreo",
-        err.mensaje || "Correo o contraseña incorrectos",
-      );
-    }
-  } finally {
-    btnTexto.classList.remove("oculto");
-    btnCargando.classList.add("oculto");
+  if (hayError) {
+    enfocarPrimerError(e.target);
+    return;
   }
+
+  await conOcupado(boton, async () => {
+    try {
+      const datos = await llamarAPI('/auth/login', 'POST', { correo, contrasena });
+      if (recordar) authStorage.setCorreoRecordado(correo);
+      else authStorage.clearCorreoRecordado();
+      document.getElementById('loginContrasena').value = '';
+      document.getElementById('avisoSesionExpirada').classList.add('oculto');
+      iniciarSesionLocal(datos);
+      irAPagina(paginaInicial(datos.usuario.rol));
+    } catch (err) {
+      if (err.status === 429) {
+        document.getElementById('mensajeBloqueo').textContent = err.mensaje;
+        document.getElementById('avisoBloqueo').classList.remove('oculto');
+      } else if (err.status) {
+        ponerError('loginContrasena', err.mensaje || 'Correo o contraseña incorrectos');
+      } else {
+        mostrarTostada(err.mensaje || 'No se pudo iniciar sesión', 'error');
+      }
+    }
+  });
 }
 
-// Valida y envía el formulario de registro
+// Valida y envía el formulario de registro.
 async function alEnviarRegistro(e) {
   e.preventDefault();
+  const boton = document.getElementById('btnRegistro');
+  const nombres = document.getElementById('regNombres').value.trim();
+  const apellidos = document.getElementById('regApellidos').value.trim();
+  const correo = document.getElementById('regCorreo').value.trim();
+  const rol = document.getElementById('regRol').value;
+  const contrasena = document.getElementById('regContrasena').value;
+  const repetida = document.getElementById('regContrasena2').value;
+  const terminos = document.getElementById('regTerminos').checked;
 
-  var nombres = document.getElementById("regNombres").value.trim();
-  var apellidos = document.getElementById("regApellidos").value.trim();
-  var correo = document.getElementById("regCorreo").value.trim();
-  var rol = document.getElementById("regRol").value;
-  var contrasena = document.getElementById("regContrasena").value;
-  var contra2 = document.getElementById("regContrasena2").value;
-  var terminos = document.getElementById("regTerminos").checked;
-  var hayError = false;
+  limpiarErrores(e.target);
 
-  [
-    "regNombres",
-    "regApellidos",
-    "regCorreo",
-    "regRol",
-    "regContrasena",
-    "regContrasena2",
-    "regTerminos",
-  ].forEach(function (id) {
-    quitarError(id);
-  });
-
-  if (!nombres) {
-    ponerError("regNombres", "Requerido");
-    hayError = true;
-  }
-  if (!apellidos) {
-    ponerError("regApellidos", "Requerido");
-    hayError = true;
-  }
-  if (!correo || !esCorreoValido(correo)) {
-    ponerError("regCorreo", "Solo correos " + CONFIG.DOMINIO_CORREO);
-    hayError = true;
-  }
-  if (!rol) {
-    ponerError("regRol", "Selecciona un rol");
-    hayError = true;
-  }
-  // Valida la contraseña con las mismas reglas que aplica el backend
-  var reglasContrasena = [
-    [contrasena.length >= 8, "Mínimo 8 caracteres"],
-    [/[A-Za-z]/.test(contrasena), "Debe incluir al menos una letra"],
-    [/[0-9]/.test(contrasena), "Debe incluir al menos un número"],
-  ];
-  var falla = reglasContrasena.find(function (r) { return !r[0]; });
-  if (falla) {
-    ponerError("regContrasena", falla[1]);
-    hayError = true;
-  }
-  if (contrasena !== contra2) {
-    ponerError("regContrasena2", "Las contraseñas no coinciden");
-    hayError = true;
-  }
-  if (!terminos) {
-    ponerError("regTerminos", "Acepta los términos");
-    hayError = true;
+  let hayError = false;
+  if (!nombres) { ponerError('regNombres', 'Escribe tus nombres'); hayError = true; }
+  else if (!NOMBRE_PERSONA_VALIDO.test(nombres)) { ponerError('regNombres', MENSAJE_NOMBRE_PERSONA); hayError = true; }
+  if (!apellidos) { ponerError('regApellidos', 'Escribe tus apellidos'); hayError = true; }
+  else if (!NOMBRE_PERSONA_VALIDO.test(apellidos)) { ponerError('regApellidos', MENSAJE_NOMBRE_PERSONA); hayError = true; }
+  if (!correo || !esCorreoValido(correo)) { ponerError('regCorreo', 'Solo correos ' + CONFIG.DOMINIO_CORREO); hayError = true; }
+  if (!rol) { ponerError('regRol', 'Selecciona un rol'); hayError = true; }
+  const problema = problemaContrasena(contrasena);
+  if (problema) { ponerError('regContrasena', problema); hayError = true; }
+  if (contrasena !== repetida) { ponerError('regContrasena2', 'Las contraseñas no coinciden'); hayError = true; }
+  if (!terminos) { ponerError('regTerminos', 'Debes aceptar los términos para continuar'); hayError = true; }
+  if (hayError) {
+    enfocarPrimerError(e.target);
+    return;
   }
 
-  if (hayError) return;
-
-  try {
-    var data = await llamarAPI("/auth/registro", "POST", {
-      nombres,
-      apellidos,
-      correo,
-      contrasena,
-      rol,
-    });
-
-    authStorage.setToken(data.token);
-    authStorage.setSesion(data.usuario);
-    authStorage.setUltimaActividad();
-
-    aplicarSesion(data.usuario);
-    irAPagina("completar-perfil");
-  } catch (err) {
-    // Muestra el error del servidor en el campo que lo causó
-    var m = (err.mensaje || "").toLowerCase();
-    if (m.includes("correo")) {
-      ponerError("regCorreo", err.mensaje);
-    } else if (m.includes("contraseña") || m.includes("contrasena")) {
-      ponerError("regContrasena", err.mensaje);
-    } else if (m.includes("rol")) {
-      ponerError("regRol", err.mensaje);
-    } else {
-      mostrarTostada(err.mensaje || "Error al crear la cuenta", "error");
+  await conOcupado(boton, async () => {
+    try {
+      const datos = await llamarAPI('/auth/registro', 'POST', { nombres, apellidos, correo, contrasena, rol });
+      e.target.reset();
+      medirFortaleza('');
+      iniciarSesionLocal(datos);
+      irAPagina('completar-perfil');
+      mostrarTostada('Cuenta creada. Completa tu perfil para continuar.', 'exito');
+    } catch (err) {
+      const m = (err.mensaje || '').toLowerCase();
+      if (m.includes('apellido')) ponerError('regApellidos', err.mensaje);
+      else if (m.includes('nombre')) ponerError('regNombres', err.mensaje);
+      else if (m.includes('correo')) ponerError('regCorreo', err.mensaje);
+      else if (m.includes('contraseña') || m.includes('contrasena')) ponerError('regContrasena', err.mensaje);
+      else if (m.includes('rol')) ponerError('regRol', err.mensaje);
+      else mostrarTostada(err.mensaje || 'No se pudo crear la cuenta', 'error');
     }
-  }
+  });
 }
 
-// Valida y envía el formulario de recuperación de contraseña
+// Valida y envía la solicitud de recuperación de contraseña.
 async function alEnviarRecuperacion(e) {
   e.preventDefault();
-
-  var correo = document.getElementById("recCorreo").value.trim();
-  quitarError("recCorreo");
+  const boton = document.getElementById('btnRecuperar');
+  const correo = document.getElementById('recCorreo').value.trim();
+  quitarError('recCorreo');
 
   if (!correo || !esCorreoValido(correo)) {
-    ponerError("recCorreo", "Solo correos " + CONFIG.DOMINIO_CORREO);
+    ponerError('recCorreo', 'Solo correos ' + CONFIG.DOMINIO_CORREO);
+    enfocarPrimerError(e.target);
     return;
   }
 
-  var btnTexto = document.getElementById("btnRecuperarTexto");
-  var btnCargando = document.getElementById("btnRecuperarCargando");
-  btnTexto.classList.add("oculto");
-  btnCargando.classList.remove("oculto");
-
-  try {
-    await llamarAPI("/auth/recuperar", "POST", { correo });
-    document.getElementById("correoRecuperacion").textContent = correo;
-    document.getElementById("formularioRecuperacion").classList.add("oculto");
-    document
-      .getElementById("cajaMensajeRecuperacion")
-      .classList.remove("oculto");
-  } catch (err) {
-    ponerError("recCorreo", err.mensaje || "Error al enviar el enlace");
-  } finally {
-    btnTexto.classList.remove("oculto");
-    btnCargando.classList.add("oculto");
-  }
-}
-
-// Redirige al backend para iniciar sesión con un proveedor social
-function loginSocial(proveedor) {
-  // En modo demo muestra un mensaje en lugar de llamar al backend
-  if (typeof CONFIG !== "undefined" && CONFIG.MODO_DEMO) {
-    mostrarTostada(
-      "🔐 El login con " +
-        proveedor +
-        " requiere el backend. Usa las cuentas demo: valentina.lopez@amigo.edu.co / 12345678",
-      "alerta",
-    );
-    return;
-  }
-  if (proveedor === "Google") {
-    window.location.href = API_URL.replace("/api", "") + "/api/auth/google";
-  } else {
-    mostrarTostada("Solo Google OAuth está disponible por ahora", "alerta");
-  }
-}
-
-// Canjea el código de un solo uso que Google devuelve por el token de sesión
-async function manejarCallbackGoogle() {
-  var params = new URLSearchParams(window.location.search);
-  var codigo = params.get("codigo");
-  var error = params.get("error");
-
-  if (error) {
-    mostrarTostada(
-      "No se pudo iniciar sesión con Google. Verifica que uses tu correo " +
-        CONFIG.DOMINIO_CORREO,
-      "error",
-    );
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return;
-  }
-
-  if (!codigo) return;
-
-  // Limpia la URL antes de continuar
-  window.history.replaceState({}, document.title, window.location.pathname);
-
-  try {
-    var respuesta = await fetch(API_URL + "/auth/google/canjear", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codigo: codigo }),
-    });
-
-    var data = await respuesta.json();
-
-    if (!respuesta.ok || !data.token) {
-      mostrarTostada(
-        data.error || "El enlace de acceso venció. Inicia sesión de nuevo.",
-        "error",
-      );
-      return;
+  await conOcupado(boton, async () => {
+    try {
+      const respuesta = await llamarAPI('/auth/recuperar', 'POST', { correo });
+      document.getElementById('correoRecuperacion').textContent = correo;
+      document.getElementById('textoRecuperacion').textContent = respuesta.mensaje || '';
+      e.target.classList.add('oculto');
+      document.getElementById('cajaMensajeRecuperacion').classList.remove('oculto');
+    } catch (err) {
+      ponerError('recCorreo', err.mensaje || 'No se pudo registrar la solicitud');
     }
+  });
+}
 
-    authStorage.setToken(data.token);
-    authStorage.setSesion(data.usuario);
-    authStorage.setUltimaActividad();
-    aplicarSesion(data.usuario);
+// Redirige al backend para iniciar sesión con el proveedor elegido.
+function loginSocial(proveedor) {
+  if (proveedor === 'Google') {
+    window.location.href = API_URL.replace(/\/api$/, '') + '/api/auth/google';
+  } else {
+    mostrarTostada('Solo el acceso con Google está disponible por ahora.', 'advertencia');
+  }
+}
 
-    var paneles = {
-      estudiante: "panel-estudiante",
-      docente: "panel-docente",
-      admin: "panel-admin",
-    };
-    irAPagina(paneles[data.usuario.rol] || "panel-estudiante");
+// Canjea el código de un solo uso que Google devuelve por el token de sesión.
+async function manejarCallbackGoogle() {
+  const parametros = new URLSearchParams(window.location.search);
+  const codigo = parametros.get('codigo');
+  const hayError = parametros.get('error');
+  window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+
+  if (hayError) {
+    mostrarTostada('No se pudo iniciar sesión con Google. Verifica que uses tu correo ' + CONFIG.DOMINIO_CORREO, 'error');
+    return false;
+  }
+  if (!codigo) return false;
+
+  try {
+    const respuesta = await fetch(API_URL + '/auth/google/canjear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codigo }),
+    });
+    const datos = await respuesta.json();
+    if (!respuesta.ok || !datos.token) {
+      mostrarTostada(datos.error || 'El enlace de acceso venció. Inicia sesión de nuevo.', 'error');
+      return false;
+    }
+    iniciarSesionLocal(datos);
+    irAPagina(paginaInicial(datos.usuario.rol));
+    return true;
   } catch (e) {
-    mostrarTostada("No se pudo completar el inicio de sesión con Google.", "error");
+    mostrarTostada('No se pudo completar el inicio de sesión con Google.', 'error');
+    return false;
   }
 }
 
-// Restablece la interfaz al estado sin sesión activa
+// Restablece la interfaz al estado sin sesión.
 function aplicarEstadoInvitado() {
-  document.body.classList.add("sin-sesion");
+  document.body.classList.add('sin-sesion');
+  Object.assign(sesion, { activa: false, id: null, nombre: '', inicial: '?', correo: '', rol: '' });
 
-  sesion.activa = false;
-  sesion.id = null;
-  sesion.nombre = "";
-  sesion.inicial = "";
-  sesion.correo = "";
-  sesion.rol = "";
-
-  var barraAvatar = document.getElementById("barraAvatar");
-  var barraNombre = document.getElementById("barraNombre");
-  var barraRol = document.getElementById("barraRol");
-  var barraEtiqueta = document.getElementById("barraEtiqueta");
-  if (barraAvatar) barraAvatar.textContent = "?";
-  if (barraNombre) barraNombre.textContent = "Invitado";
-  if (barraRol) barraRol.textContent = "Sin sesión";
-  if (barraEtiqueta) barraEtiqueta.textContent = "—";
-
-  var lateralUsuario = document.getElementById("lateralUsuario");
-  if (lateralUsuario) lateralUsuario.classList.add("oculto");
-
-  var chipAvatar = document.getElementById("chipAvatar");
-  var chipNombre = document.getElementById("chipNombre");
-  if (chipAvatar) chipAvatar.textContent = "?";
-  if (chipNombre) chipNombre.textContent = "Invitado";
-  // Quita la foto del usuario anterior para que no quede en el encabezado del siguiente.
-  if (typeof aplicarFotoAvatar === "function") aplicarFotoAvatar("");
-  var bsChip = document.getElementById("bsChip");
-  if (bsChip) bsChip.classList.add("oculto");
-
-  var lateralCerrar = document.getElementById("lateralCerrar");
-  if (lateralCerrar) lateralCerrar.classList.add("oculto");
-
-  var menuAcceso = document.getElementById("menuAcceso");
-  if (menuAcceso) menuAcceso.classList.remove("oculto");
-  ["menuEstudiante", "menuDocente", "menuAdmin"].forEach(function (id) {
-    var el = document.getElementById(id);
-    if (el) el.classList.add("oculto");
-  });
+  pintarAvatar(document.getElementById('barraAvatar'), '?', '');
+  pintarAvatar(document.getElementById('chipAvatar'), '?', '');
+  document.getElementById('barraNombre').textContent = 'Invitado';
+  document.getElementById('barraRol').textContent = 'Sin sesión';
+  document.getElementById('chipNombre').textContent = 'Invitado';
+  document.getElementById('lateralCerrar').classList.add('oculto');
+  document.getElementById('bsChip').classList.add('oculto');
+  document.getElementById('notifPanel').classList.add('oculto');
+  document.getElementById('campanaBadge').classList.add('oculto');
+  document.getElementById('notifLista').innerHTML = '';
+  ['menuEstudiante', 'menuDocente', 'menuAdmin'].forEach((id) => document.getElementById(id).classList.add('oculto'));
+  const pastilla = document.getElementById('pastillaTutoriasAdmin');
+  if (pastilla) pastilla.classList.add('oculto');
 }
 
-// Avisa al servidor el cierre para que quede en la auditoría; no espera la respuesta.
-function registrarSalida(motivo) {
-  if (!authStorage.getToken() || CONFIG.MODO_DEMO) return;
-  llamarAPI("/auth/salir", "POST", { motivo: motivo || "manual" }).catch(function () {});
-}
-
-// Cierra la sesión y limpia el almacenamiento local
-function cerrarSesion() {
-  registrarSalida("manual");
-  perfilStorage.limpiarTodo();
-  academicoStorage.limpiarTodo();
-  authStorage.limpiarTodo();
-
-  aplicarEstadoInvitado();
-
-  irAPagina("inicio-sesion");
-  mostrarTostada("Sesión cerrada", "exito");
-}
-
-// Aplica los datos de la sesión activa a la interfaz
+// Aplica los datos de la sesión activa a la interfaz.
 function aplicarSesion(usuario) {
-  document.body.classList.remove("sin-sesion");
-
-  sesion.activa = true;
-  sesion.id = usuario.id;
-  sesion.nombre = (usuario.nombres + " " + usuario.apellidos).trim();
-  sesion.inicial = (
-    (usuario.nombres[0] || "") + (usuario.apellidos[0] || "")
-  ).toUpperCase();
-  sesion.correo = usuario.correo;
-  sesion.rol = usuario.rol;
-
-  document.getElementById("barraAvatar").textContent = sesion.inicial;
-  document.getElementById("barraNombre").textContent = sesion.nombre;
-  document.getElementById("chipAvatar").textContent = sesion.inicial;
-  document.getElementById("chipNombre").textContent =
-    sesion.nombre.split(" ")[0];
-
-  var etiquetas = {
-    estudiante: "Estudiante",
-    docente: "Docente",
-    admin: "Admin",
-  };
-  document.getElementById("barraRol").textContent =
-    etiquetas[usuario.rol] || "";
-  document.getElementById("barraEtiqueta").textContent =
-    etiquetas[usuario.rol] || "";
-
-  document.getElementById("menuAcceso").classList.add("oculto");
-  ["menuEstudiante", "menuDocente", "menuAdmin"].forEach(function (id) {
-    document.getElementById(id).classList.add("oculto");
+  document.body.classList.remove('sin-sesion');
+  const nombreCompleto = ((usuario.nombres || '') + ' ' + (usuario.apellidos || '')).trim();
+  Object.assign(sesion, {
+    activa: true,
+    id: usuario.id,
+    nombre: nombreCompleto,
+    inicial: iniciales(nombreCompleto),
+    correo: usuario.correo,
+    rol: usuario.rol,
   });
 
-  document.getElementById("lateralUsuario").classList.remove("oculto");
-  document.getElementById("lateralCerrar").classList.remove("oculto");
-  var bsChip = document.getElementById("bsChip");
-  if (bsChip) bsChip.classList.remove("oculto");
+  pintarAvatar(document.getElementById('barraAvatar'), sesion.inicial, '');
+  pintarAvatar(document.getElementById('chipAvatar'), sesion.inicial, '');
+  document.getElementById('barraNombre').textContent = nombreCompleto;
+  document.getElementById('barraRol').textContent = ETIQUETAS_ROL[usuario.rol] || '';
+  document.getElementById('chipNombre').textContent = (usuario.nombres || nombreCompleto).split(' ')[0];
+  document.getElementById('menuUsuarioNombre').textContent = nombreCompleto;
+  document.getElementById('menuUsuarioCorreo').textContent = usuario.correo;
+  document.getElementById('lateralCerrar').classList.remove('oculto');
+  document.getElementById('bsChip').classList.remove('oculto');
 
-  var menus = {
-    estudiante: "menuEstudiante",
-    docente: "menuDocente",
-    admin: "menuAdmin",
-  };
-  if (menus[usuario.rol]) {
-    document.getElementById(menus[usuario.rol]).classList.remove("oculto");
-  }
+  const menus = { estudiante: 'menuEstudiante', docente: 'menuDocente', admin: 'menuAdmin' };
+  Object.entries(menus).forEach(([rol, id]) => document.getElementById(id).classList.toggle('oculto', rol !== usuario.rol));
 
   cargarNotificaciones();
   cargarReglas();
-  if (typeof cargarFotoAvatar === "function") cargarFotoAvatar();
+  cargarFotoAvatar();
 }
 
-// Trae las reglas vigentes de Configuración y actualiza los textos que las muestran.
-async function cargarReglas() {
-  if (CONFIG.MODO_DEMO) return;
-  try {
-    var reglas = await llamarAPI("/reglas", "GET");
-    aplicarReglas(reglas);
-    try { localStorage.setItem("cp.reglas", JSON.stringify(reglas)); } catch (e) { /* sin espacio */ }
-  } catch (e) {
-    // Conserva las últimas reglas conocidas.
-  }
-  actualizarTextosReglas();
+// Avisa al servidor del cierre para que quede en la auditoría; no espera la respuesta.
+function registrarSalida(motivo) {
+  if (!authStorage.getToken()) return;
+  llamarAPI('/auth/salir', 'POST', { motivo: motivo || 'manual' }).catch(() => {});
 }
 
-// Escribe en la pantalla los valores de las reglas que cambian desde Configuración.
-function actualizarTextosReglas() {
-  var horas = document.getElementById("avisoHorasCancelacion");
-  if (horas) horas.textContent = CONFIG.HORAS_CANCELACION;
-  var cupo = document.getElementById("cupoMaxTutor");
-  if (cupo) cupo.textContent = CONFIG.MAX_ESTUDIANTES;
+// Borra todo lo guardado del usuario y vuelve a la pantalla de ingreso.
+function cerrarSesionLocal() {
+  perfilStorage.limpiarTodo();
+  academicoStorage.limpiarTodo();
+  authStorage.limpiarTodo();
+  ejecutarLimpiezas();
+  aplicarEstadoInvitado();
+  restablecerPaginas();
+  irAPagina('inicio-sesion');
 }
 
-// Indica si pasó el tiempo máximo sin actividad que fija RNF02.
+// Cierra la sesión a petición de la persona.
+function cerrarSesion() {
+  registrarSalida('manual');
+  cerrarSesionLocal();
+  mostrarTostada('Sesión cerrada', 'exito');
+}
+
+// Cierra la sesión por inactividad y deja el aviso visible en el inicio de sesión.
+function cerrarSesionPorInactividad() {
+  registrarSalida('inactividad');
+  cerrarSesionLocal();
+  document.getElementById('avisoSesionExpirada').classList.remove('oculto');
+}
+
+// Indica si pasó el tiempo máximo sin actividad que fija la configuración.
 function sesionInactivaVencida() {
   const ultima = authStorage.getUltimaActividad();
   return ultima > 0 && (Date.now() - ultima) / 60000 > CONFIG.MINUTOS_INACTIVIDAD;
 }
 
-// Cierra la sesión por inactividad y deja el aviso en el inicio de sesión.
-function cerrarSesionPorInactividad() {
-  registrarSalida("inactividad");
-  perfilStorage.limpiarTodo();
-  academicoStorage.limpiarTodo();
-  authStorage.limpiarTodo();
-  aplicarEstadoInvitado();
-  irAPagina("inicio-sesion");
-  const aviso = document.getElementById("avisoSesionExpirada");
-  if (aviso) aviso.style.display = "block";
+// Trae las reglas vigentes y actualiza los textos que las muestran.
+async function cargarReglas() {
+  try {
+    const reglas = await llamarAPI('/reglas', 'GET');
+    aplicarReglas(reglas);
+    guardarClave('cp.reglas', reglas);
+  } catch (e) {
+    /* se conservan las últimas reglas conocidas */
+  }
+  actualizarTextosReglas();
 }
 
-// Verifica si hay una sesión válida guardada al cargar la app
-async function verificarSesionGuardada() {
-  var token = authStorage.getToken();
-  var sesionGuardada = authStorage.getSesion();
+// Escribe en pantalla los valores de las reglas que cambian desde Configuración.
+function actualizarTextosReglas() {
+  const horas = document.getElementById('avisoHorasCancelacion');
+  if (horas) horas.textContent = CONFIG.HORAS_CANCELACION;
+  const cupo = document.getElementById('cupoMaxTutor');
+  if (cupo) cupo.textContent = CONFIG.MAX_ESTUDIANTES;
+}
 
-  if (!token || !sesionGuardada) {
+// Revisa al cargar la página si hay una sesión guardada que el servidor siga aceptando.
+async function verificarSesionGuardada() {
+  if (!authStorage.getToken() || !authStorage.getSesion()) {
     aplicarEstadoInvitado();
+    paginaParaInvitado();
     return;
   }
 
-  var ultima = authStorage.getUltimaActividad();
-  var minutos = (Date.now() - ultima) / 60000;
-
-  if (minutos > CONFIG.MINUTOS_INACTIVIDAD) {
+  if (sesionInactivaVencida() || authStorage.getUltimaActividad() === 0) {
     authStorage.limpiarTodo();
     aplicarEstadoInvitado();
-    var aviso = document.getElementById("avisoSesionExpirada");
-    if (aviso) aviso.style.display = "block";
+    paginaParaInvitado();
+    document.getElementById('avisoSesionExpirada').classList.remove('oculto');
     return;
   }
 
   try {
-    var data = await llamarAPI("/auth/yo", "GET");
-    aplicarSesion(data);
+    const usuario = await llamarAPI('/auth/yo', 'GET');
+    authStorage.setSesion(usuario);
     authStorage.setUltimaActividad();
-
-    var paneles = {
-      estudiante: "panel-estudiante",
-      docente: "panel-docente",
-      admin: "panel-admin",
-    };
-    irAPagina(paneles[data.rol] || "panel-estudiante");
+    aplicarSesion(usuario);
+    irAPagina(paginaInicial(usuario.rol), { reemplazar: true });
   } catch (err) {
     authStorage.limpiarTodo();
     aplicarEstadoInvitado();
+    paginaParaInvitado();
   }
-}
-
-function seleccionarRolLogin(btn) {
-  document
-    .querySelectorAll("#selectorRolLogin .tarjeta-rol")
-    .forEach(function (b) {
-      b.classList.remove("seleccionada");
-    });
-  btn.classList.add("seleccionada");
-  btn.closest("#selectorRolLogin").dataset.elegido = "1";
 }
