@@ -1,0 +1,1708 @@
+{
+  "info": {
+    "name": "ConectaProfe - CRUD",
+    "description": "Recorre el CRUD de la API en orden: crea datos temporales, los lee, los modifica y los borra al final. Ejecútala completa con el Collection Runner o petición por petición. Requiere las variables adminCorreo y adminContrasena del entorno.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "sufijo",
+      "value": ""
+    },
+    {
+      "key": "tokenAdmin",
+      "value": ""
+    },
+    {
+      "key": "tokenDocente",
+      "value": ""
+    },
+    {
+      "key": "docenteId",
+      "value": ""
+    },
+    {
+      "key": "estudianteId",
+      "value": ""
+    },
+    {
+      "key": "asignacionId",
+      "value": ""
+    },
+    {
+      "key": "periodoId",
+      "value": ""
+    },
+    {
+      "key": "tutoriaId",
+      "value": ""
+    },
+    {
+      "key": "fechaTutoria",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Sesión",
+      "item": [
+        {
+          "name": "Ping",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ping"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado ok', () => pm.expect(pm.response.json().estado).to.eql('ok'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin token responde 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{adminCorreo}}\",\n  \"contrasena\": \"{{adminContrasena}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Sufijo único para que cada corrida cree datos nuevos sin chocar con los anteriores.",
+                  "const letras = 'abcdefghijklmnopqrstuvwxyz';",
+                  "let sufijo = '';",
+                  "for (let i = 0; i < 6; i++) sufijo += letras[Math.floor(Math.random() * letras.length)];",
+                  "pm.collectionVariables.set('sufijo', sufijo);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const datos = pm.response.json();",
+                  "pm.test('Es administrador', () => pm.expect(datos.usuario.rol).to.eql('admin'));",
+                  "pm.collectionVariables.set('tokenAdmin', datos.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quién soy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/yo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "yo"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Usuarios (admin)",
+      "item": [
+        {
+          "name": "Crear docente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Docente\",\n  \"apellidos\": \"Prueba {{sufijo}}\",\n  \"correo\": \"docente.{{sufijo}}@amigo.edu.co\",\n  \"rol\": \"docente\",\n  \"contrasena\": \"Clave1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('docenteId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear estudiante",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Estudiante\",\n  \"apellidos\": \"Prueba {{sufijo}}\",\n  \"correo\": \"estudiante.{{sufijo}}@amigo.edu.co\",\n  \"rol\": \"estudiante\",\n  \"contrasena\": \"Clave1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('estudianteId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear con correo repetido responde 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Otro\",\n  \"apellidos\": \"Repetido\",\n  \"correo\": \"estudiante.{{sufijo}}@amigo.edu.co\",\n  \"rol\": \"estudiante\",\n  \"contrasena\": \"Clave1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear sin campos responde 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Incompleto\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar usuarios creados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios?q={{sufijo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{sufijo}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Aparecen los dos usuarios', () => pm.expect(pm.response.json().length).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar estudiante",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios/{{estudianteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios",
+                "{{estudianteId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Estudiante\",\n  \"apellidos\": \"Editado {{sufijo}}\",\n  \"correo\": \"estudiante.{{sufijo}}@amigo.edu.co\",\n  \"rol\": \"estudiante\",\n  \"promedio\": 3.8\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar actualización",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios?q=Editado {{sufijo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Editado {{sufijo}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const fila = pm.response.json()[0];",
+                  "pm.test('Cambió el apellido', () => pm.expect(fila.apellidos).to.include('Editado'));",
+                  "pm.test('Guardó el promedio', () => pm.expect(Number(fila.promedio)).to.eql(3.8));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Desactivar estudiante",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios/{{estudianteId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios",
+                "{{estudianteId}}",
+                "estado"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Activar estudiante",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios/{{estudianteId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios",
+                "{{estudianteId}}",
+                "estado"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Perfil docente",
+      "item": [
+        {
+          "name": "Login docente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"docente.{{sufijo}}@amigo.edu.co\",\n  \"contrasena\": \"Clave1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('tokenDocente', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Guardar perfil docente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/perfil/docente",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "perfil",
+                "docente"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cedula\": \"{{cedula}}\",\n  \"facultad\": \"Facultad de Ingenierías\",\n  \"telefono\": \"3001234567\",\n  \"asignaturas\": [\n    \"Programación I\"\n  ],\n  \"programas\": [\n    \"Sistemas\"\n  ],\n  \"horarios\": [\n    {\n      \"dia\": \"Lunes\",\n      \"hora_inicio\": \"08:00\",\n      \"hora_fin\": \"10:00\",\n      \"lugar\": \"Bloque 1\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// La cédula debe tener entre 6 y 11 dígitos.",
+                  "pm.variables.set('cedula', String(Math.floor(100000000 + Math.random() * 900000000)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver perfil docente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/perfil",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "perfil"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Asignaciones (admin)",
+      "item": [
+        {
+          "name": "Crear asignación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/asignaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "asignaciones"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estudiante_id\": \"{{estudianteId}}\",\n  \"docente_id\": \"{{docenteId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('asignacionId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear asignación repetida responde 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/asignaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "asignaciones"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estudiante_id\": \"{{estudianteId}}\",\n  \"docente_id\": \"{{docenteId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar asignaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/asignaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "asignaciones"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const id = Number(pm.collectionVariables.get('asignacionId'));",
+                  "pm.test('Incluye la asignación creada', () => pm.expect(pm.response.json().some(a => a.id === id)).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar asignación",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/asignaciones/{{asignacionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "asignaciones",
+                "{{asignacionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Períodos (admin)",
+      "item": [
+        {
+          "name": "Listar períodos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/periodos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "periodos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear período",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/periodos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "periodos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Prueba {{sufijo}}\",\n  \"inicio\": \"{{periodoInicio}}\",\n  \"fin\": \"{{periodoFin}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Año lejano y aleatorio para no cruzarse con períodos abiertos.",
+                  "const anio = 2200 + Math.floor(Math.random() * 7000);",
+                  "pm.variables.set('periodoInicio', anio + '-01-15');",
+                  "pm.variables.set('periodoFin', anio + '-06-15');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('periodoId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear período con fechas al revés responde 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/periodos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "periodos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Malo {{sufijo}}\",\n  \"inicio\": \"2300-06-01\",\n  \"fin\": \"2300-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerrar período",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/periodos/{{periodoId}}/cerrar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "periodos",
+                "{{periodoId}}",
+                "cerrar"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Tutorías",
+      "item": [
+        {
+          "name": "Programar tutoría",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tutorias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tutorias"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estudiante_id\": \"{{estudianteId}}\",\n  \"docente_id\": \"{{docenteId}}\",\n  \"asignatura\": \"Programación I\",\n  \"modalidad\": \"Virtual\",\n  \"fecha\": \"{{fechaTutoria}}\",\n  \"hora\": \"10:00\",\n  \"observaciones\": \"Creada desde Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Una semana adelante: la regla exige desde mañana y 24 h para cancelar.",
+                  "const fecha = new Date(Date.now() + 7 * 24 * 3600 * 1000);",
+                  "pm.collectionVariables.set('fechaTutoria', fecha.toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('tutoriaId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Programar a la misma hora responde 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tutorias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tutorias"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estudiante_id\": \"{{estudianteId}}\",\n  \"docente_id\": \"{{docenteId}}\",\n  \"asignatura\": \"Programación I\",\n  \"modalidad\": \"Virtual\",\n  \"fecha\": \"{{fechaTutoria}}\",\n  \"hora\": \"10:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Programar materia que no dicta responde 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tutorias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tutorias"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estudiante_id\": \"{{estudianteId}}\",\n  \"docente_id\": \"{{docenteId}}\",\n  \"asignatura\": \"Cálculo Diferencial\",\n  \"modalidad\": \"Virtual\",\n  \"fecha\": \"{{fechaTutoria}}\",\n  \"hora\": \"11:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar tutorías del docente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tutorias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tutorias"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const id = Number(pm.collectionVariables.get('tutoriaId'));",
+                  "pm.test('Incluye la tutoría creada', () => pm.expect(pm.response.json().some(t => t.id === id)).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar tutoría",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tutorias/{{tutoriaId}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tutorias",
+                "{{tutoriaId}}",
+                "cancelar"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar otra vez responde 400",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tutorias/{{tutoriaId}}/cancelar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tutorias",
+                "{{tutoriaId}}",
+                "cancelar"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Limpieza",
+      "item": [
+        {
+          "name": "Eliminar estudiante",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios/{{estudianteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios",
+                "{{estudianteId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar docente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios/{{docenteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios",
+                "{{docenteId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar inexistente responde 404",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios/{{estudianteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios",
+                "{{estudianteId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar que no quedan usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios?q={{sufijo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{sufijo}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('No quedan usuarios de prueba', () => pm.expect(pm.response.json()).to.have.length(0));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
