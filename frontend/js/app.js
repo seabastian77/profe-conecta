@@ -139,14 +139,33 @@ function alternarMenu() {
   const lateral = document.getElementById('barraLateral');
   const abierto = lateral.classList.toggle('abierta');
   document.getElementById('overlayMenu').classList.toggle('oculto', !abierto);
+  document.body.classList.toggle('menu-abierto', abierto);
   document.getElementById('botonMenu').setAttribute('aria-expanded', abierto ? 'true' : 'false');
+  if (abierto) enfocarItemDelMenu();
 }
 
-// Cierra el menú lateral.
+// Lleva el foco a la opción activa del menú (o a la primera visible) para quien navega con teclado.
+function enfocarItemDelMenu() {
+  const visibles = [...document.querySelectorAll('#barraLateral .lateral__item')].filter((i) => i.getClientRects().length);
+  (visibles.find((i) => i.classList.contains('activo')) || visibles[0])?.focus({ preventScroll: true });
+}
+
+// Cierra el menú lateral y avisa si estaba abierto.
 function cerrarMenu() {
-  document.getElementById('barraLateral').classList.remove('abierta');
+  const lateral = document.getElementById('barraLateral');
+  const estabaAbierto = lateral.classList.contains('abierta');
+  lateral.classList.remove('abierta');
   document.getElementById('overlayMenu').classList.add('oculto');
+  document.body.classList.remove('menu-abierto');
   document.getElementById('botonMenu').setAttribute('aria-expanded', 'false');
+  return estabaAbierto;
+}
+
+// Cierra el menú si la ventana se agranda hasta el diseño de escritorio con el menú abierto.
+function vigilarTamanoDeVentana() {
+  globalThis.matchMedia('(min-width: 64.0625rem)').addEventListener('change', (e) => {
+    if (e.matches) cerrarMenu();
+  });
 }
 
 const POPOVERS = [
@@ -345,7 +364,7 @@ function vigilarPopovers() {
       cerrarPopovers();
       document.getElementById(abierto.boton).focus();
     }
-    cerrarMenu();
+    if (cerrarMenu()) document.getElementById('botonMenu').focus();
   });
 }
 
@@ -391,6 +410,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   vigilarInactividad();
   vigilarNotificaciones();
   vigilarPopovers();
+  vigilarTamanoDeVentana();
   window.addEventListener('popstate', () => {
     if (window.location.hash && !window.location.hash.startsWith('#/')) return;
     irAPagina(paginaDesdeRuta() || (sesion.activa ? panelDeRol[sesion.rol] : 'inicio-sesion'), { desdeHistorial: true });

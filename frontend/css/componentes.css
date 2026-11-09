@@ -228,6 +228,7 @@ input[type="date"].campo__entrada, input[type="time"].campo__entrada { min-width
 .insignia { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border-radius: var(--r-pildora); font-size: var(--t-xs); font-weight: 600; line-height: 1.5; white-space: nowrap; background: var(--tinta-100); color: var(--tinta-700); }
 .insignia::before { content: ""; width: 0.4375rem; height: 0.4375rem; border-radius: 50%; background: currentColor; opacity: 0.85; }
 .insignia--sin-punto::before { display: none; }
+.insignia--texto { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .insignia--ok { background: var(--ok-100); color: var(--ok-700); }
 .insignia--aviso { background: var(--aviso-100); color: var(--aviso-700); }
 .insignia--error { background: var(--error-100); color: var(--error-700); }
@@ -254,7 +255,7 @@ input[type="date"].campo__entrada, input[type="time"].campo__entrada { min-width
 .aviso__acciones { display: flex; gap: var(--e-2); flex-wrap: wrap; margin-top: var(--e-3); }
 
 /* ── Tablas ───────────────────────────────────────────────── */
-.tabla-scroll { overflow-x: auto; }
+.tabla-scroll { overflow-x: auto; position: relative; }
 .tabla { font-size: var(--t-base); }
 .tabla th { padding: 0.625rem var(--e-4); background: var(--tinta-50); border-bottom: 1px solid var(--borde); color: var(--tinta-600); font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.02em; text-align: left; white-space: nowrap; }
 .tabla td { padding: 0.75rem var(--e-4); border-bottom: 1px solid var(--borde); vertical-align: middle; color: var(--tinta-800); }
@@ -265,6 +266,8 @@ input[type="date"].campo__entrada, input[type="time"].campo__entrada { min-width
 .tabla .acciones { text-align: right; white-space: nowrap; }
 .tabla .acciones .btn { margin-left: 0.125rem; }
 .tabla .no-parte { white-space: nowrap; }
+.tabla td { overflow-wrap: anywhere; }
+.tabla td.num, .tabla td.acciones, .tabla td.no-parte { overflow-wrap: normal; }
 .tabla .texto-libre { overflow-wrap: anywhere; }
 .tabla__vacio { text-align: center; color: var(--texto-tenue); padding: var(--e-8) var(--e-4) !important; }
 .persona { display: flex; align-items: center; gap: var(--e-3); min-width: 0; }
@@ -383,3 +386,17 @@ input[type="date"].campo__entrada, input[type="time"].campo__entrada { min-width
   .modal__pie { flex-direction: column-reverse; }
   .modal__pie .btn { width: 100%; }
 }
+
+/* En pantallas táctiles los controles pequeños ganan área de toque sin cambiar su aspecto. */
+@media (pointer: coarse) {
+  .ficha--quitable button { position: relative; }
+  .ficha--quitable button::after { content: ""; position: absolute; inset: -0.45rem; }
+  .cabecera-pagina__atras { min-height: 2.25rem; }
+  .campo__enlace { display: inline-block; padding: 0.4rem 0; margin: -0.4rem 0; }
+  .acceso__caja a:not(.btn) { padding-block: 0.45rem; }
+}
+
+/* El texto que escribe la gente (nombres, materias, enlaces) se parte donde haga falta en vez de ensanchar la página. */
+.perfil__nombre, .cabecera-pagina__titulo, .kpi__detalle, .ficha, .horario__lugar, .periodo__nombre,
+.tutoria__meta, .tutoria__nota, .tutoria__nota-texto, .alerta-estudiante__detalle,
+.notif-item__titulo, .notif-item__desc, .actividad__texto { overflow-wrap: anywhere; }

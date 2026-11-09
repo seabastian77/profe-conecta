@@ -302,6 +302,7 @@ function aplicarEstadoInvitado() {
   document.getElementById('barraNombre').textContent = 'Invitado';
   document.getElementById('barraRol').textContent = 'Sin sesión';
   document.getElementById('chipNombre').textContent = 'Invitado';
+  document.getElementById('botonUsuario').removeAttribute('aria-label');
   document.getElementById('lateralCerrar').classList.add('oculto');
   document.getElementById('bsChip').classList.add('oculto');
   document.getElementById('notifPanel').classList.add('oculto');
@@ -330,6 +331,7 @@ function aplicarSesion(usuario) {
   document.getElementById('barraNombre').textContent = nombreCompleto;
   document.getElementById('barraRol').textContent = ETIQUETAS_ROL[usuario.rol] || '';
   document.getElementById('chipNombre').textContent = (usuario.nombres || nombreCompleto).split(' ')[0];
+  document.getElementById('botonUsuario').setAttribute('aria-label', 'Menú de usuario: ' + nombreCompleto);
   document.getElementById('menuUsuarioNombre').textContent = nombreCompleto;
   document.getElementById('menuUsuarioCorreo').textContent = usuario.correo;
   document.getElementById('lateralCerrar').classList.remove('oculto');

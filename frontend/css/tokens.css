@@ -27,7 +27,7 @@
   --tinta-800: #243a42;
   --tinta-700: #364e57;
   --tinta-600: #4a616a;
-  --tinta-500: #62767e;
+  --tinta-500: #566a72;
   --tinta-400: #8798a0;
   --tinta-300: #b2bfc5;
   --tinta-200: #d5dde1;
@@ -110,8 +110,8 @@
 
   /* Capas. */
   --z-barra: 30;
-  --z-lateral: 40;
-  --z-telon: 45;
+  --z-telon: 40;
+  --z-lateral: 45;
   --z-popover: 60;
   --z-modal: 70;
   --z-tostada: 90;

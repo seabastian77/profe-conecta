@@ -117,7 +117,7 @@ function prepararDialogoUsuario(usuario) {
     : 'La cuenta queda activa de inmediato.';
   document.getElementById('btnGuardarUsuario').textContent = edicion ? 'Guardar cambios' : 'Crear usuario';
   document.getElementById('usuContrasenaEtiqueta').textContent = edicion ? 'Nueva contraseña (opcional)' : 'Contraseña';
-  document.getElementById('usuContrasena').placeholder = edicion ? 'Déjala vacía para no cambiarla' : 'Mínimo 8, con letras y números';
+  document.getElementById('usuContrasena').placeholder = edicion ? 'Vacía para no cambiarla' : 'Mínimo 8, letras y números';
 
   if (edicion) {
     document.getElementById('usuNombres').value = usuario.nombres || '';

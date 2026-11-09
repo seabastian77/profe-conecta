@@ -36,7 +36,7 @@ body.sin-sesion .zona-principal { padding: 0; }
 .lateral__nombre { display: block; font-size: var(--t-l); font-weight: 700; letter-spacing: -0.015em; color: #fff; line-height: 1.2; }
 .lateral__institucion { display: block; font-size: 0.6875rem; line-height: 1.3; color: rgb(255 255 255 / 0.62); }
 .lateral__nav { flex: 1; overflow-y: auto; padding: var(--e-2) var(--e-3) var(--e-4); }
-.lateral__titulo { padding: var(--e-4) var(--e-3) var(--e-2); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: rgb(255 255 255 / 0.5); }
+.lateral__titulo { padding: var(--e-4) var(--e-3) var(--e-2); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: rgb(255 255 255 / 0.62); }
 .lateral__lista { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .lateral__item { position: relative; display: flex; align-items: center; gap: var(--e-3); width: 100%; padding: 0.55rem var(--e-3); border-radius: var(--r-m); color: rgb(255 255 255 / 0.8); font-weight: 500; text-align: left; transition: background var(--rapido), color var(--rapido); }
 .lateral__item .icono { width: 1.25rem; height: 1.25rem; color: rgb(255 255 255 / 0.62); transition: color var(--rapido); }
@@ -56,6 +56,7 @@ body.sin-sesion .zona-principal { padding: 0; }
 .lateral__salir:hover { background: rgb(255 255 255 / 0.08); color: #fff; }
 .lateral__salir .icono { width: 1.125rem; height: 1.125rem; }
 .telon { position: fixed; inset: 0; z-index: var(--z-telon); background: rgb(14 28 34 / 0.55); animation: aparece var(--normal) ease; }
+@media (min-width: 64.0625rem) { .telon { display: none; } }
 
 /* ── Barra superior ───────────────────────────────────────── */
 .barra-superior { position: sticky; top: 0; z-index: var(--z-barra); height: var(--alto-barra); display: flex; align-items: center; gap: var(--e-3); padding: 0 var(--e-8); background: var(--superficie); border-bottom: 1px solid var(--borde); }
@@ -109,7 +110,7 @@ body.sin-sesion .zona-principal { padding: 0; }
 .seccion__subtitulo { font-size: var(--t-s); color: var(--texto-tenue); }
 .grilla { display: grid; gap: var(--e-4); }
 .grilla--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.grilla--auto { grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); }
+.grilla--auto { grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
 .grilla--entre { align-items: start; }
 .dos-columnas { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: var(--e-6); align-items: start; }
 .lateral-pegajoso { position: sticky; top: calc(var(--alto-barra) + var(--e-4)); }
@@ -131,6 +132,7 @@ body.sin-sesion .zona-principal { padding: 0; }
 .acceso__panel { display: flex; align-items: center; justify-content: center; padding: var(--e-10) var(--e-8); background: var(--superficie); }
 .acceso__caja { width: 100%; max-width: 26rem; }
 .acceso__encabezado { margin-bottom: var(--e-6); }
+.acceso__caja > .aviso { margin-bottom: var(--e-4); }
 .acceso__encabezado h1, .acceso__encabezado h2 { font-size: var(--t-2xl); letter-spacing: -0.02em; }
 .acceso__encabezado p { margin-top: var(--e-2); color: var(--texto-suave); }
 .acceso__alterno { margin-top: var(--e-6); text-align: center; font-size: var(--t-s); color: var(--texto-suave); }
@@ -157,11 +159,16 @@ body.sin-sesion .zona-principal { padding: 0; }
 .paso--completado { color: var(--ok-700); }
 .paso--completado .paso__numero { background: var(--ok-600); color: #fff; }
 .paso + .paso::before { content: ""; width: 1.75rem; height: 1px; background: var(--borde-fuerte); margin-right: var(--e-1); }
+@media (max-width: 30rem) {
+  .pasos { gap: var(--e-2) var(--e-4); }
+  .paso + .paso::before { display: none; }
+}
 
 /* ── Adaptación a pantallas menores ───────────────────────── */
 @media (max-width: 64rem) {
-  .lateral { transform: translateX(-100%); box-shadow: none; }
-  .lateral.abierta { transform: none; box-shadow: var(--sombra-l); }
+  .lateral { transform: translateX(-100%); visibility: hidden; box-shadow: none; transition: transform var(--normal) var(--curva), visibility 0s linear var(--normal); }
+  .lateral.abierta { transform: none; visibility: visible; box-shadow: var(--sombra-l); transition-delay: 0s; }
+  body.menu-abierto { overflow: hidden; }
   .contenido { margin-left: 0; }
   .barra-superior { padding: 0 var(--e-4); }
   .barra-superior__menu { display: grid; }

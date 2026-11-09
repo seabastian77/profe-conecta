@@ -1,7 +1,11 @@
 // Reúne las validaciones y utilidades de entrada que comparten los controladores.
 const NOMBRE_PERSONA = /^[\p{L}\p{M}\s'.-]{1,80}$/u;
 const TEXTO_SEGURO = /^[^<>"`\\\u0000-\u001f]*$/;
-const CORREO = /^[^\s@<>"'`\\]+@[^\s@<>"'`\\]+\.[^\s@<>"'`\\]+$/;
+// Misma forma que exige el inicio de sesión: así una cuenta creada desde el panel siempre se puede abrir.
+const ATOMO_CORREO = String.raw`[\p{L}\p{N}!#$%&*+/=?^_{|}~-]+`;
+const ETIQUETA_DOMINIO = String.raw`[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?`;
+const CORREO = new RegExp(String.raw`^${ATOMO_CORREO}(?:\.${ATOMO_CORREO})*@(?:${ETIQUETA_DOMINIO}\.)+\p{L}{2,63}$`, 'u');
+const MAX_USUARIO_CORREO = 64;
 const MAX_BYTES_CONTRASENA = 72;
 const LIMITE_POR_DEFECTO = 50;
 const LIMITE_MAXIMO = 200;
@@ -20,7 +24,7 @@ function normalizarCorreo(correo) {
 
 // Indica si el texto tiene forma de correo y una longitud razonable.
 function correoValido(correo) {
-  return typeof correo === 'string' && correo.length <= 120 && CORREO.test(correo);
+  return typeof correo === 'string' && correo.length <= 120 && correo.indexOf('@') <= MAX_USUARIO_CORREO && CORREO.test(correo);
 }
 
 // Indica si el texto es un nombre o apellido admitido.

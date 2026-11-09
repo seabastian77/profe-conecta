@@ -202,6 +202,12 @@ button.cal__celda:hover { background: var(--marca-50); }
   .tabla--apilada td.acciones .btn--icono { width: 2.5rem; min-height: 2.5rem; }
   .tabla--apilada .tabla__vacio { display: block; text-align: center; }
 }
+@media (max-width: 30rem) {
+  .horario-fila { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 24rem) {
+  .cal__nav-texto { display: none; }
+}
 @media (max-width: 40rem) {
   .cal__celda { min-height: 3.75rem; align-items: center; padding: 0.25rem 0.125rem; }
   .cal__evento, .cal__mas, .cal__festivo { display: none; }

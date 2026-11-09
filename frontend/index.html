@@ -530,7 +530,7 @@
                       <label class="campo__etiqueta" for="docAsignaturaInput">Busca una materia o escribe una nueva</label>
                       <div class="fichas" id="docAsignaturasSeleccionadas" aria-live="polite"></div>
                       <div class="con-sugerencias">
-                        <input type="text" id="docAsignaturaInput" class="campo__entrada" placeholder="Escribe para buscar o crear una materia" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="docAsignaturaDropdown" aria-describedby="errorDocAsignaturaInput">
+                        <input type="text" id="docAsignaturaInput" class="campo__entrada" placeholder="Busca o crea una materia" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="docAsignaturaDropdown" aria-describedby="errorDocAsignaturaInput">
                         <div class="sugerencias" id="docAsignaturaDropdown" role="listbox"></div>
                       </div>
                       <span class="campo__mensaje-error" id="errorDocAsignaturaInput" aria-live="polite"></span>
@@ -574,7 +574,7 @@
                   <div class="campos-2">
                     <div class="campo">
                       <label class="campo__etiqueta" for="admDependencia">Dependencia <span class="campo__ayuda">(opcional)</span></label>
-                      <input type="text" id="admDependencia" class="campo__entrada" placeholder="Ej: Vicerrectoría Académica" aria-describedby="errorAdmDependencia">
+                      <input type="text" id="admDependencia" class="campo__entrada" placeholder="Ej: Vicerrectoría" aria-describedby="errorAdmDependencia">
                       <span class="campo__mensaje-error" id="errorAdmDependencia" aria-live="polite"></span>
                     </div>
                     <div class="campo">
@@ -954,7 +954,7 @@
               </div>
               <div class="campo">
                 <label class="campo__etiqueta" for="notifAsunto">Asunto</label>
-                <input type="text" id="notifAsunto" class="campo__entrada" maxlength="150" placeholder="Ej: Alerta de promedio bajo — acción requerida" aria-describedby="errorNotifAsunto">
+                <input type="text" id="notifAsunto" class="campo__entrada" maxlength="150" placeholder="Ej: Alerta de promedio bajo" aria-describedby="errorNotifAsunto">
                 <span class="campo__mensaje-error" id="errorNotifAsunto" aria-live="polite"></span>
               </div>
               <div class="campo">
@@ -1340,9 +1340,9 @@
           <div class="apilado">
             <section class="tarjeta tarjeta--sin-relleno" aria-label="Calendario mensual">
               <div class="cal__navegacion">
-                <button type="button" class="btn btn--s" onclick="calNavegar(-1)"><svg class="icono icono--s" aria-hidden="true"><use href="img/iconos.svg#i-izquierda"/></svg>Anterior</button>
-                <h2 class="cal__titulo" data-cal="calTitulo" aria-live="polite"></h2>
-                <button type="button" class="btn btn--s" onclick="calNavegar(1)">Siguiente<svg class="icono icono--s" aria-hidden="true"><use href="img/iconos.svg#i-derecha"/></svg></button>
+                <button type="button" class="btn btn--s" aria-label="Mes anterior" onclick="calNavegar(-1)"><svg class="icono icono--s" aria-hidden="true"><use href="img/iconos.svg#i-izquierda"/></svg><span class="cal__nav-texto">Anterior</span></button>
+                <h2 class="cal__titulo" data-cal="calTitulo" aria-live="polite">Calendario</h2>
+                <button type="button" class="btn btn--s" aria-label="Mes siguiente" onclick="calNavegar(1)"><span class="cal__nav-texto">Siguiente</span><svg class="icono icono--s" aria-hidden="true"><use href="img/iconos.svg#i-derecha"/></svg></button>
               </div>
               <div class="cal__semana" aria-hidden="true">
                 <div class="cal__nombre-dia">Lun</div>
@@ -1354,7 +1354,7 @@
                 <div class="cal__nombre-dia">Dom</div>
               </div>
               <div class="cal__celdas" data-cal="calCeldas"></div>
-              <div class="leyenda" aria-label="Leyenda de colores">
+              <div class="leyenda" role="group" aria-label="Leyenda de colores">
                 <span class="leyenda__item estado-pendiente">Pendiente</span>
                 <span class="leyenda__item estado-confirmada">Confirmada</span>
                 <span class="leyenda__item estado-completada">Completada</span>
@@ -1372,14 +1372,14 @@
             </section>
           </div>
 
-          <aside class="tarjeta tarjeta--sin-relleno lateral-pegajoso" aria-labelledby="tituloProximas">
+          <section class="tarjeta tarjeta--sin-relleno lateral-pegajoso" aria-labelledby="tituloProximas">
             <div class="tarjeta__cabecera">
               <h2 class="tarjeta__titulo" id="tituloProximas"><svg class="icono" aria-hidden="true"><use href="img/iconos.svg#i-lista"/></svg>Próximas actividades</h2>
             </div>
             <div class="proximas-lista" data-cal="calProximas">
               <p class="texto-tenue">Cargando…</p>
             </div>
-          </aside>
+          </section>
         </div>
       </section>
 
@@ -1387,7 +1387,7 @@
       <section class="pagina" id="pagina-mi-perfil" aria-labelledby="perfilHeroNombre">
         <div class="perfil">
           <div class="perfil__portada" id="perfilPortada">
-            <img class="perfil__portada-img oculto" id="perfilPortadaImg" alt="Foto de portada">
+            <img class="perfil__portada-img oculto" id="perfilPortadaImg" alt="Foto de portada" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
             <button type="button" class="btn btn--s perfil__portada-boton" onclick="document.getElementById('perfilPortadaInput').click()"><svg class="icono icono--s" aria-hidden="true"><use href="img/iconos.svg#i-imagen"/></svg>Cambiar portada</button>
             <input type="file" id="perfilPortadaInput" hidden accept="image/jpeg,image/png,image/webp" onchange="subirPortada(this)">
           </div>
@@ -1473,7 +1473,7 @@
           </div>
           <div class="campo">
             <label class="campo__etiqueta" for="usuContrasena"><span id="usuContrasenaEtiqueta">Contraseña</span></label>
-            <input type="password" id="usuContrasena" class="campo__entrada" placeholder="Mínimo 8, con letras y números" autocomplete="new-password" aria-describedby="errorUsuContrasena">
+            <input type="password" id="usuContrasena" class="campo__entrada" placeholder="Mínimo 8, letras y números" autocomplete="new-password" aria-describedby="errorUsuContrasena">
             <span class="campo__mensaje-error" id="errorUsuContrasena" aria-live="polite"></span>
           </div>
         </div>

@@ -84,7 +84,7 @@ function textoODato(valor) {
 // Muestra una lista de textos como etiquetas, o un texto tenue cuando no hay ninguno.
 function etiquetasPerfil(lista, vacio) {
   if (!lista || !lista.length) return '<span class="texto-tenue">' + vacio + '</span>';
-  return '<span class="fichas">' + lista.map((texto) => '<span class="insignia insignia--marca insignia--sin-punto">' + escaparHtml(texto) + '</span>').join('') + '</span>';
+  return '<span class="fichas">' + lista.map((texto) => '<span class="insignia insignia--marca insignia--sin-punto insignia--texto">' + escaparHtml(texto) + '</span>').join('') + '</span>';
 }
 
 // Arma una sección del perfil como tarjeta con título e ícono.
