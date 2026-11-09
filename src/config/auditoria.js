@@ -17,4 +17,16 @@ async function auditar(req, evento, detalle, usuarioId) {
   }
 }
 
-module.exports = { auditar, ipDe };
+// Grupos de eventos que el panel de auditoría ofrece como filtro.
+const GRUPOS_EVENTOS = {
+  inicio: ['LOGIN'],
+  cierre: ['LOGOUT'],
+  fallido: ['LOGIN_FALLIDO', 'LOGIN_BLOQUEADO'],
+  registro: ['REGISTRO', 'RECUPERACION_SOLICITADA'],
+  usuarios: ['CREAR_USUARIO', 'EDITAR_USUARIO', 'ELIMINAR_USUARIO', 'ACTIVAR_USUARIO', 'DESACTIVAR_USUARIO'],
+  tutorias: ['ASIGNACION_CREADA', 'ASIGNACION_ELIMINADA', 'ASESORIA_PROGRAMADA'],
+  notificacion: ['NOTIFICACION'],
+  sistema: ['CONFIG', 'CONFIG_RESET', 'PERIODO_CREADO', 'PERIODO_ACTIVADO', 'PERIODO_CERRADO', 'AUDITORIA_ARCHIVADA']
+};
+
+module.exports = { auditar, ipDe, GRUPOS_EVENTOS };

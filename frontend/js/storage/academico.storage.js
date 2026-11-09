@@ -1,19 +1,6 @@
-// Caché de datos académicos (tutorías, historial), refrescada en cada panel.
-
+// Caché de las tutorías del usuario, que se refresca cada vez que se abre un panel.
 const academicoStorage = {
-  getTutorias()         {
-    const t = localStorage.getItem('cp.tutorias');
-    return t ? JSON.parse(t) : [];
-  },
-  setTutorias(lista)    { localStorage.setItem('cp.tutorias', JSON.stringify(lista)); },
-
-  getHistorial()        {
-    const h = localStorage.getItem('cp.historial');
-    return h ? JSON.parse(h) : [];
-  },
-  setHistorial(lista)   { localStorage.setItem('cp.historial', JSON.stringify(lista)); },
-
-  limpiarTodo() {
-    ['cp.tutorias','cp.historial'].forEach(k => localStorage.removeItem(k));
-  }
+  getTutorias() { return leerJSON('cp.tutorias', []); },
+  setTutorias(lista) { guardarClave('cp.tutorias', lista); },
+  limpiarTodo() { borrarClaves(['cp.tutorias', 'cp.historial']); },
 };

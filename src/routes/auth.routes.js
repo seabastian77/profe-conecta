@@ -1,8 +1,9 @@
 const router   = require('express').Router();
 const passport = require('passport');
 const { autenticar } = require('../middlewares/autenticar');
-const { limiteAuth } = require('../middlewares/limites');
-const { envolverControlador } = require('../middlewares/envolver');
+const { limiteAuth, limiteRecuperacion, limiteRegistro } = require('../middlewares/limites');
+const { envolver, envolverControlador } = require('../middlewares/envolver');
+const { auditar } = require('../config/auditoria');
 const ctrl = envolverControlador(require('../controllers/authController'));
 const { generarToken } = require('../config/jwt');
 const { crearCodigo, canjearCodigo } = require('../config/codigosOauth');
@@ -14,9 +15,9 @@ const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:3000')
   .replace(/\/$/, '');
 
 // Login y registro clásicos, protegidos contra fuerza bruta.
-router.post('/registro',  limiteAuth, ctrl.reglasRegistro, ctrl.registro);
+router.post('/registro',  limiteRegistro, limiteAuth, ctrl.reglasRegistro, ctrl.registro);
 router.post('/login',     limiteAuth, ctrl.reglasLogin,    ctrl.login);
-router.post('/recuperar', limiteAuth, ctrl.recuperar);
+router.post('/recuperar', limiteRecuperacion, ctrl.reglasRecuperar, ctrl.recuperar);
 router.get('/yo',         autenticar, ctrl.yo);
 router.post('/salir',     autenticar, ctrl.salir);
 
@@ -31,20 +32,16 @@ router.get('/google', (req, res, next) => {
   passport.authenticate('google', { scope: ['profile', 'email'], session: false })(req, res, next);
 });
 
-// Recibe el retorno de Google y entrega un código de un solo uso.
-router.get('/google/callback',
-  (req, res, next) => {
-    if (!oauthActivo) return res.redirect(`${FRONTEND_URL}?error=oauth_no_configurado`);
-    passport.authenticate('google', {
-      session: false,
-      failureRedirect: `${FRONTEND_URL}?error=oauth`
-    })(req, res, next);
-  },
-  function (req, res) {
-    const usuario = req.user;
-    if (!usuario || !usuario.id) return res.redirect(`${FRONTEND_URL}?error=oauth`);
+// Recibe el retorno de Google, registra el acceso y entrega un código de un solo uso.
+router.get('/google/callback', (req, res, next) => {
+  if (!oauthActivo) return res.redirect(`${FRONTEND_URL}?error=oauth_no_configurado`);
+
+  passport.authenticate('google', { session: false }, envolver(async (err, usuario) => {
+    if (err) console.warn('Fallo en el inicio de sesión con Google:', err.message);
+    if (err || !usuario || !usuario.id) return res.redirect(`${FRONTEND_URL}?error=oauth`);
 
     const token = generarToken({ id: usuario.id, correo: usuario.correo, rol: usuario.rol });
+    await auditar(req, 'LOGIN', 'Inicio de sesión con Google', usuario.id);
 
     // Manda un código de un solo uso en vez del token en la URL.
     const codigo = crearCodigo({
@@ -59,8 +56,8 @@ router.get('/google/callback',
     });
 
     res.redirect(`${FRONTEND_URL}?codigo=${codigo}`);
-  }
-);
+  }))(req, res, next);
+});
 
 // Canjea el código de un solo uso por el token real.
 router.post('/google/canjear', limiteAuth, (req, res) => {

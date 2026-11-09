@@ -1,661 +1,620 @@
-// Agrega una fila dinámica para capturar un horario del docente
-function agregarFilaHorario() {
-  const container = document.getElementById("docHorariosContainer");
-  if (!container) return;
-  const fila = document.createElement("div");
-  fila.className = "docHorarioFila";
-  fila.style.cssText = "display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap";
-  fila.innerHTML = `
-    <select class="horDia campo__entrada" style="flex:1;min-width:110px">
-      <option value="">Día</option>
-      <option>Lunes</option><option>Martes</option><option>Miércoles</option>
-      <option>Jueves</option><option>Viernes</option><option>Sábado</option>
-    </select>
-    <input type="time" class="horInicio campo__entrada" style="flex:1;min-width:90px" placeholder="Inicio"/>
-    <input type="time" class="horFin campo__entrada" style="flex:1;min-width:90px" placeholder="Fin"/>
-    <input type="text" class="horLugar campo__entrada" style="flex:2;min-width:120px" placeholder="Lugar (Aula 301, Meet...)"/>
-    <button type="button" onclick="this.parentElement.remove()" style="background:#fee2e2;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;color:#dc2626;font-weight:700">✕</button>
-  `;
-  container.appendChild(fila);
+// Perfil del usuario: consulta con caché breve, página «Mi perfil», formularios por rol y fotos.
+
+const VIGENCIA_PERFIL_MS = 20000;
+const LIMITE_FOTO_BYTES = 2 * 1024 * 1024;
+const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp'];
+const DIAS_HORARIO = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const MAX_HORARIOS = 30;
+const SEMESTRES_REFERENCIA = 10;
+
+const perfilMemoria = { uid: null, datos: null, hasta: 0, pendiente: null };
+let asistenteEditando = false;
+
+registrarLimpieza(() => {
+  invalidarPerfil();
+  perfilMemoria.uid = null;
+  asistenteEditando = false;
+});
+
+// Descarta el perfil recordado para que la próxima consulta vaya al servidor.
+function invalidarPerfil() {
+  perfilMemoria.datos = null;
+  perfilMemoria.hasta = 0;
+  perfilMemoria.pendiente = null;
+  perfilStorage.clearPerfil();
 }
 
-// Muestra el formulario de perfil correcto según el rol activo
-function mostrarFormPerfil() {
-  const rol = sesion.rol;
-  document.getElementById("perfilFormEstudiante").classList.add("oculto");
-  document.getElementById("perfilFormDocente").classList.add("oculto");
-  document.getElementById("perfilFormAdmin").classList.add("oculto");
+// Devuelve el perfil con sus fotos; reutiliza la respuesta de los últimos segundos para no repetir la consulta.
+function obtenerPerfil(forzar) {
+  const mismoUsuario = perfilMemoria.uid === sesion.id;
+  if (!forzar && mismoUsuario && perfilMemoria.datos && Date.now() < perfilMemoria.hasta) return Promise.resolve(perfilMemoria.datos);
+  if (!forzar && mismoUsuario && perfilMemoria.pendiente) return perfilMemoria.pendiente;
 
-  if (rol === "estudiante") {
-    document.getElementById("perfilFormEstudiante").classList.remove("oculto");
-    rellenarFormEstudiante();
-  }
-  if (rol === "docente") {
-    document.getElementById("perfilFormDocente").classList.remove("oculto");
-    if (typeof inicializarAutocompleteAsignaturas === "function")
-      inicializarAutocompleteAsignaturas();
-    if (typeof inicializarSelectFacultad === "function")
-      inicializarSelectFacultad();
-    rellenarFormDocente();
-  }
-  if (rol === "admin") {
-    document.getElementById("perfilFormAdmin").classList.remove("oculto");
-    rellenarFormAdmin();
-  }
-
-  const etiquetas = {
-    estudiante: "Estudiante",
-    docente: "Docente / Tutor",
-    admin: "Administrador",
-  };
-  document.getElementById("perfilRolEtiqueta").textContent =
-    etiquetas[rol] || "";
-}
-
-// Llena el formulario con el perfil guardado para que «Editar datos» no obligue a escribir todo otra vez.
-async function rellenarFormEstudiante() {
-  try {
-    const perfil = await llamarAPI("/perfil", "GET");
-    const d = perfil?.perfil || {};
-    if (d.documento) document.getElementById("estDocumento").value = d.documento;
-    if (d.programa) document.getElementById("estPrograma").value = d.programa;
-    if (d.semestre) document.getElementById("estSemestre").value = d.semestre;
-    if (d.telefono) document.getElementById("estTelefono").value = d.telefono;
-  } catch (err) {
-    // Sin perfil previo el formulario queda vacío, como en el primer registro.
-  }
-}
-
-// Llena el formulario del docente con lo guardado: cédula, facultad, programas, materias y horarios.
-async function rellenarFormDocente() {
-  let d;
-  try {
-    d = (await llamarAPI("/perfil", "GET"))?.perfil;
-  } catch (err) {
-    return;
-  }
-  if (!d) return;
-
-  if (d.cedula) document.getElementById("docCedula").value = d.cedula;
-  if (d.telefono) document.getElementById("docTelefono").value = d.telefono;
-
-  if (d.facultad) {
-    const facultad = FACULTADES_FUNLAM.find((f) => f.nombre === d.facultad);
-    if (facultad) {
-      seleccionarFacultad(facultad.area, facultad.nombre);
-    } else {
-      document.getElementById("docFacultadInput").value = d.facultad;
-      document.getElementById("docFacultad").value = d.facultad;
-    }
-    (d.programas || []).forEach((programa) => {
-      const casilla = [...document.querySelectorAll("#docProgramas input")].find((c) => c.value === programa);
-      if (casilla) casilla.checked = true;
-    });
-  }
-
-  if (typeof precargarAsignaturas === "function") precargarAsignaturas(d.asignaturas || []);
-
-  const contenedor = document.getElementById("docHorariosContainer");
-  if (contenedor) {
-    contenedor.innerHTML = "";
-    (d.horarios || []).forEach((h) => {
-      agregarFilaHorario();
-      const fila = contenedor.lastElementChild;
-      fila.querySelector(".horDia").value = h.dia || "";
-      fila.querySelector(".horInicio").value = (h.hora_inicio || "").slice(0, 5);
-      fila.querySelector(".horFin").value = (h.hora_fin || "").slice(0, 5);
-      fila.querySelector(".horLugar").value = h.lugar || "";
-    });
-  }
-}
-
-// Llena el formulario del administrador con sus datos guardados.
-async function rellenarFormAdmin() {
-  try {
-    const d = (await llamarAPI("/perfil", "GET"))?.perfil;
-    if (!d) return;
-    if (d.cedula) document.getElementById("admCedula").value = d.cedula;
-    if (d.cargo) document.getElementById("admCargo").value = d.cargo;
-    if (d.dependencia) document.getElementById("admDependencia").value = d.dependencia;
-    if (d.telefono) document.getElementById("admTelefono").value = d.telefono;
-  } catch (err) {
-    // Sin perfil previo el formulario queda vacío.
-  }
-}
-
-// Valida y guarda el perfil del estudiante; el promedio no va porque lo registra la institución.
-async function alEnviarPerfilEstudiante(e) {
-  e.preventDefault();
-
-  const datos = {
-    documento: document.getElementById("estDocumento").value.trim(),
-    programa: document.getElementById("estPrograma").value,
-    semestre: document.getElementById("estSemestre").value,
-    telefono: document.getElementById("estTelefono").value.trim(),
-  };
-
-  let hayError = false;
-  if (!datos.documento) {
-    ponerError("estDocumento", "El número de documento es requerido");
-    hayError = true;
-  } else if (!/^\d{6,11}$/.test(datos.documento)) {
-    ponerError("estDocumento", "Solo números, entre 6 y 11 dígitos");
-    hayError = true;
-  }
-  if (datos.telefono && !/^\d{7,10}$/.test(datos.telefono)) {
-    ponerError("estTelefono", "Entre 7 y 10 números");
-    hayError = true;
-  }
-  if (!datos.programa) {
-    ponerError("estPrograma", "Selecciona el programa");
-    hayError = true;
-  }
-  if (!datos.semestre) {
-    ponerError("estSemestre", "Selecciona el semestre");
-    hayError = true;
-  }
-  if (hayError) return;
-
-  try {
-    const resp = await llamarAPI("/perfil/estudiante", "POST", datos);
-    perfilStorage.clearPerfil(); // invalida la caché
-
-    mostrarTostada("Perfil guardado correctamente", "exito");
-
-    irAPagina("panel-estudiante");
-  } catch (err) {
-    mostrarTostada(err.mensaje || "Error guardando perfil", "error");
-  }
-}
-
-// Valida y guarda el perfil del docente
-async function alEnviarPerfilDocente(e) {
-  e.preventDefault();
-
-  // Lee las asignaturas del campo JSON oculto
-  let asignaturas = [];
-  try {
-    const jsonField = document.getElementById("docAsignaturasJSON");
-    asignaturas = jsonField ? JSON.parse(jsonField.value || "[]") : [];
-  } catch(err) { asignaturas = []; }
-
-  // Obtiene los programas seleccionados
-  const programas = typeof getProgramasSeleccionados === 'function'
-    ? getProgramasSeleccionados()
-    : [...document.querySelectorAll("#docProgramas input:checked")].map(cb => cb.value || cb.closest("label").textContent.trim());
-
-  // Captura los horarios desde las filas dinámicas
-  const horarios = [];
-  document.querySelectorAll(".docHorarioFila").forEach(fila => {
-    const dia = fila.querySelector(".horDia").value;
-    const hi = fila.querySelector(".horInicio").value;
-    const hf = fila.querySelector(".horFin").value;
-    const lugar = fila.querySelector(".horLugar").value.trim();
-    if (dia && hi && hf) horarios.push({ dia, hora_inicio: hi, hora_fin: hf, lugar: lugar || "Por definir" });
+  perfilMemoria.uid = sesion.id;
+  const consulta = llamarAPI('/perfil', 'GET');
+  perfilMemoria.pendiente = consulta;
+  consulta.then((datos) => {
+    if (perfilMemoria.pendiente !== consulta) return;
+    perfilMemoria.datos = datos;
+    perfilMemoria.hasta = Date.now() + VIGENCIA_PERFIL_MS;
+  }, () => {}).then(() => {
+    if (perfilMemoria.pendiente === consulta) perfilMemoria.pendiente = null;
   });
-
-  const datos = {
-    cedula: document.getElementById("docCedula").value.trim(),
-    facultad: document.getElementById("docFacultad").value,
-    telefono: document.getElementById("docTelefono").value.trim(),
-    asignaturas,
-    programas,
-    horarios,
-  };
-
-  let hayError = false;
-  if (!datos.cedula) {
-    ponerError("docCedula", "El número de cédula es requerido");
-    hayError = true;
-  } else if (!/^\d{6,11}$/.test(datos.cedula)) {
-    ponerError("docCedula", "Solo números, entre 6 y 11 dígitos");
-    hayError = true;
-  }
-  if (datos.telefono && !/^\d{7,10}$/.test(datos.telefono)) {
-    ponerError("docTelefono", "Entre 7 y 10 números");
-    hayError = true;
-  }
-  if (!datos.facultad) {
-    ponerError("docFacultad", "Selecciona facultad");
-    hayError = true;
-  }
-  if (asignaturas.length === 0) {
-    ponerError("docAsignaturas", "Agrega al menos una materia");
-    hayError = true;
-  }
-  if (hayError) return;
-
-  try {
-    await llamarAPI("/perfil/docente", "POST", datos);
-    perfilStorage.clearPerfil();
-    mostrarTostada("Perfil guardado correctamente", "exito");
-    irAPagina("panel-docente");
-  } catch (err) {
-    mostrarTostada(err.mensaje || "Error guardando perfil", "error");
-  }
+  return consulta;
 }
 
-// Valida y guarda el perfil del administrador
-async function alEnviarPerfilAdmin(e) {
-  e.preventDefault();
-
-  const datos = {
-    cedula: document.getElementById("admCedula").value.trim(),
-    cargo: document.getElementById("admCargo").value,
-    dependencia: document.getElementById("admDependencia").value.trim(),
-    telefono: document.getElementById("admTelefono").value.trim(),
-  };
-
-  let hayError = false;
-  if (!datos.cedula) {
-    ponerError("admCedula", "Requerido");
-    hayError = true;
-  } else if (!/^\d{6,11}$/.test(datos.cedula)) {
-    ponerError("admCedula", "Solo números, entre 6 y 11 dígitos");
-    hayError = true;
-  }
-  if (datos.telefono && !/^\d{7,10}$/.test(datos.telefono)) {
-    ponerError("admTelefono", "Entre 7 y 10 números");
-    hayError = true;
-  }
-  if (!datos.cargo) {
-    ponerError("admCargo", "Selecciona el cargo");
-    hayError = true;
-  }
-  if (hayError) return;
-
-  try {
-    await llamarAPI("/perfil/admin", "POST", datos);
-    perfilStorage.clearPerfil();
-    mostrarTostada("Perfil guardado correctamente", "exito");
-    irAPagina("panel-admin");
-  } catch (err) {
-    mostrarTostada(err.mensaje || "Error guardando perfil", "error");
-  }
-}
-
-// Carga y renderiza la página de perfil del usuario
-async function cargarMiPerfil() {
-  let perfil = perfilStorage.getPerfil();
-  const idSesion = sesion?.id || authStorage.getSesion()?.id;
-
-  // Consulta el API si la caché no corresponde al usuario actual o no tiene fotos
-  if (!perfil || String(perfil.id) !== String(idSesion) || !perfil.fotos) {
-    perfilStorage.clearPerfil();
-    try {
-      perfil = await llamarAPI("/perfil", "GET");
-      perfilStorage.setPerfil(perfil);
-    } catch (err) {
-      console.error("Error cargando perfil:", err);
-      return;
-    }
-  }
-
-  // Rellena los datos básicos del encabezado
-  document.getElementById("perfilHeroNombre").textContent =
-    `${escaparHtml(perfil.nombres)} ${escaparHtml(perfil.apellidos)}`;
-  document.getElementById("perfilHeroCorreo").textContent = perfil.correo;
-  document.getElementById("perfilHeroRol").textContent = perfil.rol;
-
-  // Resuelve la foto de perfil dando prioridad al servidor sobre la caché local
-  const fotoPerfilServidor = perfil.fotos?.foto_perfil || "";
-  const fotoPerfilLocal    = perfilStorage.getFotoPerfil();
-  const fotoPerfil = fotoPerfilServidor || fotoPerfilLocal || "";
-
-  // Sincroniza la caché local con la foto del servidor
-  if (fotoPerfilServidor) {
-    perfilStorage.setFotoPerfil(fotoPerfilServidor);
-  }
-
-  // La foto empieza con la clase «oculto» (display:none !important): hay que quitarla, el style.display no basta.
-  const imgPerfil = document.getElementById("perfilFotoImg");
-  const iniciales = document.getElementById("perfilFotoIniciales");
-  if (fotoPerfil && imgPerfil && iniciales) {
-    imgPerfil.src = fotoPerfil;
-    imgPerfil.classList.remove("oculto");
-    iniciales.classList.add("oculto");
-  } else if (iniciales && imgPerfil) {
-    imgPerfil.classList.add("oculto");
-    iniciales.classList.remove("oculto");
-    iniciales.textContent = sesion?.inicial || "?";
-  }
-  aplicarFotoAvatar(fotoPerfil);
-
-  // Resuelve la foto de portada con la misma lógica
-  const fotoPortadaServidor = perfil.fotos?.foto_portada || "";
-  const fotoPortadaLocal    = perfilStorage.getFotoPortada();
-  const fotoPortada = fotoPortadaServidor || fotoPortadaLocal || "";
-
-  if (fotoPortadaServidor) {
-    perfilStorage.setFotoPortada(fotoPortadaServidor);
-  }
-
-  const imgPortada = document.getElementById("perfilPortadaImg");
-  if (imgPortada) {
-    if (fotoPortada) imgPortada.src = fotoPortada;
-    imgPortada.classList.toggle("oculto", !fotoPortada);
-  }
-
-  // RF027 — Muestra un aviso si el perfil está incompleto
-  const contenedor = document.getElementById("perfilContenido");
-  const datos = perfil.perfil || {};
-  const incompleto = perfilEstaIncompleto(perfil.rol, datos);
-
-  let avisoHTML = "";
-  if (incompleto) {
-    avisoHTML = `
-      <div class="aviso-naranja" style="margin-bottom:18px">
-        <span>⚠️</span>
-        <p>
-          <strong>Tu perfil está incompleto.</strong>
-          Faltan datos requeridos para poder usar todas las funcionalidades del sistema.
-          <a href="#" onclick="irAPagina('completar-perfil'); return false;" class="texto-naranja">
-            <strong>Completar perfil ahora →</strong>
-          </a>
-        </p>
-      </div>`;
-  }
-
-  // Renderiza el contenido según el rol
-  if (perfil.rol === "estudiante")
-    contenedor.innerHTML = avisoHTML + perfilEstudianteHTML(perfil);
-  else if (perfil.rol === "docente")
-    contenedor.innerHTML = avisoHTML + perfilDocenteHTML(perfil);
-  else contenedor.innerHTML = avisoHTML + perfilAdminHTML(perfil);
-}
-
-// RF027 — Detecta si el perfil está incompleto según el rol
+// Indica si faltan datos obligatorios del perfil según el rol.
 function perfilEstaIncompleto(rol, datos) {
   if (!datos) return true;
-  if (rol === "estudiante") {
-    return !datos.documento || !datos.programa || !datos.semestre;
-  }
-  if (rol === "docente") {
-    return !datos.cedula || !datos.facultad ||
-      !(datos.asignaturas && datos.asignaturas.length > 0);
-  }
-  if (rol === "admin") {
-    return !datos.cedula || !datos.cargo;
-  }
+  if (rol === 'estudiante') return !datos.documento || !datos.programa || !datos.semestre;
+  if (rol === 'docente') return !datos.cedula || !datos.facultad || !(datos.asignaturas && datos.asignaturas.length);
+  if (rol === 'admin') return !datos.cedula || !datos.cargo;
   return false;
 }
 
-// Arma una sección del perfil con cabecera y cuerpo con espacio interno; antes el contenido pegaba con el borde.
-function seccionPerfil(titulo, cuerpo) {
-  return `
-    <div class="perfil-seccion">
-      <div class="perfil-seccion__cabecera"><h3 class="perfil-seccion__titulo">${titulo}</h3></div>
-      <div class="perfil-seccion__cuerpo">${cuerpo}</div>
-    </div>`;
-}
-
-function perfilEstudianteHTML(p) {
-  const d = p.perfil || {};
-  const promedio = parseFloat(d.promedio) || 0;
-  const textoPromedio = promedio > 0 ? promedio.toFixed(1) : "Sin registrar";
-  const enAlerta = promedio > 0 && promedio < CONFIG.PROMEDIO_MINIMO;
-
-  // RF031 — Calcula la barra de progreso de créditos
-  const semestre = parseInt(d.semestre) || 0;
-  const totalCreditos = 160;
-  const creditosAprobados = Math.min(semestre * 16, totalCreditos);
-  const porcentajeCreditos = Math.round(
-    (creditosAprobados / totalCreditos) * 100,
-  );
-  const colorBarra = porcentajeCreditos < 50 ? "#f39200" : "#22c55e";
-
-  return (
-    seccionPerfil("Datos Académicos", `
-      <div class="perfil-datos-grilla">
-        <div class="perfil-dato"><span class="perfil-dato__label">N° Documento</span><span>${escaparHtml(d.documento || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Programa</span><span>${escaparHtml(d.programa || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Semestre</span><span>${escaparHtml(d.semestre || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Promedio</span>
-          <span class="${enAlerta ? "texto-naranja" : ""}">${textoPromedio}${enAlerta ? " ⚠️" : ""}</span>
-          <small style="display:block;color:#94a3b8;font-size:11px">Lo registra la universidad</small>
-        </div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
-      </div>`) +
-    seccionPerfil("📚 Avance del Programa Académico", `
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:#555">
-        <span><strong>${creditosAprobados}</strong> de ${totalCreditos} créditos aprobados</span>
-        <span style="color:${colorBarra};font-weight:700">${porcentajeCreditos}%</span>
-      </div>
-      <div style="background:#e5e7eb;border-radius:8px;height:14px;overflow:hidden">
-        <div style="width:${porcentajeCreditos}%;height:100%;background:linear-gradient(90deg,${colorBarra},${colorBarra}cc);border-radius:8px;transition:width 0.6s ease"></div>
-      </div>
-      <p style="margin-top:10px;font-size:12px;color:#777">
-        Estimado a partir del semestre actual · 16 créditos por semestre
-      </p>`)
-  );
-}
-
-function perfilDocenteHTML(p) {
-  const d = p.perfil || {};
-  const asig = escaparHtml((d.asignaturas || []).join(", ") || "—");
-  const progs = escaparHtml((d.programas || []).join(", ") || "—");
-  const horarios = d.horarios || [];
-
-  const horariosHTML = horarios.length > 0
-    ? horarios.map(h => `
-        <div style="background:#f0f9fb;border-left:3px solid #007b99;padding:10px;border-radius:6px">
-          <div style="font-weight:700;color:#007b99;font-size:13px">${escaparHtml(h.dia)}</div>
-          <div style="font-size:12px;color:#333;margin-top:4px">${escaparHtml(h.hora_inicio)} – ${escaparHtml(h.hora_fin)}</div>
-          <div style="font-size:11px;color:#777">${escaparHtml(h.lugar || 'Por definir')}</div>
-        </div>`).join("")
-    : '<p style="color:#999;font-size:13px;padding:8px 0">Sin horarios registrados aún.</p>';
-
-  // Obtiene las últimas 4 tutorías
-  const tutorias = (academicoStorage.getTutorias() || [])
-    .slice()
-    .sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""))
-    .slice(0, 4);
-
-  const tutoriasHTML =
-    tutorias.length === 0
-      ? '<p class="sin-datos">Aún no hay sesiones registradas.</p>'
-      : tutorias
-          .map(
-            (t) => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee">
-          <div>
-            <div style="font-weight:600;font-size:13px">${escaparHtml(t.asignatura || "—")}</div>
-            <div style="font-size:11px;color:#777">${escaparHtml(t.nombre_estudiante || "Estudiante")} · ${formatearFecha(t.fecha)}</div>
-          </div>
-          <span class="insignia ${t.estado === "pendiente" ? "insignia--alerta" : "insignia--activo"}">${escaparHtml(t.estado || "pendiente")}</span>
-        </div>`,
-          )
-          .join("");
-
-  return (
-    seccionPerfil("Datos del Docente", `
-      <div class="perfil-datos-grilla">
-        <div class="perfil-dato"><span class="perfil-dato__label">Cédula</span><span>${escaparHtml(d.cedula || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Facultad</span><span>${escaparHtml(d.facultad || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
-        <div class="perfil-dato" style="grid-column:1/-1"><span class="perfil-dato__label">Programas que atiende</span><span>${progs}</span></div>
-        <div class="perfil-dato" style="grid-column:1/-1"><span class="perfil-dato__label">Materias</span><span>${asig}</span></div>
-      </div>`) +
-    seccionPerfil("🕒 Horarios Disponibles", `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">
-        ${horariosHTML}
-      </div>
-      <button class="btn-secundario" style="margin-top:12px;font-size:12px" onclick="irAPagina('completar-perfil')">✏️ Editar perfil y horarios</button>`) +
-    seccionPerfil("📋 Últimas Tutorías", tutoriasHTML)
-  );
-}
-
-function perfilAdminHTML(p) {
-  const d = p.perfil || {};
-  // RF034 — La actividad reciente sale de la auditoría; antes eran acciones de ejemplo que nunca pasaron.
-  setTimeout(cargarActividadAdmin, 0);
-
-  return (
-    seccionPerfil("Datos del Administrador", `
-      <div class="perfil-datos-grilla">
-        <div class="perfil-dato"><span class="perfil-dato__label">Cédula</span><span>${escaparHtml(d.cedula || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Cargo</span><span>${escaparHtml(d.cargo || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Dependencia</span><span>${escaparHtml(d.dependencia || "—")}</span></div>
-        <div class="perfil-dato"><span class="perfil-dato__label">Teléfono</span><span>${escaparHtml(d.telefono || "—")}</span></div>
-      </div>`) +
-    seccionPerfil("📜 Actividad Reciente", '<div id="perfilActividadAdmin"><p class="sin-datos">Cargando…</p></div>')
-  );
-}
-
-// Muestra las últimas acciones del administrador registradas en la auditoría.
-async function cargarActividadAdmin() {
-  const contenedor = document.getElementById("perfilActividadAdmin");
-  if (!contenedor) return;
-  try {
-    const eventos = await llamarAPI("/admin/auditoria?mios=1", "GET");
-    if (!eventos.length) {
-      contenedor.innerHTML = '<p class="sin-datos">Aún no hay acciones registradas.</p>';
-      return;
-    }
-    contenedor.innerHTML = eventos.slice(0, 6).map((e) => {
-      const evento = typeof EVENTOS_AUDITORIA !== "undefined" ? EVENTOS_AUDITORIA[e.evento] : null;
-      return `
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #eee">
-          <div style="width:36px;height:36px;border-radius:50%;background:#007b9920;display:flex;align-items:center;justify-content:center;font-size:16px">${evento ? evento.icono : "📝"}</div>
-          <div style="flex:1">
-            <div style="font-weight:600;font-size:13px;color:#333">${escaparHtml(evento ? evento.texto : e.evento)}${e.detalle ? " — " + escaparHtml(e.detalle) : ""}</div>
-            <div style="font-size:11px;color:#777">${formatearTiempo(e.creada_en)}</div>
-          </div>
-        </div>`;
-    }).join("");
-  } catch (err) {
-    contenedor.innerHTML = '<p class="sin-datos">No se pudo cargar la actividad.</p>';
-  }
-}
-
-// Pone la foto en los avatares del encabezado y del menú, o las iniciales si no hay foto.
+// Pone la foto, o las iniciales, en los avatares del encabezado, del menú y de la página de perfil.
 function aplicarFotoAvatar(foto) {
-  const valida = typeof foto === "string" && /^data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+$/.test(foto);
-  ["chipAvatar", "barraAvatar"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (valida) {
-      el.style.backgroundImage = `url("${foto}")`;
-      el.style.backgroundSize = "cover";
-      el.style.backgroundPosition = "center";
-      el.textContent = "";
-    } else {
-      el.style.backgroundImage = "";
-      el.textContent = sesion?.inicial || "?";
-    }
-  });
+  ['chipAvatar', 'barraAvatar', 'perfilFoto'].forEach((id) => pintarAvatar(document.getElementById(id), sesion.inicial, foto));
 }
 
-// Al entrar, trae la foto guardada para que el encabezado no quede con las iniciales.
+// Pinta la foto guardada en este navegador y la corrige con la del servidor, que es la que vale.
 async function cargarFotoAvatar() {
-  let foto = perfilStorage.getFotoPerfil();
-  if (!foto) {
-    try {
-      const perfil = await llamarAPI("/perfil", "GET");
-      foto = perfil?.fotos?.foto_perfil || "";
-      if (foto) perfilStorage.setFotoPerfil(foto);
-    } catch (err) {
-      foto = "";
-    }
+  aplicarFotoAvatar(perfilStorage.getFotoPerfil());
+  try {
+    const perfil = await obtenerPerfil();
+    const foto = (perfil.fotos && perfil.fotos.foto_perfil) || '';
+    if (foto) perfilStorage.setFotoPerfil(foto);
+    else perfilStorage.clearFotoPerfil();
+    aplicarFotoAvatar(foto);
+  } catch (err) {
+    /* sin conexión se conserva lo que ya estaba en pantalla */
   }
-  aplicarFotoAvatar(foto);
 }
 
-// Comprime una imagen hasta un máximo de maxKB kilobytes
-function comprimirImagen(archivo, maxAncho, maxKB) {
-  return new Promise(function(resolve) {
-    var lector = new FileReader();
-    lector.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        var canvas = document.createElement('canvas');
-        var ancho = Math.min(img.width, maxAncho);
-        var alto  = Math.round(img.height * (ancho / img.width));
-        canvas.width  = ancho;
-        canvas.height = alto;
-        canvas.getContext('2d').drawImage(img, 0, 0, ancho, alto);
-
-        // Reduce la calidad hasta que la imagen quepa en maxKB
-        var calidad = 0.85;
-        var resultado = canvas.toDataURL('image/jpeg', calidad);
-        while (resultado.length > maxKB * 1024 && calidad > 0.2) {
-          calidad -= 0.1;
-          resultado = canvas.toDataURL('image/jpeg', calidad);
-        }
-        resolve(resultado);
-      };
-      img.src = e.target.result;
-    };
-    lector.readAsDataURL(archivo);
-  });
+// Arma un dato de la ficha; el valor ya llega escapado o es marcado propio.
+function datoPerfil(etiqueta, valorHtml, ancho) {
+  return '<div class="dato' + (ancho ? ' dato--ancho' : '') + '"><span class="dato__etiqueta">' + etiqueta + '</span><span class="dato__valor">' + valorHtml + '</span></div>';
 }
 
-// Comprime la foto elegida, la previsualiza y la sube al servidor
-// RF036 fija 2 MB; antes la imagen se reducía en silencio y el límite nunca se aplicaba (DEF-03).
-const LIMITE_FOTO_BYTES = 2 * 1024 * 1024;
+// Escapa un valor y muestra un guion cuando está vacío.
+function textoODato(valor) {
+  return escaparHtml(valor) || '—';
+}
 
-// Rechaza lo que no es imagen o pesa más de 2 MB; devuelve true si el archivo sirve.
-function fotoAceptable(input, archivo) {
-  if (!archivo.type || !archivo.type.startsWith("image/")) {
-    mostrarTostada("El archivo debe ser una imagen (JPG, PNG o WebP)", "error");
-    input.value = "";
+// Muestra una lista de textos como etiquetas, o un texto tenue cuando no hay ninguno.
+function etiquetasPerfil(lista, vacio) {
+  if (!lista || !lista.length) return '<span class="texto-tenue">' + vacio + '</span>';
+  return '<span class="fichas">' + lista.map((texto) => '<span class="insignia insignia--marca insignia--sin-punto insignia--texto">' + escaparHtml(texto) + '</span>').join('') + '</span>';
+}
+
+// Arma una sección del perfil como tarjeta con título e ícono.
+function seccionPerfil(titulo, nombreIcono, cuerpo) {
+  return '<section class="tarjeta"><div class="tarjeta__cabecera"><h2 class="tarjeta__titulo">' + icono(nombreIcono) + titulo + '</h2></div>' +
+    '<div class="tarjeta__cuerpo">' + cuerpo + '</div></section>';
+}
+
+// Dibuja las secciones del perfil del estudiante.
+function perfilEstudianteHTML(perfil) {
+  const d = perfil.perfil || {};
+  const promedio = parseFloat(d.promedio) || 0;
+  const enAlerta = promedio > 0 && promedio < CONFIG.PROMEDIO_MINIMO;
+  const semestre = parseInt(d.semestre, 10) || 0;
+
+  const valorPromedio = promedio > 0
+    ? numeroCO(promedio, 1) + (enAlerta ? ' <span class="insignia insignia--error">Por debajo del mínimo</span>' : '')
+    : '<span class="texto-tenue">Aún sin registrar</span>';
+
+  const avance = semestre
+    ? '<p><strong>Semestre ' + semestre + ' de ' + SEMESTRES_REFERENCIA + '</strong></p>' +
+      '<div class="progreso" role="meter" aria-label="Semestre actual" aria-valuemin="0" aria-valuemax="' + SEMESTRES_REFERENCIA + '" aria-valuenow="' + semestre +
+      '" aria-valuetext="Semestre ' + semestre + ' de ' + SEMESTRES_REFERENCIA + '"><div class="progreso__relleno" data-ancho="' + Math.min(100, (semestre / SEMESTRES_REFERENCIA) * 100) + '"></div></div>' +
+      '<p class="campo__ayuda">La barra toma como referencia ' + SEMESTRES_REFERENCIA + ' semestres, el máximo que ofrece el registro.</p>'
+    : '<p class="texto-tenue">Registra tu semestre para ver tu avance.</p>';
+
+  return seccionPerfil('Datos académicos', 'birrete',
+    '<div class="datos">' +
+      datoPerfil('Número de documento', textoODato(d.documento)) +
+      datoPerfil('Programa', textoODato(d.programa)) +
+      datoPerfil('Semestre', textoODato(d.semestre)) +
+      datoPerfil('Promedio acumulado', valorPromedio) +
+      datoPerfil('Teléfono', textoODato(d.telefono)) +
+    '</div><p class="campo__ayuda">El promedio lo registra la universidad y no se edita desde aquí.</p>') +
+    seccionPerfil('Avance en el programa', 'objetivo', avance);
+}
+
+// Dibuja las secciones del perfil del docente; las últimas tutorías llegan después.
+function perfilDocenteHTML(perfil) {
+  const d = perfil.perfil || {};
+  const horarios = d.horarios || [];
+  const franjas = horarios.length
+    ? '<div class="horarios">' + horarios.map((h) =>
+      '<div class="horario"><div class="horario__dia">' + escaparHtml(h.dia) + '</div>' +
+      '<div class="horario__hora">' + escaparHtml(String(h.hora_inicio).slice(0, 5)) + ' – ' + escaparHtml(String(h.hora_fin).slice(0, 5)) + '</div>' +
+      '<div class="horario__lugar">' + escaparHtml(h.lugar || 'Por definir') + '</div></div>').join('') + '</div>'
+    : estadoVacio({ icono: 'reloj', titulo: 'Sin horarios registrados', texto: 'Agrega tus franjas para que los estudiantes sepan cuándo atiendes.', compacto: true });
+
+  return seccionPerfil('Datos del docente', 'usuario',
+    '<div class="datos">' +
+      datoPerfil('Cédula', textoODato(d.cedula)) +
+      datoPerfil('Facultad', textoODato(d.facultad)) +
+      datoPerfil('Teléfono', textoODato(d.telefono)) +
+      datoPerfil('Programas que atiende', etiquetasPerfil(d.programas, 'Sin programas'), true) +
+      datoPerfil('Materias que dicta', etiquetasPerfil(d.asignaturas, 'Sin materias'), true) +
+    '</div>') +
+    seccionPerfil('Horarios disponibles', 'reloj',
+      franjas + '<div class="aviso__acciones"><button type="button" class="btn btn--s" onclick="irAPagina(\'completar-perfil\')">' + icono('editar', 's') + 'Editar perfil y horarios</button></div>') +
+    seccionPerfil('Últimas tutorías', 'calendario', '<div class="tutorias" id="perfilTutoriasDocente">' + esqueletoLista(2) + '</div>');
+}
+
+// Dibuja las secciones del perfil del administrador; la actividad llega después.
+function perfilAdminHTML(perfil) {
+  const d = perfil.perfil || {};
+  return seccionPerfil('Datos del administrador', 'escudo-ok',
+    '<div class="datos">' +
+      datoPerfil('Cédula', textoODato(d.cedula)) +
+      datoPerfil('Cargo', textoODato(d.cargo)) +
+      datoPerfil('Dependencia', textoODato(d.dependencia)) +
+      datoPerfil('Teléfono', textoODato(d.telefono)) +
+    '</div>') +
+    seccionPerfil('Actividad reciente', 'archivo', '<div class="actividad" id="perfilActividadAdmin">' + esqueletoLista(2) + '</div>');
+}
+
+// Muestra las últimas acciones del administrador que quedaron en la auditoría.
+async function cargarActividadAdmin() {
+  let eventos;
+  try {
+    eventos = await llamarAPI('/admin/auditoria?mios=1&limite=6', 'GET');
+  } catch (err) {
+    const fallo = document.getElementById('perfilActividadAdmin');
+    if (fallo) fallo.innerHTML = estadoError(err.mensaje, 'cargarActividadAdmin()');
+    return;
+  }
+  const contenedor = document.getElementById('perfilActividadAdmin');
+  if (!contenedor) return;
+  if (!eventos.length) {
+    contenedor.innerHTML = estadoVacio({ icono: 'archivo', titulo: 'Aún no hay acciones registradas', compacto: true });
+    return;
+  }
+  contenedor.innerHTML = eventos.slice(0, 6).map((e) => {
+    const conocido = EVENTOS_AUDITORIA[e.evento] || { texto: e.evento, icono: 'registro' };
+    return '<div class="actividad__item"><span class="actividad__icono">' + icono(conocido.icono) + '</span>' +
+      '<div class="actividad__texto"><strong>' + escaparHtml(conocido.texto) + '</strong>' + escaparHtml(e.detalle || '') +
+      '<span class="actividad__tiempo">' + escaparHtml(formatearTiempo(e.creada_en)) + '</span></div></div>';
+  }).join('');
+}
+
+// Muestra las cuatro tutorías más recientes del docente.
+async function cargarUltimasTutoriasDocente() {
+  let tutorias;
+  try {
+    tutorias = await cargarTutorias();
+  } catch (err) {
+    const fallo = document.getElementById('perfilTutoriasDocente');
+    if (fallo) fallo.innerHTML = estadoError(err.mensaje, 'cargarUltimasTutoriasDocente()');
+    return;
+  }
+  const contenedor = document.getElementById('perfilTutoriasDocente');
+  if (!contenedor) return;
+  const recientes = tutorias.slice().sort((a, b) => (String(b.fecha) + String(b.hora)).localeCompare(String(a.fecha) + String(a.hora))).slice(0, 4);
+  contenedor.innerHTML = recientes.length
+    ? recientes.map((t) => tarjetaTutoriaHTML(t, 'docente', 'compacta')).join('')
+    : estadoVacio({ icono: 'calendario', titulo: 'Aún no hay sesiones', texto: 'Cuando se programe una tutoría, la verás aquí.', compacto: true });
+}
+
+// Carga y dibuja la página de perfil de la persona.
+async function cargarMiPerfil() {
+  const contenedor = document.getElementById('perfilContenido');
+  if (!contenedor.children.length) contenedor.innerHTML = esqueletoLista(2);
+
+  let perfil;
+  try {
+    perfil = await obtenerPerfil(true);
+  } catch (err) {
+    contenedor.innerHTML = estadoError(err.mensaje, 'cargarMiPerfil()');
+    return;
+  }
+
+  document.getElementById('perfilHeroNombre').textContent = (perfil.nombres + ' ' + perfil.apellidos).trim();
+  document.getElementById('perfilHeroCorreo').textContent = perfil.correo;
+  document.getElementById('perfilHeroRol').textContent = ETIQUETAS_ROL[perfil.rol] || perfil.rol;
+
+  const fotos = perfil.fotos || {};
+  const fotoPerfil = esFotoValida(fotos.foto_perfil) ? fotos.foto_perfil : '';
+  const fotoPortada = esFotoValida(fotos.foto_portada) ? fotos.foto_portada : '';
+  if (fotoPerfil) perfilStorage.setFotoPerfil(fotoPerfil);
+  else perfilStorage.clearFotoPerfil();
+  aplicarFotoAvatar(fotoPerfil);
+  ponerPortada(fotoPortada);
+
+  const aviso = perfilEstaIncompleto(perfil.rol, perfil.perfil)
+    ? '<div class="aviso aviso--aviso" role="status">' + icono('alerta') + '<div><p><strong>Tu perfil está incompleto.</strong> Faltan datos requeridos para usar todas las funciones del sistema.</p>' +
+      '<div class="aviso__acciones"><button type="button" class="btn btn--s" onclick="irAPagina(\'completar-perfil\')">Completar perfil</button></div></div></div>'
+    : '';
+
+  const secciones = { estudiante: perfilEstudianteHTML, docente: perfilDocenteHTML, admin: perfilAdminHTML };
+  contenedor.innerHTML = aviso + (secciones[perfil.rol] || perfilAdminHTML)(perfil);
+  aplicarAnchos(contenedor);
+
+  if (perfil.rol === 'docente') cargarUltimasTutoriasDocente();
+  if (perfil.rol === 'admin') cargarActividadAdmin();
+}
+
+// Muestra la imagen de portada o la oculta si no hay una válida.
+function ponerPortada(foto) {
+  const imagen = document.getElementById('perfilPortadaImg');
+  if (foto) {
+    imagen.src = foto;
+    imagen.classList.remove('oculto');
+  } else {
+    imagen.removeAttribute('src');
+    imagen.classList.add('oculto');
+  }
+}
+
+// Rechaza lo que no es una imagen JPG, PNG o WebP, o pesa más de 2 MB; devuelve true si el archivo sirve.
+function fotoAceptable(archivo) {
+  if (!TIPOS_FOTO.includes(archivo.type)) {
+    mostrarTostada('El archivo debe ser una imagen JPG, PNG o WebP', 'error');
     return false;
   }
   if (archivo.size > LIMITE_FOTO_BYTES) {
-    const mb = (archivo.size / 1048576).toFixed(1).replace(".", ",");
-    mostrarTostada(`La imagen pesa ${mb} MB y el máximo permitido es 2 MB`, "error");
-    input.value = "";
+    mostrarTostada('La imagen pesa ' + numeroCO(archivo.size / 1048576, 1) + ' MB y el máximo permitido es 2 MB', 'error');
     return false;
   }
   return true;
 }
 
-function subirFotoPerfil(input) {
-  const archivo = input.files[0];
-  if (!archivo) return;
-  if (!fotoAceptable(input, archivo)) return;
-
-  mostrarTostada("⏳ Procesando foto...", "info");
-
-  comprimirImagen(archivo, 400, 300).then(async function(base64) {
-    var img = document.getElementById("perfilFotoImg");
-    var iniciales = document.getElementById("perfilFotoIniciales");
-    if (img) { img.src = base64; img.classList.remove("oculto"); }
-    if (iniciales) iniciales.classList.add("oculto");
-    aplicarFotoAvatar(base64);
-
-    try { perfilStorage.setFotoPerfil(base64); } catch(e) { console.warn("localStorage lleno"); }
-
+// Abre el archivo como imagen respetando la orientación que traiga.
+async function abrirImagen(archivo) {
+  if (window.createImageBitmap) {
     try {
-      await llamarAPI("/perfil/foto", "POST", { foto_base64: base64, tipo: "perfil" });
-      mostrarTostada("✅ Foto de perfil actualizada", "exito");
-      perfilStorage.clearPerfil();
+      return await createImageBitmap(archivo, { imageOrientation: 'from-image' });
     } catch (err) {
-      mostrarTostada("⚠️ Foto guardada localmente. Sin conexión con servidor.", "advertencia");
+      /* si el navegador no la decodifica así, se prueba con una etiqueta de imagen */
     }
+  }
+  return new Promise((resolver, rechazar) => {
+    const direccion = URL.createObjectURL(archivo);
+    const imagen = new Image();
+    imagen.onload = () => { URL.revokeObjectURL(direccion); resolver(imagen); };
+    imagen.onerror = () => { URL.revokeObjectURL(direccion); rechazar({ mensaje: 'No se pudo leer la imagen. Prueba con otro archivo.' }); };
+    imagen.src = direccion;
   });
 }
 
-// Comprime la portada elegida y la sube al servidor
-function subirPortada(input) {
-  const archivo = input.files[0];
-  if (!archivo) return;
-  if (!fotoAceptable(input, archivo)) return;
-
-  mostrarTostada("⏳ Procesando portada...", "info");
-
-  comprimirImagen(archivo, 1200, 400).then(async function(base64) {
-    var img = document.getElementById("perfilPortadaImg");
-    if (img) { img.src = base64; img.classList.remove("oculto"); }
-
-    try { perfilStorage.setFotoPortada(base64); } catch(e) { console.warn("localStorage lleno"); }
-
-    try {
-      await llamarAPI("/perfil/foto", "POST", { foto_base64: base64, tipo: "portada" });
-      mostrarTostada("✅ Foto de portada actualizada", "exito");
-      perfilStorage.clearPerfil();
-    } catch (err) {
-      mostrarTostada("⚠️ Portada guardada localmente. Sin conexión con servidor.", "advertencia");
+// Reduce la imagen al ancho máximo y la guarda como JPEG bajando la calidad hasta que quepa en maxKB.
+async function comprimirImagen(archivo, maxAncho, maxKB) {
+  const origen = await abrirImagen(archivo);
+  try {
+    let escala = Math.min(1, maxAncho / origen.width);
+    for (let intento = 0; intento < 4; intento++) {
+      const lienzo = document.createElement('canvas');
+      lienzo.width = Math.max(1, Math.round(origen.width * escala));
+      lienzo.height = Math.max(1, Math.round(origen.height * escala));
+      const contexto = lienzo.getContext('2d');
+      contexto.fillStyle = '#ffffff';
+      contexto.fillRect(0, 0, lienzo.width, lienzo.height);
+      contexto.drawImage(origen, 0, 0, lienzo.width, lienzo.height);
+      for (let calidad = 0.85; calidad >= 0.3; calidad -= 0.1) {
+        const resultado = lienzo.toDataURL('image/jpeg', calidad);
+        if (resultado.length <= maxKB * 1024) return resultado;
+      }
+      escala *= 0.8;
     }
+  } finally {
+    if (origen.close) origen.close();
+  }
+  throw { mensaje: 'La imagen es demasiado compleja para reducirla. Prueba con otra.' };
+}
+
+// Comprime la imagen elegida, la sube y solo entonces la muestra; si el servidor la rechaza, no cambia nada.
+async function subirImagenPerfil(entrada, tipo) {
+  const archivo = entrada.files && entrada.files[0];
+  entrada.value = '';
+  if (!archivo || !fotoAceptable(archivo)) return;
+
+  const marco = entrada.parentElement;
+  if (marco.getAttribute('aria-busy') === 'true') return;
+  marco.setAttribute('aria-busy', 'true');
+
+  const esPortada = tipo === 'portada';
+  try {
+    const base64 = await comprimirImagen(archivo, esPortada ? 1200 : 400, esPortada ? 400 : 300);
+    await llamarAPI('/perfil/foto', 'POST', { foto_base64: base64, tipo });
+    if (esPortada) {
+      ponerPortada(base64);
+      perfilStorage.setFotoPortada(base64);
+    } else {
+      aplicarFotoAvatar(base64);
+      perfilStorage.setFotoPerfil(base64);
+    }
+    invalidarPerfil();
+    mostrarTostada(esPortada ? 'Portada actualizada' : 'Foto de perfil actualizada', 'exito');
+  } catch (err) {
+    mostrarTostada(err.mensaje || 'No se pudo guardar la imagen', 'error');
+  } finally {
+    marco.removeAttribute('aria-busy');
+  }
+}
+
+// Cambia la foto de perfil.
+function subirFotoPerfil(entrada) {
+  return subirImagenPerfil(entrada, 'perfil');
+}
+
+// Cambia la foto de portada.
+function subirPortada(entrada) {
+  return subirImagenPerfil(entrada, 'portada');
+}
+
+// Lee un campo del formulario sin espacios sobrantes.
+function valorCampo(id) {
+  return document.getElementById(id).value.trim();
+}
+
+// Marca el error de un campo obligatorio vacío o que incumple la regla; devuelve true si hubo error.
+function exigirCampo(id, mensajeVacio, regla) {
+  const valor = valorCampo(id);
+  const mensaje = !valor ? mensajeVacio : (regla ? regla(valor) : '');
+  if (mensaje) ponerError(id, mensaje);
+  return Boolean(mensaje);
+}
+
+// Marca el error de un campo opcional que incumple la regla; devuelve true si hubo error.
+function revisarOpcional(id, regla) {
+  const mensaje = regla(valorCampo(id));
+  if (mensaje) ponerError(id, mensaje);
+  return Boolean(mensaje);
+}
+
+// Selecciona la opción con ese valor y la agrega si el selector no la traía, para no perder un dato antiguo.
+function seleccionarOpcion(idSelector, valor) {
+  const selector = document.getElementById(idSelector);
+  const texto = valor === null || valor === undefined ? '' : String(valor);
+  if (texto && ![...selector.options].some((o) => o.value === texto)) selector.add(new Option(texto, texto));
+  selector.value = texto;
+}
+
+// Agrega una franja horaria al formulario del docente, vacía o con los datos recibidos.
+function agregarFilaHorario(datos) {
+  const contenedor = document.getElementById('docHorariosContainer');
+  if (contenedor.children.length >= MAX_HORARIOS) {
+    mostrarTostada('Puedes registrar hasta ' + MAX_HORARIOS + ' franjas horarias', 'advertencia');
+    return;
+  }
+  const fila = document.createElement('div');
+  fila.className = 'horario-fila';
+  fila.innerHTML =
+    '<select class="campo__entrada" data-campo="dia" aria-label="Día de la semana"><option value="">Día</option>' + DIAS_HORARIO.map((d) => '<option>' + d + '</option>').join('') + '</select>' +
+    '<input type="time" class="campo__entrada" data-campo="inicio" aria-label="Hora de inicio">' +
+    '<input type="time" class="campo__entrada" data-campo="fin" aria-label="Hora de fin">' +
+    '<input type="text" class="campo__entrada" data-campo="lugar" maxlength="80" placeholder="Lugar (aula, enlace…)" aria-label="Lugar">' +
+    '<button type="button" class="btn btn--fantasma btn--icono" aria-label="Quitar esta franja" onclick="quitarFilaHorario(this)">' + icono('cerrar', 's') + '</button>';
+  contenedor.appendChild(fila);
+
+  if (datos && datos.dia) {
+    fila.querySelector('[data-campo="dia"]').value = datos.dia;
+    fila.querySelector('[data-campo="inicio"]').value = String(datos.hora_inicio || '').slice(0, 5);
+    fila.querySelector('[data-campo="fin"]').value = String(datos.hora_fin || '').slice(0, 5);
+    fila.querySelector('[data-campo="lugar"]').value = datos.lugar && datos.lugar !== 'Por definir' ? datos.lugar : '';
+  } else {
+    fila.querySelector('[data-campo="dia"]').focus();
+  }
+}
+
+// Quita la franja horaria a la que pertenece el botón.
+function quitarFilaHorario(boton) {
+  boton.closest('.horario-fila').remove();
+  quitarError('docHorarios');
+}
+
+// Lee y revisa las franjas del formulario; ignora las filas vacías y marca las incompletas.
+function leerHorarios() {
+  const horarios = [];
+  let hayError = false;
+  document.querySelectorAll('#docHorariosContainer .horario-fila').forEach((fila) => {
+    const campos = {};
+    fila.querySelectorAll('[data-campo]').forEach((campo) => {
+      campos[campo.dataset.campo] = campo;
+      campo.classList.remove('campo--invalido');
+      campo.removeAttribute('aria-invalid');
+    });
+    const dia = campos.dia.value;
+    const inicio = campos.inicio.value;
+    const fin = campos.fin.value;
+    const lugar = campos.lugar.value.trim();
+    if (!dia && !inicio && !fin && !lugar) return;
+
+    const marcar = (campo) => {
+      campo.classList.add('campo--invalido');
+      campo.setAttribute('aria-invalid', 'true');
+      hayError = true;
+    };
+    if (!dia) marcar(campos.dia);
+    if (!inicio) marcar(campos.inicio);
+    if (!fin) marcar(campos.fin);
+    if (inicio && fin && fin <= inicio) marcar(campos.fin);
+    if (lugar && (lugar.length > 80 || !textoSinSimbolos(lugar))) marcar(campos.lugar);
+    horarios.push({ dia, hora_inicio: inicio, hora_fin: fin, lugar: lugar || 'Por definir' });
   });
+  return { horarios, hayError };
+}
+
+// Ajusta el título, los pasos y los botones según sea el primer registro o una edición.
+function prepararEncabezadoAsistente() {
+  ponerTexto('tituloCompletarPerfil', asistenteEditando ? 'Edita tu perfil' : 'Completa tu perfil');
+  document.getElementById('perfilPasos').classList.toggle('oculto', asistenteEditando);
+  document.querySelectorAll('#pagina-completar-perfil [type="submit"]').forEach((boton) => {
+    if (!boton.dataset.original) boton.dataset.original = boton.textContent;
+    boton.textContent = asistenteEditando ? 'Guardar cambios' : boton.dataset.original;
+  });
+}
+
+// Llena el formulario del estudiante con lo guardado.
+function rellenarFormEstudiante(datos) {
+  document.getElementById('estDocumento').value = datos.documento || '';
+  seleccionarOpcion('estPrograma', datos.programa);
+  seleccionarOpcion('estSemestre', datos.semestre);
+  document.getElementById('estTelefono').value = datos.telefono || '';
+}
+
+// Llena el formulario del docente con lo guardado: datos, facultad, programas, materias y horarios.
+function rellenarFormDocente(datos) {
+  document.getElementById('docCedula').value = datos.cedula || '';
+  document.getElementById('docTelefono').value = datos.telefono || '';
+  if (datos.facultad) seleccionarOpcion('docFacultad', datos.facultad);
+  cargarProgramasPorFacultad(datos.facultad || '', datos.programas || []);
+  precargarAsignaturas(datos.asignaturas || []);
+  (datos.horarios || []).forEach((h) => agregarFilaHorario(h));
+}
+
+// Llena el formulario del administrador con lo guardado.
+function rellenarFormAdmin(datos) {
+  document.getElementById('admCedula').value = datos.cedula || '';
+  seleccionarOpcion('admCargo', datos.cargo);
+  document.getElementById('admDependencia').value = datos.dependencia || '';
+  document.getElementById('admTelefono').value = datos.telefono || '';
+}
+
+// Muestra el formulario de perfil del rol y lo llena con lo que ya está guardado.
+async function mostrarFormPerfil() {
+  const rol = sesion.rol;
+  const nombres = { estudiante: 'Estudiante', docente: 'Docente', admin: 'Admin' };
+  Object.keys(nombres).forEach((r) => document.getElementById('perfilForm' + nombres[r]).classList.toggle('oculto', r !== rol));
+  ponerTexto('perfilRolEtiqueta', ETIQUETAS_ROL[rol] || '');
+
+  const formulario = document.getElementById('formularioPerfil' + nombres[rol]);
+  formulario.reset();
+  limpiarErrores(formulario);
+  if (rol === 'docente') {
+    inicializarSelectFacultad();
+    inicializarAutocompleteAsignaturas();
+    precargarAsignaturas([]);
+    cargarProgramasPorFacultad('', []);
+    document.getElementById('docHorariosContainer').replaceChildren();
+  }
+
+  let datos = {};
+  try {
+    datos = (await obtenerPerfil(true)).perfil || {};
+  } catch (err) {
+    mostrarTostada('No se pudieron cargar tus datos guardados. ' + (err.mensaje || ''), 'advertencia');
+  }
+
+  asistenteEditando = !perfilEstaIncompleto(rol, datos);
+  prepararEncabezadoAsistente();
+  if (rol === 'estudiante') rellenarFormEstudiante(datos);
+  if (rol === 'docente') rellenarFormDocente(datos);
+  if (rol === 'admin') rellenarFormAdmin(datos);
+}
+
+// Envía el perfil; si el servidor rechaza un dato, deja el mensaje en el campo que corresponde.
+async function guardarPerfil(boton, ruta, datos, reglasDeError) {
+  await conOcupado(boton, async () => {
+    try {
+      await llamarAPI(ruta, 'POST', datos);
+    } catch (err) {
+      const mensaje = err.mensaje || 'No se pudo guardar el perfil';
+      const regla = (reglasDeError || []).find(([patron]) => patron.test(mensaje));
+      if (regla) {
+        ponerError(regla[1], mensaje);
+        const campo = document.getElementById(regla[1]);
+        if (campo && campo.focus) campo.focus();
+      } else {
+        mostrarTostada(mensaje, 'error');
+      }
+      return;
+    }
+    invalidarPerfil();
+    mostrarTostada(asistenteEditando ? 'Cambios guardados' : 'Perfil guardado', 'exito');
+    irAPagina(asistenteEditando ? 'mi-perfil' : panelDeRol[sesion.rol]);
+  });
+}
+
+// Valida y guarda el perfil del estudiante; el promedio no va porque lo registra la institución.
+async function alEnviarPerfilEstudiante(evento) {
+  evento.preventDefault();
+  const formulario = evento.target;
+  limpiarErrores(formulario);
+
+  const errores = [
+    exigirCampo('estDocumento', 'El número de documento es requerido', validarCedulaCampo),
+    exigirCampo('estPrograma', 'Selecciona tu programa'),
+    exigirCampo('estSemestre', 'Selecciona tu semestre'),
+    revisarOpcional('estTelefono', validarTelefonoCampo),
+  ];
+  if (errores.some(Boolean)) {
+    enfocarPrimerError(formulario);
+    return;
+  }
+  await guardarPerfil(evento.submitter, '/perfil/estudiante', {
+    documento: valorCampo('estDocumento'),
+    programa: valorCampo('estPrograma'),
+    semestre: valorCampo('estSemestre'),
+    telefono: valorCampo('estTelefono'),
+  }, [[/documento/i, 'estDocumento'], [/tel[eé]fono/i, 'estTelefono'], [/programa/i, 'estPrograma'], [/semestre/i, 'estSemestre']]);
+}
+
+// Valida y guarda el perfil del docente con sus materias, programas y horarios.
+async function alEnviarPerfilDocente(evento) {
+  evento.preventDefault();
+  const formulario = evento.target;
+  limpiarErrores(formulario);
+
+  const asignaturas = getAsignaturasSeleccionadas();
+  const { horarios, hayError: horariosInvalidos } = leerHorarios();
+
+  const errores = [
+    exigirCampo('docCedula', 'El número de cédula es requerido', validarCedulaCampo),
+    revisarOpcional('docTelefono', validarTelefonoCampo),
+    exigirCampo('docFacultad', 'Selecciona tu facultad'),
+  ];
+  if (!asignaturas.length) {
+    ponerError('docAsignaturaInput', 'Agrega al menos una materia');
+    errores.push(true);
+  }
+  if (horariosInvalidos) {
+    ponerError('docHorarios', 'Revisa las franjas marcadas: necesitan día, hora de inicio y una hora de fin posterior, y el lugar no admite símbolos como < > o comillas.');
+    errores.push(true);
+  }
+  if (errores.some(Boolean)) {
+    enfocarPrimerError(formulario);
+    return;
+  }
+  await guardarPerfil(evento.submitter, '/perfil/docente', {
+    cedula: valorCampo('docCedula'),
+    telefono: valorCampo('docTelefono'),
+    facultad: valorCampo('docFacultad'),
+    programas: getProgramasSeleccionados(),
+    asignaturas,
+    horarios,
+  }, [[/c[eé]dula/i, 'docCedula'], [/tel[eé]fono/i, 'docTelefono'], [/facultad/i, 'docFacultad'], [/materia|asignatura/i, 'docAsignaturaInput'], [/horario|lugar/i, 'docHorarios']]);
+}
+
+// Valida y guarda el perfil del administrador.
+async function alEnviarPerfilAdmin(evento) {
+  evento.preventDefault();
+  const formulario = evento.target;
+  limpiarErrores(formulario);
+
+  const dependencia = valorCampo('admDependencia');
+  const errores = [
+    exigirCampo('admCedula', 'La cédula es requerida', validarCedulaCampo),
+    exigirCampo('admCargo', 'Selecciona tu cargo'),
+    revisarOpcional('admTelefono', validarTelefonoCampo),
+  ];
+  if (dependencia.length > 120 || !textoSinSimbolos(dependencia)) {
+    ponerError('admDependencia', 'Máximo 120 caracteres y sin símbolos como < > o comillas');
+    errores.push(true);
+  }
+  if (errores.some(Boolean)) {
+    enfocarPrimerError(formulario);
+    return;
+  }
+  await guardarPerfil(evento.submitter, '/perfil/admin', {
+    cedula: valorCampo('admCedula'),
+    cargo: valorCampo('admCargo'),
+    dependencia,
+    telefono: valorCampo('admTelefono'),
+  }, [[/c[eé]dula/i, 'admCedula'], [/tel[eé]fono/i, 'admTelefono'], [/cargo|dependencia/i, 'admDependencia']]);
 }

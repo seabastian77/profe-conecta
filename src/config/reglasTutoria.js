@@ -14,14 +14,14 @@ async function docenteDictaAsignatura(docenteUsuarioId, asignatura) {
 }
 
 // Devuelve el error si el tutor ya llegó al máximo de estudiantes configurado, o null si el estudiante cabe.
-async function errorCupoTutor(docenteId, estudianteId) {
-  const yaAsignado = await db.prepare(
+async function errorCupoTutor(docenteId, estudianteId, ejecutor = db) {
+  const yaAsignado = await ejecutor.prepare(
     "SELECT id FROM asignaciones WHERE estudiante_id=? AND docente_id=? AND estado='activa'"
   ).get(estudianteId, docenteId);
   if (yaAsignado) return null;
 
   const maximo = await getConfigNum('RN_MAX_ESTUDIANTES', 15);
-  const fila = await db.prepare(
+  const fila = await ejecutor.prepare(
     "SELECT COUNT(DISTINCT estudiante_id) AS n FROM asignaciones WHERE docente_id=? AND estado='activa'"
   ).get(docenteId);
   const actuales = parseInt(fila?.n || 0);
