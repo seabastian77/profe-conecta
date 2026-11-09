@@ -165,6 +165,7 @@ button.cal__celda:hover { background: var(--marca-50); }
 .zona-peligrosa__titulo { display: flex; align-items: center; gap: var(--e-2); font-size: var(--t-m); color: var(--error-700); }
 .zona-peligrosa__desc { margin-top: 0.25rem; font-size: var(--t-s); color: var(--tinta-700); }
 .zona-peligrosa__botones { display: flex; gap: var(--e-3); flex-wrap: wrap; margin-top: var(--e-4); }
+.zona-peligrosa__botones .btn { max-width: 100%; padding-block: 0.5rem; white-space: normal; overflow-wrap: anywhere; text-align: center; }
 
 .evento { display: inline-flex; align-items: center; gap: var(--e-2); }
 .evento .icono { width: 1rem; height: 1rem; color: var(--tinta-500); }

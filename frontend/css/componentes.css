@@ -337,13 +337,14 @@ input[type="date"].campo__entrada, input[type="time"].campo__entrada { min-width
 .modal__icono--peligro { background: var(--error-100); color: var(--error-700); }
 .modal__icono--info { background: var(--marca-100); color: var(--marca-700); }
 .modal__encabezado-icono { display: flex; gap: var(--e-4); align-items: flex-start; }
+.modal__cabecera > div, .modal__encabezado-icono > div { min-width: 0; }
 @keyframes modal-entra { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
 
 /* ── Mensajes emergentes ──────────────────────────────────── */
 .tostadas { position: fixed; z-index: var(--z-tostada); right: var(--e-5); bottom: var(--e-5); display: flex; flex-direction: column; gap: var(--e-2); width: min(24rem, calc(100vw - 2rem)); pointer-events: none; }
 .tostada { pointer-events: auto; display: flex; align-items: flex-start; gap: var(--e-3); padding: var(--e-3) var(--e-4); background: var(--tinta-950); color: #fff; border-radius: var(--r-m); box-shadow: var(--sombra-l); font-size: var(--t-s); line-height: 1.45; animation: tostada-entra var(--normal) var(--curva); border-left: 4px solid var(--tinta-400); }
 .tostada .icono { margin-top: 0.05rem; width: 1.125rem; height: 1.125rem; }
-.tostada__texto { flex: 1; }
+.tostada__texto { flex: 1; min-width: 0; }
 .tostada__cerrar { color: rgb(255 255 255 / 0.65); display: grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: var(--r-s); }
 .tostada__cerrar:hover { color: #fff; background: rgb(255 255 255 / 0.12); }
 .tostada.exito { border-left-color: #3ec27a; }
@@ -399,4 +400,5 @@ input[type="date"].campo__entrada, input[type="time"].campo__entrada { min-width
 /* El texto que escribe la gente (nombres, materias, enlaces) se parte donde haga falta en vez de ensanchar la página. */
 .perfil__nombre, .cabecera-pagina__titulo, .kpi__detalle, .ficha, .horario__lugar, .periodo__nombre,
 .tutoria__meta, .tutoria__nota, .tutoria__nota-texto, .alerta-estudiante__detalle,
-.notif-item__titulo, .notif-item__desc, .actividad__texto { overflow-wrap: anywhere; }
+.notif-item__titulo, .notif-item__desc, .actividad__texto, .kpi__valor, .nota-reporte,
+.sugerencia__titulo, .sugerencia__detalle, .modal__titulo, .modal__descripcion, .tostada__texto { overflow-wrap: anywhere; }

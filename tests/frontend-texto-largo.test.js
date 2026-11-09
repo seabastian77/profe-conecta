@@ -34,9 +34,29 @@ describe('Texto que escribe la gente', () => {
     '.notif-item__titulo',
     '.notif-item__desc',
     '.actividad__texto',
+    '.kpi__valor',
+    '.nota-reporte',
+    '.sugerencia__titulo',
+    '.sugerencia__detalle',
+    '.modal__titulo',
+    '.modal__descripcion',
+    '.tostada__texto',
     '.tabla td',
   ])('%s parte las palabras muy largas', (selector) => {
     expect(SE_PARTEN.has(selector)).toBe(true);
+  });
+
+  test('el texto de toda la página se parte antes de salirse de su caja', () => {
+    expect(leer('css', 'base.css')).toMatch(/body\s*\{[^}]*overflow-wrap:\s*break-word/);
+  });
+
+  test('las ventanas y los avisos dejan que su texto se encoja dentro de la caja', () => {
+    expect(css).toMatch(/\.tostada__texto\s*\{[^}]*min-width:\s*0/);
+    expect(css).toMatch(/\.modal__cabecera > div,\s*\.modal__encabezado-icono > div\s*\{\s*min-width:\s*0/);
+  });
+
+  test('los botones de la zona peligrosa pueden partir el nombre del período en varias líneas', () => {
+    expect(css).toMatch(/\.zona-peligrosa__botones \.btn\s*\{[^}]*white-space:\s*normal/);
   });
 
   test('las celdas de números, acciones y fechas no se parten', () => {
